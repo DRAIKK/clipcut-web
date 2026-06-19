@@ -11,13 +11,13 @@ type HomeScreenProps = {
 export function HomeScreen({ barbers, onSearch, onSelectBarber }: HomeScreenProps) {
   return (
     <div className="space-y-8">
-      <LogoHeader />
+      <LogoHeader size="home" />
 
       <section className="space-y-4">
         <h2 className="text-sm font-black uppercase tracking-[0.18em] text-zinc-900">
           Peluqueros cerca
         </h2>
-        <div className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
+        <div className="scrollbar-hide -mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
           {barbers.map((barber) => (
             <BarberMiniCard barber={barber} key={barber.id} onSelect={onSelectBarber} />
           ))}

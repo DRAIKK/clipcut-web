@@ -1,17 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { BarberHero } from "./components/BarberHero";
 import { BookingModal } from "./components/BookingModal";
 import { BookingsScreen } from "./components/BookingsScreen";
 import { BottomTabs, type TabId } from "./components/BottomTabs";
 import { HomeScreen } from "./components/HomeScreen";
 import { LogoHeader } from "./components/LogoHeader";
 import { ProfileScreen } from "./components/ProfileScreen";
+import { PublicBarberProfile } from "./components/PublicBarberProfile";
 import { SearchScreen } from "./components/SearchScreen";
-import { SectionHeader } from "./components/SectionHeader";
-import { ServiceCard } from "./components/ServiceCard";
-import { TimeSlotGrid } from "./components/TimeSlotGrid";
 import {
   mockActiveBooking,
   mockBarber,
@@ -36,37 +33,16 @@ export default function Home() {
   };
 
   const renderReservationFlow = () => (
-    <div className="space-y-8">
-      <LogoHeader subtitle="Perfil del peluquero" />
-      <BarberHero barber={selectedBarber ?? mockBarber} onReserve={() => setModalOpen(true)} />
-
-      <section className="space-y-4">
-        <SectionHeader eyebrow="Servicios" title="Elegí qué querés hacerte" />
-        <div className="space-y-3">
-          {mockServices.map((service) => (
-            <ServiceCard
-              key={service.id}
-              onSelect={setSelectedService}
-              selected={selectedService.id === service.id}
-              service={service}
-            />
-          ))}
-        </div>
-      </section>
-
-      <section className="space-y-4">
-        <SectionHeader eyebrow="Horarios" title="Turnos disponibles para hoy" />
-        <TimeSlotGrid onSelect={setSelectedSlot} selectedSlot={selectedSlot} slots={mockTimeSlots} />
-      </section>
-
-      <button
-        className="h-14 w-full rounded-2xl bg-green-600 font-black text-white shadow-2xl shadow-green-600/30 transition duration-300 hover:bg-green-700 active:scale-[0.98]"
-        onClick={() => setModalOpen(true)}
-        type="button"
-      >
-        Revisar reserva
-      </button>
-    </div>
+    <PublicBarberProfile
+      barber={selectedBarber ?? mockBarber}
+      onReserve={() => setModalOpen(true)}
+      onSelectService={setSelectedService}
+      onSelectSlot={setSelectedSlot}
+      selectedService={selectedService}
+      selectedSlot={selectedSlot}
+      services={mockServices}
+      slots={mockTimeSlots}
+    />
   );
 
   let content = null;

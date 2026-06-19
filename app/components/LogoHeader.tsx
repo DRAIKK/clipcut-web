@@ -7,19 +7,22 @@ const logoSources = ["/clipcut-logo.png", "/logo.png"];
 
 type LogoHeaderProps = {
   subtitle?: string;
+  size?: "default" | "home";
 };
 
-export function LogoHeader({ subtitle }: LogoHeaderProps) {
+export function LogoHeader({ subtitle, size = "default" }: LogoHeaderProps) {
   const [logoIndex, setLogoIndex] = useState(0);
   const logoSrc = logoSources[logoIndex];
+  const imageClassName = size === "home" ? "h-20 w-auto object-contain" : "h-[4.5rem] w-auto object-contain";
+  const imageHeight = size === "home" ? 80 : 72;
 
   return (
     <header className="flex flex-col items-center px-4 pb-3 pt-2 text-center">
       {logoSrc ? (
         <Image
           alt="Clipcut"
-          className="h-16 w-auto object-contain"
-          height={64}
+          className={imageClassName}
+          height={imageHeight}
           onError={() => setLogoIndex((current) => current + 1)}
           priority
           src={logoSrc}
