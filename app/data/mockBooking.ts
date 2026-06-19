@@ -1,6 +1,7 @@
-import type { Barber, Service, TimeSlot } from "../types/booking";
+import type { Barber, Booking, Service, TimeSlot } from "../types/booking";
 
 export const mockBarber: Barber = {
+  id: "mateo-alvarez",
   name: "Mateo Alvarez",
   description:
     "Especialista en cortes modernos, fades limpios y perfilado de barba. Agenda tu turno en segundos y vive una experiencia premium.",
@@ -8,7 +9,50 @@ export const mockBarber: Barber = {
   address: "Av. Palermo 1842, Buenos Aires",
   rating: 4.9,
   imageGradient: "from-emerald-400 via-green-600 to-zinc-950",
+  distance: "1.2 km",
+  initials: "MA",
 };
+
+export const nearbyBarbers: Barber[] = [
+  mockBarber,
+  {
+    id: "nico-fades",
+    name: "Nico Fades",
+    description: "Cortes urbanos, perfilado y diseños con terminación prolija.",
+    followers: "8.4k",
+    address: "Gorriti 5120, Palermo",
+    rating: 4.8,
+    imageGradient: "from-lime-300 via-emerald-500 to-green-900",
+    distance: "850 m",
+    initials: "NF",
+  },
+  {
+    id: "tomi-barber",
+    name: "Tomi Barber",
+    description: "Barbería moderna para cortes clásicos, fades y barba.",
+    followers: "6.1k",
+    address: "Honduras 4211, Buenos Aires",
+    rating: 4.7,
+    imageGradient: "from-green-300 via-teal-600 to-zinc-900",
+    distance: "2.4 km",
+    initials: "TB",
+  },
+];
+
+export const searchBarbers: Barber[] = [
+  ...nearbyBarbers,
+  {
+    id: "leo-style",
+    name: "Leo Style",
+    description: "Color, tijera y cortes con asesoría de imagen.",
+    followers: "9.7k",
+    address: "Serrano 1444, Palermo Soho",
+    rating: 4.9,
+    imageGradient: "from-emerald-200 via-green-500 to-black",
+    distance: "3.1 km",
+    initials: "LS",
+  },
+];
 
 export const mockServices: Service[] = [
   {
@@ -44,3 +88,11 @@ export const mockTimeSlots: TimeSlot[] = [
   { id: "slot-1700", label: "17:00", available: false },
   { id: "slot-1730", label: "17:30", available: true },
 ];
+
+export const mockActiveBooking: Booking = {
+  barberName: "Mateo Alvarez",
+  serviceName: "Corte fade premium",
+  dateTime: "Hoy, 16:30 hs",
+  address: "Av. Palermo 1842, Buenos Aires",
+  status: "Confirmada",
+};
