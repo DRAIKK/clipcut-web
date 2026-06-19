@@ -1,4 +1,4 @@
-type TabId = "home" | "search" | "bookings" | "profile";
+export type TabId = "home" | "search" | "bookings" | "profile";
 
 type BottomTabsProps = {
   activeTab: TabId;
