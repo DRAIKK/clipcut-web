@@ -21,7 +21,7 @@ import type { Barber, Service, TimeSlot } from "./types/booking";
 
 export default function Home() {
   const [selectedBarber, setSelectedBarber] = useState<Barber>();
-  const [selectedService, setSelectedService] = useState<Service>(mockServices[0]);
+  const [selectedService, setSelectedService] = useState<Service>();
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot>();
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
@@ -60,7 +60,7 @@ export default function Home() {
           </p>
           <h1 className="mt-2 text-3xl font-black tracking-tight">¡Tu turno está listo!</h1>
           <p className="mt-3 text-sm leading-6 text-zinc-500">
-            Te esperamos para {selectedService.name} a las {selectedSlot?.label}. Esta es una confirmación mock para la versión web de Clipcut.
+            Te esperamos para {selectedService?.name} a las {selectedSlot?.label}. Esta es una confirmación mock para la versión web de Clipcut.
           </p>
           <div className="mt-6 rounded-3xl bg-zinc-50 p-4 text-left">
             <p className="text-sm font-black text-zinc-950">{(selectedBarber ?? mockBarber).name}</p>
@@ -105,7 +105,9 @@ export default function Home() {
         }}
         open={modalOpen}
         service={selectedService}
+        services={mockServices}
         slot={selectedSlot}
+        onSelectService={setSelectedService}
       />
     </main>
   );
