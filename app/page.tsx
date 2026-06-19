@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { AppHeader } from "./components/AppHeader";
 import { BarberHero } from "./components/BarberHero";
+import { BottomTabs } from "./components/BottomTabs";
 import { BookingModal } from "./components/BookingModal";
 import { SectionHeader } from "./components/SectionHeader";
 import { ServiceCard } from "./components/ServiceCard";
@@ -14,11 +16,15 @@ export default function Home() {
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot>();
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
+  const [activeTab, setActiveTab] = useState<"home" | "search" | "bookings" | "profile">("home");
 
   if (confirmed) {
     return (
-      <main className="min-h-dvh bg-gradient-to-b from-green-50 via-white to-zinc-100 px-4 py-8 text-zinc-950">
-        <section className="mx-auto flex min-h-[calc(100dvh-4rem)] w-full max-w-md flex-col justify-center">
+      <main className="min-h-dvh bg-gradient-to-b from-green-50 via-white to-zinc-100 px-4 py-5 text-zinc-950">
+        <div className="mx-auto w-full max-w-md pb-28">
+          <AppHeader subtitle="Reserva confirmada" />
+        </div>
+        <section className="mx-auto flex min-h-[calc(100dvh-13rem)] w-full max-w-md flex-col justify-center pb-28">
           <div className="rounded-[2.25rem] bg-white p-6 text-center shadow-2xl shadow-green-950/10 ring-1 ring-zinc-200/70">
             <div className="mx-auto grid h-24 w-24 place-items-center rounded-full bg-green-100 text-5xl">
               ✓
@@ -43,22 +49,15 @@ export default function Home() {
             </button>
           </div>
         </section>
+        <BottomTabs activeTab={activeTab} onChange={setActiveTab} />
       </main>
     );
   }
 
   return (
     <main className="min-h-dvh bg-gradient-to-b from-green-50 via-white to-zinc-100 px-4 py-5 text-zinc-950">
-      <div className="mx-auto w-full max-w-md space-y-8 pb-24">
-        <header className="flex items-center justify-between px-1 py-2">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-green-600">Clipcut</p>
-            <p className="text-sm font-semibold text-zinc-500">Reservas para clientes</p>
-          </div>
-          <div className="grid h-11 w-11 place-items-center rounded-2xl bg-zinc-950 text-lg font-black text-white">
-            C
-          </div>
-        </header>
+      <div className="mx-auto w-full max-w-md space-y-8 pb-44">
+        <AppHeader />
 
         <BarberHero barber={mockBarber} onReserve={() => setModalOpen(true)} />
 
@@ -85,7 +84,7 @@ export default function Home() {
           />
         </section>
 
-        <div className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-md bg-gradient-to-t from-white via-white to-white/0 p-4 pt-8">
+        <div className="fixed inset-x-0 bottom-[6.5rem] z-40 mx-auto max-w-md px-4">
           <button
             className="h-14 w-full rounded-2xl bg-green-600 font-black text-white shadow-2xl shadow-green-600/30 transition duration-300 hover:bg-green-700 active:scale-[0.98]"
             onClick={() => setModalOpen(true)}
@@ -95,6 +94,8 @@ export default function Home() {
           </button>
         </div>
       </div>
+
+      <BottomTabs activeTab={activeTab} onChange={setActiveTab} />
 
       <BookingModal
         onClose={() => setModalOpen(false)}
