@@ -9,7 +9,32 @@ type RegisterScreenProps = {
   onLogin: () => void;
 };
 
-type Role = "barber" | "client";
+type Role = "client";
+
+type StoreLink = {
+  className: string;
+  href: string;
+  icon: string;
+  label: string;
+};
+
+const appStoreUrl = "#app-store";
+const googlePlayUrl = "#google-play";
+
+const storeLinks: StoreLink[] = [
+  {
+    className: "bg-zinc-950 text-white shadow-lg shadow-zinc-950/20",
+    href: appStoreUrl,
+    icon: "",
+    label: "App Store",
+  },
+  {
+    className: "border border-zinc-200 bg-white text-zinc-950 shadow-sm",
+    href: googlePlayUrl,
+    icon: "▶",
+    label: "Google Play",
+  },
+];
 
 function SocialButton({ className, label }: { className: string; label: string }) {
   return (
@@ -19,8 +44,60 @@ function SocialButton({ className, label }: { className: string; label: string }
   );
 }
 
+function BarberRegistrationModal({ onClose, open }: { onClose: () => void; open: boolean }) {
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-zinc-950/45 px-4 py-8 backdrop-blur-sm" role="presentation">
+      <div
+        aria-labelledby="barber-registration-title"
+        aria-modal="true"
+        className="w-full max-w-sm rounded-[2rem] bg-white p-5 text-center shadow-2xl shadow-zinc-950/25 ring-1 ring-zinc-200/80"
+        role="dialog"
+      >
+        <div className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-green-100 text-3xl shadow-inner shadow-green-600/10">
+          ✂️
+        </div>
+        <h2 id="barber-registration-title" className="mt-5 text-2xl font-black tracking-[-0.04em] text-zinc-950">
+          Registrate como peluquero
+        </h2>
+        <p className="mt-3 text-sm font-bold leading-6 text-zinc-600">
+          Los peluqueros gestionan su perfil desde la aplicación móvil de Clipcut.
+        </p>
+        <p className="mt-2 text-sm leading-6 text-zinc-500">
+          Descargá la app para registrarte y administrar tu peluquería.
+        </p>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          {storeLinks.map((link) => (
+            <a
+              className={`flex h-14 items-center justify-center gap-2 rounded-[1.15rem] text-sm font-black transition active:scale-[0.98] ${link.className}`}
+              href={link.href}
+              key={link.label}
+            >
+              <span aria-hidden="true" className="text-lg leading-none">
+                {link.icon}
+              </span>
+              {link.label}
+            </a>
+          ))}
+        </div>
+
+        <button
+          className="mt-3 h-12 w-full rounded-[1.05rem] bg-green-100 text-sm font-black text-green-700 transition active:scale-[0.98]"
+          onClick={onClose}
+          type="button"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function RegisterScreen({ onEnter, onLogin }: RegisterScreenProps) {
   const [role, setRole] = useState<Role>("client");
+  const [barberModalOpen, setBarberModalOpen] = useState(false);
 
   return (
     <AuthLayout>
@@ -41,11 +118,19 @@ export function RegisterScreen({ onEnter, onLogin }: RegisterScreenProps) {
 
             return (
               <button
+                aria-pressed={isActive}
                 className={`h-12 rounded-[1rem] text-sm font-black transition active:scale-[0.98] ${
                   isActive ? "bg-green-600 text-white shadow-lg shadow-green-600/25" : "text-zinc-500"
                 }`}
                 key={option.id}
-                onClick={() => setRole(option.id as Role)}
+                onClick={() => {
+                  if (option.id === "barber") {
+                    setBarberModalOpen(true);
+                    return;
+                  }
+
+                  setRole("client");
+                }}
                 type="button"
               >
                 {option.label}
@@ -53,11 +138,6 @@ export function RegisterScreen({ onEnter, onLogin }: RegisterScreenProps) {
             );
           })}
         </div>
-        {role === "barber" ? (
-          <div className="mt-3 rounded-[1.15rem] border border-green-200 bg-green-50 px-4 py-3 text-sm font-bold leading-5 text-green-800">
-            Los peluqueros gestionan su perfil desde la aplicación móvil de Clipcut.
-          </div>
-        ) : null}
       </div>
 
       <button
@@ -93,6 +173,8 @@ export function RegisterScreen({ onEnter, onLogin }: RegisterScreenProps) {
           Iniciar sesión
         </button>
       </p>
+
+      <BarberRegistrationModal onClose={() => setBarberModalOpen(false)} open={barberModalOpen} />
     </AuthLayout>
   );
 }
