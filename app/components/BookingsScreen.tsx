@@ -43,7 +43,7 @@ export function BookingsScreen() {
         <LogoHeader />
         <button
           aria-label="Notificaciones"
-          className="absolute right-1 top-5 grid h-11 w-11 place-items-center rounded-full bg-white text-xl shadow-sm ring-1 ring-zinc-200 transition active:scale-95"
+          className="absolute right-4 top-9 grid h-11 w-11 place-items-center rounded-full bg-white text-xl shadow-sm ring-1 ring-zinc-200 transition active:scale-95"
           type="button"
         >
           🔔

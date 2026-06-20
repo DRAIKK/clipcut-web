@@ -15,14 +15,14 @@ export function ProfileScreen() {
         <button
           aria-expanded={menuOpen}
           aria-label="Abrir menú de perfil"
-          className="absolute right-0 top-3 grid h-11 w-11 place-items-center rounded-full bg-green-600 text-xl font-black text-white shadow-lg shadow-green-600/20"
+          className="absolute right-4 top-9 grid h-11 w-11 place-items-center rounded-full bg-green-600 text-xl font-black text-white shadow-lg shadow-green-600/20 transition active:scale-95"
           onClick={() => setMenuOpen((open) => !open)}
           type="button"
         >
           ☰
         </button>
         {menuOpen ? (
-          <div className="absolute right-0 top-16 z-10 w-48 rounded-2xl bg-white p-2 shadow-2xl shadow-zinc-950/15 ring-1 ring-zinc-200">
+          <div className="absolute right-4 top-24 z-10 w-48 rounded-2xl bg-white p-2 shadow-2xl shadow-zinc-950/15 ring-1 ring-zinc-200">
             <button className="w-full rounded-xl px-4 py-3 text-left text-sm font-black text-red-600 hover:bg-red-50" type="button">
               Cerrar sesión
             </button>
