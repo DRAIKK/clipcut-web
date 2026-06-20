@@ -71,18 +71,17 @@ export function PublicBarberProfile({
                 </button>
               </div>
             </div>
+            <div className="mt-5 flex flex-nowrap items-center gap-3 text-sm font-black">
+              <span className="whitespace-nowrap rounded-full bg-zinc-50 px-3 py-1.5 text-zinc-950 ring-1 ring-zinc-200">
+                {barber.followers} seguidores
+              </span>
+              <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-zinc-950 ring-1 ring-amber-100">
+                <span className="text-base leading-none text-amber-500">★</span>
+                <span>{barber.rating.toFixed(1)}</span>
+                <span className="text-zinc-400">(128)</span>
+              </span>
+            </div>
           </div>
-        </div>
-
-        <div className="mt-8 flex flex-nowrap items-center gap-3 text-sm font-black">
-          <span className="whitespace-nowrap rounded-full bg-zinc-50 px-3 py-1.5 text-zinc-950 ring-1 ring-zinc-200">
-            {barber.followers} seguidores
-          </span>
-          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-zinc-950 ring-1 ring-amber-100">
-            <span className="text-base leading-none text-amber-500">★</span>
-            <span>{barber.rating.toFixed(1)}</span>
-            <span className="text-zinc-400">(128)</span>
-          </span>
         </div>
 
         <p className="mt-6 text-sm font-semibold leading-6 text-zinc-500">{barber.description}</p>

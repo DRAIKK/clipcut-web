@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { AuthInput } from "./AuthInput";
 import { AuthLayout } from "./AuthLayout";
+import { ClipcutLogo } from "./ClipcutLogo";
 
 type RegisterScreenProps = {
   onEnter: () => void;
@@ -53,8 +54,8 @@ function BarberRegistrationModal({ onClose, open }: { onClose: () => void; open:
         className="w-full max-w-sm rounded-[2rem] bg-white p-5 text-center shadow-2xl shadow-zinc-950/25 ring-1 ring-zinc-200/80"
         role="dialog"
       >
-        <div className="mx-auto grid h-16 w-16 place-items-center rounded-3xl bg-green-100 text-3xl shadow-inner shadow-green-600/10">
-          ✂️
+        <div className="flex justify-center">
+          <ClipcutLogo className="h-16 w-auto object-contain" height={64} width={144} />
         </div>
         <h2 id="barber-registration-title" className="mt-5 text-2xl font-black tracking-[-0.04em] text-zinc-950">
           Registrate como peluquero
@@ -66,20 +67,20 @@ function BarberRegistrationModal({ onClose, open }: { onClose: () => void; open:
           Descargá la app para registrarte y administrar tu peluquería.
         </p>
 
-        <div className="mx-auto mt-6 grid max-w-[17rem] justify-items-center gap-3 sm:max-w-none sm:grid-cols-2">
+        <div className="mx-auto mt-6 grid max-w-[13rem] justify-items-center gap-4">
           {storeLinks.map((link) => (
             <a
               aria-label={`Descargar en ${link.label}`}
-              className="block w-48 transition active:scale-[0.98]"
+              className="block w-40 transition active:scale-[0.98]"
               href={link.href}
               key={link.label}
             >
               <Image
                 alt={`Descargar en ${link.label}`}
                 className="h-auto w-full object-contain drop-shadow-sm"
-                height={108}
+                height={96}
                 src={link.image}
-                width={360}
+                width={320}
               />
             </a>
           ))}
