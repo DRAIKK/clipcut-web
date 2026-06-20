@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState } from "react";
 import { AuthInput } from "./AuthInput";
 import { AuthLayout } from "./AuthLayout";
@@ -12,9 +13,8 @@ type RegisterScreenProps = {
 type Role = "client";
 
 type StoreLink = {
-  className: string;
   href: string;
-  icon: string;
+  image: string;
   label: string;
 };
 
@@ -23,15 +23,13 @@ const googlePlayUrl = "#google-play";
 
 const storeLinks: StoreLink[] = [
   {
-    className: "bg-zinc-950 text-white shadow-lg shadow-zinc-950/20",
     href: appStoreUrl,
-    icon: "",
+    image: "/app-store.svg",
     label: "App Store",
   },
   {
-    className: "border border-zinc-200 bg-white text-zinc-950 shadow-sm",
     href: googlePlayUrl,
-    icon: "▶",
+    image: "/google-play.svg",
     label: "Google Play",
   },
 ];
@@ -68,17 +66,21 @@ function BarberRegistrationModal({ onClose, open }: { onClose: () => void; open:
           Descargá la app para registrarte y administrar tu peluquería.
         </p>
 
-        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        <div className="mx-auto mt-6 grid max-w-[17rem] justify-items-center gap-3 sm:max-w-none sm:grid-cols-2">
           {storeLinks.map((link) => (
             <a
-              className={`flex h-14 items-center justify-center gap-2 rounded-[1.15rem] text-sm font-black transition active:scale-[0.98] ${link.className}`}
+              aria-label={`Descargar en ${link.label}`}
+              className="block w-48 transition active:scale-[0.98]"
               href={link.href}
               key={link.label}
             >
-              <span aria-hidden="true" className="text-lg leading-none">
-                {link.icon}
-              </span>
-              {link.label}
+              <Image
+                alt={`Descargar en ${link.label}`}
+                className="h-auto w-full object-contain drop-shadow-sm"
+                height={108}
+                src={link.image}
+                width={360}
+              />
             </a>
           ))}
         </div>

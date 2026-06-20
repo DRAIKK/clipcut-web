@@ -39,6 +39,10 @@ export default function Home() {
   const renderReservationFlow = () => (
     <PublicBarberProfile
       barber={selectedBarber ?? mockBarber}
+      onBackToSearch={() => {
+        setSelectedBarber(undefined);
+        setActiveTab("search");
+      }}
       onReserve={() => setModalOpen(true)}
       onSelectService={setSelectedService}
       onSelectSlot={setSelectedSlot}
