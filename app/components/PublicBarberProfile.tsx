@@ -10,6 +10,7 @@ type PublicBarberProfileProps = {
   slots: TimeSlot[];
   onSelectService: (service: Service) => void;
   onSelectSlot: (slot: TimeSlot) => void;
+  onBackToSearch: () => void;
   onReserve: () => void;
 };
 
@@ -29,6 +30,7 @@ export function PublicBarberProfile({
   selectedSlot,
   slots,
   onSelectSlot,
+  onBackToSearch,
   onReserve,
 }: PublicBarberProfileProps) {
   const availableSlots = slots.filter((slot) => slot.available);
@@ -40,7 +42,7 @@ export function PublicBarberProfile({
 
   return (
     <div className="space-y-5">
-      <LogoHeader />
+      <LogoHeader backButton={{ label: "Volver a Buscar", onClick: onBackToSearch }} />
 
       <section className="rounded-[2.25rem] bg-white p-5 shadow-sm ring-1 ring-zinc-200">
         <div className="flex items-start gap-4">
@@ -51,16 +53,6 @@ export function PublicBarberProfile({
                 <h1 className="truncate text-xl font-black tracking-tight text-zinc-950">
                   {barber.name}
                 </h1>
-                <div className="mt-5 flex flex-nowrap items-center gap-3 text-sm font-black">
-                  <span className="whitespace-nowrap rounded-full bg-zinc-50 px-3 py-1.5 text-zinc-950 ring-1 ring-zinc-200">
-                    {barber.followers} seguidores
-                  </span>
-                  <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-zinc-950 ring-1 ring-amber-100">
-                    <span className="text-base leading-none text-amber-500">★</span>
-                    <span>{barber.rating.toFixed(1)}</span>
-                    <span className="text-zinc-400">(128)</span>
-                  </span>
-                </div>
               </div>
               <div className="flex shrink-0 gap-2 pt-1">
                 <button
@@ -80,6 +72,17 @@ export function PublicBarberProfile({
               </div>
             </div>
           </div>
+        </div>
+
+        <div className="mt-8 flex flex-nowrap items-center gap-3 text-sm font-black">
+          <span className="whitespace-nowrap rounded-full bg-zinc-50 px-3 py-1.5 text-zinc-950 ring-1 ring-zinc-200">
+            {barber.followers} seguidores
+          </span>
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-zinc-950 ring-1 ring-amber-100">
+            <span className="text-base leading-none text-amber-500">★</span>
+            <span>{barber.rating.toFixed(1)}</span>
+            <span className="text-zinc-400">(128)</span>
+          </span>
         </div>
 
         <p className="mt-6 text-sm font-semibold leading-6 text-zinc-500">{barber.description}</p>

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="108" viewBox="0 0 360 108" role="img" aria-labelledby="title desc">
+<title id="title">Download on the App Store</title><desc id="desc">App Store download badge mock asset</desc>
+<rect width="360" height="108" rx="18" fill="#050505"/>
+<rect x="1.5" y="1.5" width="357" height="105" rx="16.5" fill="none" stroke="#A6A6A6" stroke-width="3"/>
+<path fill="#fff" d="M86.6 55.7c-.1-9 7.3-13.4 7.6-13.6-4.2-6.2-10.8-7-13.1-7.1-5.6-.6-10.9 3.3-13.7 3.3-2.8 0-7.2-3.2-11.9-3.1-6.1.1-11.8 3.6-15 9.1-6.4 11.1-1.6 27.6 4.6 36.6 3.1 4.4 6.7 9.4 11.5 9.2 4.6-.2 6.4-3 12-3s7.2 3 11.9 2.9c4.9-.1 8-4.5 11-8.9 3.5-5.1 4.9-10.1 5-10.3-.1-.1-9.8-3.8-9.9-15.1ZM77.5 29.1c2.5-3 4.2-7.2 3.7-11.4-3.6.1-7.9 2.4-10.4 5.4-2.3 2.6-4.3 6.9-3.8 11 4 .3 8-2 10.5-5Z"/>
+<text x="116" y="42" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="500">Download on the</text>
+<text x="116" y="78" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="34" font-weight="700">App Store</text>
+</svg>
