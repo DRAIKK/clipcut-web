@@ -10,7 +10,6 @@ import { ProfileScreen } from "./components/ProfileScreen";
 import { PublicBarberProfile } from "./components/PublicBarberProfile";
 import { SearchScreen } from "./components/SearchScreen";
 import {
-  mockActiveBooking,
   mockBarber,
   mockServices,
   mockTimeSlots,
@@ -77,11 +76,11 @@ export default function Home() {
       </section>
     );
   } else if (activeTab === "home") {
-    content = <HomeScreen barbers={nearbyBarbers} onSearch={() => setActiveTab("search")} onSelectBarber={openBarberProfile} />;
+    content = <HomeScreen barbers={nearbyBarbers} onSelectBarber={openBarberProfile} />;
   } else if (activeTab === "search") {
     content = selectedBarber ? renderReservationFlow() : <SearchScreen barbers={searchBarbers} onSelectBarber={openBarberProfile} />;
   } else if (activeTab === "bookings") {
-    content = <BookingsScreen booking={mockActiveBooking} />;
+    content = <BookingsScreen />;
   } else {
     content = <ProfileScreen />;
   }
