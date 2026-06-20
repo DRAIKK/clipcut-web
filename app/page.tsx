@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { BookingModal } from "./components/BookingModal";
+import { LoginScreen } from "./components/LoginScreen";
+import { RegisterScreen } from "./components/RegisterScreen";
 import { BookingsScreen } from "./components/BookingsScreen";
 import { BottomTabs, type TabId } from "./components/BottomTabs";
 import { HomeScreen } from "./components/HomeScreen";
@@ -18,6 +20,8 @@ import {
 } from "./data/mockBooking";
 import type { Barber, Service, TimeSlot } from "./types/booking";
 
+type AuthView = "login" | "register" | "app";
+
 export default function Home() {
   const [selectedBarber, setSelectedBarber] = useState<Barber>();
   const [selectedService, setSelectedService] = useState<Service>();
@@ -25,6 +29,7 @@ export default function Home() {
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("home");
+  const [authView, setAuthView] = useState<AuthView>("login");
 
   const openBarberProfile = (barber: Barber) => {
     setSelectedBarber(barber);
@@ -83,6 +88,25 @@ export default function Home() {
     content = <BookingsScreen />;
   } else {
     content = <ProfileScreen />;
+  }
+
+
+  if (authView === "login") {
+    return (
+      <LoginScreen
+        onCreateAccount={() => setAuthView("register")}
+        onEnter={() => setAuthView("app")}
+      />
+    );
+  }
+
+  if (authView === "register") {
+    return (
+      <RegisterScreen
+        onEnter={() => setAuthView("app")}
+        onLogin={() => setAuthView("login")}
+      />
+    );
   }
 
   return (
