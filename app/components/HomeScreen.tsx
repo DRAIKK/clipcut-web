@@ -5,9 +5,10 @@ import { LogoHeader } from "./LogoHeader";
 type HomeScreenProps = {
   barbers: Barber[];
   onSelectBarber: (barber: Barber) => void;
+  loading?: boolean;
 };
 
-export function HomeScreen({ barbers, onSelectBarber }: HomeScreenProps) {
+export function HomeScreen({ barbers, loading = false, onSelectBarber }: HomeScreenProps) {
   return (
     <div className="space-y-8">
       <LogoHeader />
@@ -17,6 +18,11 @@ export function HomeScreen({ barbers, onSelectBarber }: HomeScreenProps) {
           Peluqueros cerca
         </h2>
         <div className="scrollbar-hide -mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
+          {loading ? (
+            <div className="min-w-36 rounded-[1.75rem] bg-white p-4 text-sm font-black text-zinc-400 shadow-sm ring-1 ring-zinc-200">
+              Cargando...
+            </div>
+          ) : null}
           {barbers.map((barber) => (
             <BarberMiniCard barber={barber} key={barber.id} onSelect={onSelectBarber} />
           ))}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BookingModal } from "./components/BookingModal";
 import { LoginScreen } from "./components/LoginScreen";
 import { RegisterScreen } from "./components/RegisterScreen";
@@ -18,6 +18,7 @@ import {
   nearbyBarbers,
   searchBarbers,
 } from "./data/mockBooking";
+import { getBarberById, getBarbers, getBarberSlots } from "../lib/firestore-read";
 import type { Barber, Service, TimeSlot } from "./types/booking";
 
 type AuthView = "login" | "register" | "app";
@@ -30,11 +31,76 @@ export default function Home() {
   const [confirmed, setConfirmed] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("home");
   const [authView, setAuthView] = useState<AuthView>("login");
+  const [firebaseBarbers, setFirebaseBarbers] = useState<Barber[]>([]);
+  const [barbersLoading, setBarbersLoading] = useState(false);
+  const [profileSlots, setProfileSlots] = useState<TimeSlot[]>(mockTimeSlots);
+  const [profileLoading, setProfileLoading] = useState(false);
+
+  const selectedBarberId = selectedBarber?.id;
+  const visibleBarbers = firebaseBarbers.length ? firebaseBarbers : nearbyBarbers;
+  const visibleSearchBarbers = firebaseBarbers.length ? firebaseBarbers : searchBarbers;
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadBarbers() {
+      setBarbersLoading(true);
+      try {
+        const barbers = await getBarbers();
+        if (!ignore && barbers.length) setFirebaseBarbers(barbers);
+      } catch (error) {
+        console.warn("No se pudieron cargar peluqueros desde Firebase. Usando mocks.", error);
+      } finally {
+        if (!ignore) setBarbersLoading(false);
+      }
+    }
+
+    loadBarbers();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const openBarberProfile = (barber: Barber) => {
     setSelectedBarber(barber);
+    setSelectedSlot(undefined);
+    setProfileSlots(mockTimeSlots);
     setActiveTab("search");
   };
+
+  useEffect(() => {
+    if (!selectedBarberId) return;
+
+    let ignore = false;
+
+    async function loadProfile() {
+      setProfileLoading(true);
+      try {
+        const [freshBarber, slots] = await Promise.all([
+          getBarberById(selectedBarberId),
+          getBarberSlots(selectedBarberId),
+        ]);
+
+        if (ignore) return;
+        setSelectedBarber((currentBarber) =>
+          freshBarber.id === mockBarber.id ? currentBarber : freshBarber
+        );
+        setProfileSlots(slots.length ? slots : mockTimeSlots);
+      } catch (error) {
+        console.warn("No se pudo cargar el perfil desde Firebase. Usando mocks.", error);
+        if (!ignore) setProfileSlots(mockTimeSlots);
+      } finally {
+        if (!ignore) setProfileLoading(false);
+      }
+    }
+
+    loadProfile();
+
+    return () => {
+      ignore = true;
+    };
+  }, [selectedBarberId]);
 
   const renderReservationFlow = () => (
     <PublicBarberProfile
@@ -49,7 +115,8 @@ export default function Home() {
       selectedService={selectedService}
       selectedSlot={selectedSlot}
       services={mockServices}
-      slots={mockTimeSlots}
+      loading={profileLoading}
+      slots={profileSlots}
     />
   );
 
@@ -85,9 +152,9 @@ export default function Home() {
       </section>
     );
   } else if (activeTab === "home") {
-    content = <HomeScreen barbers={nearbyBarbers} onSelectBarber={openBarberProfile} />;
+    content = <HomeScreen barbers={visibleBarbers} loading={barbersLoading} onSelectBarber={openBarberProfile} />;
   } else if (activeTab === "search") {
-    content = selectedBarber ? renderReservationFlow() : <SearchScreen barbers={searchBarbers} onSelectBarber={openBarberProfile} />;
+    content = selectedBarber ? renderReservationFlow() : <SearchScreen barbers={visibleSearchBarbers} loading={barbersLoading} onSelectBarber={openBarberProfile} />;
   } else if (activeTab === "bookings") {
     content = <BookingsScreen />;
   } else {
