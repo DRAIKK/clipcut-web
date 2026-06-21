@@ -13,7 +13,16 @@ const gradients = [
 ];
 
 function hasValue(value: unknown) {
+  if (typeof value === "string") return value.trim() !== "";
   return value !== undefined && value !== null && value !== "";
+}
+
+function isTrue(value: unknown) {
+  return value === true || (typeof value === "string" && value.trim().toLowerCase() === "true");
+}
+
+function isFalse(value: unknown) {
+  return value === false || (typeof value === "string" && value.trim().toLowerCase() === "false");
 }
 
 function getString(data: FirestoreRecord, keys: string[], fallback: string) {
@@ -55,50 +64,75 @@ function isBarber(data: FirestoreRecord) {
 }
 
 function adaptBarber(id: string, data: FirestoreRecord, index = 0): Barber {
-  const name = getString(data, ["fullName", "name", "displayName", "barberName"], "Peluquero Clipcut");
+  const name = getString(
+    data,
+    ["fullName", "name", "displayName", "username", "barberName"],
+    "Peluquero Clipcut"
+  );
 
   return {
     id,
     name,
     description: getString(
       data,
-      ["description", "bio", "about", "summary"],
+      ["description", "bio", "about", "barberDescription", "summary"],
       "Peluquero profesional disponible en Clipcut."
     ),
     followers: getString(data, ["followers", "followersCount", "followerCount"], "0"),
     address: getString(
       data,
-      ["address", "locationText", "formattedAddress", "location", "street", "shopAddress"],
+      [
+        "address",
+        "locationText",
+        "formattedAddress",
+        "businessAddress",
+        "addressText",
+        "location",
+        "street",
+        "shopAddress",
+      ],
       "Dirección no disponible"
     ),
-    rating: getNumber(data, ["ratingAvg", "rating", "score", "averageRating"], 5),
+    rating: getNumber(data, ["ratingAvg", "ratingAverage", "rating", "score", "averageRating"], 5),
     ratingCount: getNumber(data, ["ratingCount", "reviewsCount", "reviewCount"], 0),
     imageGradient: gradients[index % gradients.length],
     distance: getString(data, ["distance", "distanceLabel"], "Cerca tuyo"),
     initials: getInitials(name),
     photoUrl: getString(
       data,
-      ["photoURL", "avatarUrl", "profilePhoto", "imageUrl", "photoUrl", "avatar", "image"],
+      ["photoURL", "avatarUrl", "profilePhoto", "profileImage", "imageUrl", "photo", "photoUrl", "avatar", "image"],
       ""
     ),
   };
 }
 
+function getSlotLabel(day: string, startTime: string, endTime: string) {
+  const timeLabel = startTime && endTime && startTime !== endTime ? `${startTime} - ${endTime}` : startTime || endTime;
+
+  if (day && timeLabel) return `${day} · ${timeLabel}`;
+  return day || timeLabel;
+}
+
 function adaptSlot(id: string, data: FirestoreRecord): TimeSlot | null {
-  const status = getString(data, ["status"], "").toLowerCase();
-  const isAvailable = data.available === true && !hasValue(data.bookedBy) && status !== "booked";
+  const status = getString(data, ["status"], "").trim().toLowerCase();
+  const isAvailable =
+    !hasValue(data.bookedBy) && status !== "booked" && !isTrue(data.booked) && !isFalse(data.available);
 
   if (!isAvailable) return null;
 
-  const label = getString(data, ["startTime", "time", "label"], "");
+  const day = getString(data, ["day", "dayLabel", "weekday", "dayName"], "");
+  const startTime = getString(data, ["startTime", "start", "time", "label"], "");
+  const endTime = getString(data, ["endTime", "end"], "");
+  const label = getSlotLabel(day, startTime, endTime);
+
   if (!label) return null;
 
   return {
     id,
     label,
     available: true,
-    day: getString(data, ["day", "dayLabel", "weekday"], ""),
-    endTime: getString(data, ["endTime"], ""),
+    day,
+    endTime,
   };
 }
 
@@ -119,13 +153,19 @@ export async function getBarberById(barberId: string): Promise<Barber> {
   const snapshot = await getDoc(doc(db, "users", barberId));
   if (!snapshot.exists()) return mockBarber;
 
-  return adaptBarber(snapshot.id, snapshot.data());
+  const data = snapshot.data();
+  console.log("barber real data", data);
+
+  return adaptBarber(snapshot.id, data);
 }
 
 export async function getBarberSlots(barberId: string): Promise<TimeSlot[]> {
   if (!db) return [];
 
   const snapshot = await getDocs(query(collection(db, "users", barberId, "slots")));
+  const slots = snapshot.docs.map((slotDoc) => ({ id: slotDoc.id, ...slotDoc.data() }));
+  console.log("slots real data", slots);
+
   return snapshot.docs
     .map((slotDoc) => adaptSlot(slotDoc.id, slotDoc.data()))
     .filter((slot): slot is TimeSlot => Boolean(slot));
