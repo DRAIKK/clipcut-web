@@ -117,6 +117,11 @@ export function PublicBarberProfile({
               Cargando perfil y horarios...
             </div>
           ) : null}
+          {!loading && availableSlots.length === 0 ? (
+            <div className="rounded-[1.35rem] bg-white p-4 text-sm font-black text-zinc-400 ring-1 ring-zinc-200">
+              Este peluquero aún no configuró sus horarios.
+            </div>
+          ) : null}
           {availableSlots.map((slot, index) => (
             <div
               className={`flex w-full items-center gap-3 rounded-[1.35rem] p-3 text-left ring-1 transition ${

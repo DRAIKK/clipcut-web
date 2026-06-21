@@ -36,6 +36,11 @@ export function SearchScreen({ barbers, loading = false, onSelectBarber }: Searc
             Cargando peluqueros...
           </div>
         ) : null}
+        {!loading && barbers.length === 0 ? (
+          <div className="rounded-[1.75rem] bg-white p-4 text-sm font-black text-zinc-400 shadow-sm ring-1 ring-zinc-200">
+            No hay peluqueros disponibles.
+          </div>
+        ) : null}
         {barbers.map((barber) => (
           <button
             className="flex w-full items-center gap-4 rounded-[1.75rem] bg-white p-4 text-left shadow-sm ring-1 ring-zinc-200 transition active:scale-[0.99]"
