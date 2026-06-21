@@ -23,6 +23,11 @@ export function HomeScreen({ barbers, loading = false, onSelectBarber }: HomeScr
               Cargando...
             </div>
           ) : null}
+          {!loading && barbers.length === 0 ? (
+            <div className="min-w-36 rounded-[1.75rem] bg-white p-4 text-sm font-black text-zinc-400 shadow-sm ring-1 ring-zinc-200">
+              No hay peluqueros disponibles.
+            </div>
+          ) : null}
           {barbers.map((barber) => (
             <BarberMiniCard barber={barber} key={barber.id} onSelect={onSelectBarber} />
           ))}
@@ -59,8 +64,11 @@ export function HomeScreen({ barbers, loading = false, onSelectBarber }: HomeScr
           </div>
 
           <button
-            className="mt-5 h-14 w-full rounded-2xl bg-[#16A34A] font-black text-white shadow-xl shadow-green-600/25 transition active:scale-[0.98]"
-            onClick={() => onSelectBarber(barbers[0])}
+            className="mt-5 h-14 w-full rounded-2xl bg-[#16A34A] font-black text-white shadow-xl shadow-green-600/25 transition active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:shadow-none"
+            disabled={!barbers[0]}
+            onClick={() => {
+              if (barbers[0]) onSelectBarber(barbers[0]);
+            }}
             type="button"
           >
             Ver perfil

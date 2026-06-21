@@ -33,12 +33,13 @@ export default function Home() {
   const [authView, setAuthView] = useState<AuthView>("login");
   const [firebaseBarbers, setFirebaseBarbers] = useState<Barber[]>([]);
   const [barbersLoading, setBarbersLoading] = useState(false);
-  const [profileSlots, setProfileSlots] = useState<TimeSlot[]>(mockTimeSlots);
+  const [profileSlots, setProfileSlots] = useState<TimeSlot[]>([]);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [firebaseFailed, setFirebaseFailed] = useState(false);
 
   const selectedBarberId = selectedBarber?.id;
-  const visibleBarbers = firebaseBarbers.length ? firebaseBarbers : nearbyBarbers;
-  const visibleSearchBarbers = firebaseBarbers.length ? firebaseBarbers : searchBarbers;
+  const visibleBarbers = firebaseFailed ? nearbyBarbers : firebaseBarbers;
+  const visibleSearchBarbers = firebaseFailed ? searchBarbers : firebaseBarbers;
 
   useEffect(() => {
     let ignore = false;
@@ -47,9 +48,13 @@ export default function Home() {
       setBarbersLoading(true);
       try {
         const barbers = await getBarbers();
-        if (!ignore && barbers.length) setFirebaseBarbers(barbers);
+        if (!ignore) {
+          setFirebaseBarbers(barbers);
+          setFirebaseFailed(false);
+        }
       } catch (error) {
         console.warn("No se pudieron cargar peluqueros desde Firebase. Usando mocks.", error);
+        if (!ignore) setFirebaseFailed(true);
       } finally {
         if (!ignore) setBarbersLoading(false);
       }
@@ -65,7 +70,7 @@ export default function Home() {
   const openBarberProfile = (barber: Barber) => {
     setSelectedBarber(barber);
     setSelectedSlot(undefined);
-    setProfileSlots(mockTimeSlots);
+    setProfileSlots(firebaseFailed ? mockTimeSlots : []);
     setActiveTab("search");
   };
 
@@ -83,10 +88,8 @@ export default function Home() {
         ]);
 
         if (ignore) return;
-        setSelectedBarber((currentBarber) =>
-          freshBarber.id === mockBarber.id ? currentBarber : freshBarber
-        );
-        setProfileSlots(slots.length ? slots : mockTimeSlots);
+        setSelectedBarber(freshBarber);
+        setProfileSlots(slots);
       } catch (error) {
         console.warn("No se pudo cargar el perfil desde Firebase. Usando mocks.", error);
         if (!ignore) setProfileSlots(mockTimeSlots);
@@ -100,7 +103,7 @@ export default function Home() {
     return () => {
       ignore = true;
     };
-  }, [selectedBarberId]);
+  }, [firebaseFailed, selectedBarberId]);
 
   const renderReservationFlow = () => (
     <PublicBarberProfile

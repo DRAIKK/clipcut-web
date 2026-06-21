@@ -1,5 +1,4 @@
 import { collection, doc, getDoc, getDocs, query } from "firebase/firestore";
-import { mockBarber } from "../app/data/mockBooking";
 import type { Barber, TimeSlot } from "../app/types/booking";
 import { db } from "./firebase";
 
@@ -76,7 +75,7 @@ function adaptBarber(id: string, data: FirestoreRecord, index = 0): Barber {
     description: getString(
       data,
       ["description", "bio", "about", "barberDescription", "summary"],
-      "Peluquero profesional disponible en Clipcut."
+      "Este peluquero todavía no agregó una descripción."
     ),
     followers: getString(data, ["followers", "followersCount", "followerCount"], "0"),
     address: getString(
@@ -91,7 +90,7 @@ function adaptBarber(id: string, data: FirestoreRecord, index = 0): Barber {
         "street",
         "shopAddress",
       ],
-      "Dirección no disponible"
+      "Ubicación no configurada."
     ),
     rating: getNumber(data, ["ratingAvg", "ratingAverage", "rating", "score", "averageRating"], 5),
     ratingCount: getNumber(data, ["ratingCount", "reviewsCount", "reviewCount"], 0),
@@ -137,7 +136,7 @@ function adaptSlot(id: string, data: FirestoreRecord): TimeSlot | null {
 }
 
 export async function getBarbers(): Promise<Barber[]> {
-  if (!db) return [];
+  if (!db) throw new Error("Firebase no está configurado.");
 
   const snapshot = await getDocs(query(collection(db, "users")));
 
@@ -148,10 +147,10 @@ export async function getBarbers(): Promise<Barber[]> {
 }
 
 export async function getBarberById(barberId: string): Promise<Barber> {
-  if (!db) return mockBarber;
+  if (!db) throw new Error("Firebase no está configurado.");
 
   const snapshot = await getDoc(doc(db, "users", barberId));
-  if (!snapshot.exists()) return mockBarber;
+  if (!snapshot.exists()) throw new Error("No se encontró el peluquero en Firestore.");
 
   const data = snapshot.data();
   console.log("barber real data", data);
@@ -160,7 +159,7 @@ export async function getBarberById(barberId: string): Promise<Barber> {
 }
 
 export async function getBarberSlots(barberId: string): Promise<TimeSlot[]> {
-  if (!db) return [];
+  if (!db) throw new Error("Firebase no está configurado.");
 
   const snapshot = await getDocs(query(collection(db, "users", barberId, "slots")));
   const slots = snapshot.docs.map((slotDoc) => ({ id: slotDoc.id, ...slotDoc.data() }));
