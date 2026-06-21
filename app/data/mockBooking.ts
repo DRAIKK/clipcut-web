@@ -8,6 +8,7 @@ export const mockBarber: Barber = {
   followers: "12.8k",
   address: "Av. Palermo 1842, Buenos Aires",
   rating: 4.9,
+  ratingCount: 128,
   imageGradient: "from-emerald-400 via-green-600 to-zinc-950",
   distance: "1.2 km",
   initials: "MA",

@@ -5,6 +5,7 @@ export type Barber = {
   followers: string;
   address: string;
   rating: number;
+  ratingCount?: number;
   imageGradient: string;
   distance: string;
   initials: string;
