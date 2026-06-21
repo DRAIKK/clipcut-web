@@ -12,12 +12,17 @@ type PublicBarberProfileProps = {
   onSelectSlot: (slot: TimeSlot) => void;
   onBackToSearch: () => void;
   onReserve: () => void;
+  loading?: boolean;
 };
 
 const scheduleDays = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 function formatSlotRange(slot: TimeSlot) {
+  if (slot.endTime) return `${slot.label}–${slot.endTime}`;
+
   const [hour, minute] = slot.label.split(":").map(Number);
+  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return slot.label;
+
   const start = new Date(2026, 0, 1, hour, minute);
   const end = new Date(start.getTime() + 30 * 60 * 1000);
   const endLabel = `${String(end.getHours()).padStart(2, "0")}:${String(end.getMinutes()).padStart(2, "0")}`;
@@ -32,6 +37,7 @@ export function PublicBarberProfile({
   onSelectSlot,
   onBackToSearch,
   onReserve,
+  loading = false,
 }: PublicBarberProfileProps) {
   const availableSlots = slots.filter((slot) => slot.available);
 
@@ -105,6 +111,11 @@ export function PublicBarberProfile({
 
         <div className="mt-6 space-y-3">
           <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-400">Horarios disponibles</p>
+          {loading ? (
+            <div className="rounded-[1.35rem] bg-white p-4 text-sm font-black text-zinc-400 ring-1 ring-zinc-200">
+              Cargando horarios...
+            </div>
+          ) : null}
           {availableSlots.map((slot, index) => (
             <div
               className={`flex w-full items-center gap-3 rounded-[1.35rem] p-3 text-left ring-1 transition ${
@@ -115,7 +126,7 @@ export function PublicBarberProfile({
               key={slot.id}
             >
               <div className="grid h-11 w-11 place-items-center rounded-2xl bg-zinc-50 text-sm font-black text-zinc-950 ring-1 ring-zinc-200">
-                {scheduleDays[index % scheduleDays.length]}
+                {slot.day || scheduleDays[index % scheduleDays.length]}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-base font-black text-zinc-950">{formatSlotRange(slot)}</p>

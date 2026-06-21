@@ -8,6 +8,7 @@ export type Barber = {
   imageGradient: string;
   distance: string;
   initials: string;
+  photoUrl?: string;
 };
 
 export type Service = {
@@ -22,6 +23,8 @@ export type TimeSlot = {
   id: string;
   label: string;
   available: boolean;
+  day?: string;
+  endTime?: string;
 };
 
 export type Booking = {

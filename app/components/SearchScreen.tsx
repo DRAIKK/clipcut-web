@@ -5,9 +5,10 @@ import { LogoHeader } from "./LogoHeader";
 type SearchScreenProps = {
   barbers: Barber[];
   onSelectBarber: (barber: Barber) => void;
+  loading?: boolean;
 };
 
-export function SearchScreen({ barbers, onSelectBarber }: SearchScreenProps) {
+export function SearchScreen({ barbers, loading = false, onSelectBarber }: SearchScreenProps) {
   return (
     <div className="space-y-6">
       <LogoHeader />
@@ -30,6 +31,11 @@ export function SearchScreen({ barbers, onSelectBarber }: SearchScreenProps) {
         ))}
       </div>
       <section className="space-y-3">
+        {loading ? (
+          <div className="rounded-[1.75rem] bg-white p-4 text-sm font-black text-zinc-400 shadow-sm ring-1 ring-zinc-200">
+            Cargando peluqueros...
+          </div>
+        ) : null}
         {barbers.map((barber) => (
           <button
             className="flex w-full items-center gap-4 rounded-[1.75rem] bg-white p-4 text-left shadow-sm ring-1 ring-zinc-200 transition active:scale-[0.99]"

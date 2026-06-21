@@ -1,0 +1,36 @@
+import { getApps, initializeApp, type FirebaseApp } from "firebase/app";
+import { getAuth, type Auth } from "firebase/auth";
+import { getFirestore, type Firestore } from "firebase/firestore";
+
+type FirebaseExports = {
+  app: FirebaseApp | null;
+  db: Firestore | null;
+  auth: Auth | null;
+};
+
+const firebaseConfig = {
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+};
+
+const hasFirebaseConfig = Object.values(firebaseConfig).every(Boolean);
+
+function createFirebase(): FirebaseExports {
+  if (!hasFirebaseConfig) {
+    return { app: null, db: null, auth: null };
+  }
+
+  const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+
+  return {
+    app,
+    db: getFirestore(app),
+    auth: getAuth(app),
+  };
+}
+
+export const { app, db, auth } = createFirebase();
