@@ -40,6 +40,7 @@ export function PublicBarberProfile({
   loading = false,
 }: PublicBarberProfileProps) {
   const availableSlots = slots.filter((slot) => slot.available);
+  const ratingCount = barber.ratingCount ?? 128;
 
   const handleCalendarClick = (slot: TimeSlot) => {
     onSelectSlot(slot);
@@ -84,7 +85,7 @@ export function PublicBarberProfile({
               <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-zinc-950 ring-1 ring-amber-100">
                 <span className="text-base leading-none text-amber-500">★</span>
                 <span>{barber.rating.toFixed(1)}</span>
-                <span className="text-zinc-400">(128)</span>
+                <span className="text-zinc-400">({ratingCount})</span>
               </span>
             </div>
           </div>
@@ -113,7 +114,7 @@ export function PublicBarberProfile({
           <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-400">Horarios disponibles</p>
           {loading ? (
             <div className="rounded-[1.35rem] bg-white p-4 text-sm font-black text-zinc-400 ring-1 ring-zinc-200">
-              Cargando horarios...
+              Cargando perfil y horarios...
             </div>
           ) : null}
           {availableSlots.map((slot, index) => (

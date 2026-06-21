@@ -1,5 +1,5 @@
 import { collection, doc, getDoc, getDocs, query } from "firebase/firestore";
-import { mockBarber, mockTimeSlots } from "../app/data/mockBooking";
+import { mockBarber } from "../app/data/mockBooking";
 import type { Barber, TimeSlot } from "../app/types/booking";
 import { db } from "./firebase";
 
@@ -11,6 +11,10 @@ const gradients = [
   "from-green-300 via-teal-600 to-zinc-900",
   "from-emerald-200 via-green-500 to-black",
 ];
+
+function hasValue(value: unknown) {
+  return value !== undefined && value !== null && value !== "";
+}
 
 function getString(data: FirestoreRecord, keys: string[], fallback: string) {
   for (const key of keys) {
@@ -51,7 +55,7 @@ function isBarber(data: FirestoreRecord) {
 }
 
 function adaptBarber(id: string, data: FirestoreRecord, index = 0): Barber {
-  const name = getString(data, ["name", "displayName", "fullName", "barberName"], "Peluquero Clipcut");
+  const name = getString(data, ["fullName", "name", "displayName", "barberName"], "Peluquero Clipcut");
 
   return {
     id,
@@ -62,29 +66,38 @@ function adaptBarber(id: string, data: FirestoreRecord, index = 0): Barber {
       "Peluquero profesional disponible en Clipcut."
     ),
     followers: getString(data, ["followers", "followersCount", "followerCount"], "0"),
-    address: getString(data, ["address", "location", "street", "shopAddress"], "Dirección no disponible"),
-    rating: getNumber(data, ["rating", "score", "averageRating"], 5),
+    address: getString(
+      data,
+      ["address", "locationText", "formattedAddress", "location", "street", "shopAddress"],
+      "Dirección no disponible"
+    ),
+    rating: getNumber(data, ["ratingAvg", "rating", "score", "averageRating"], 5),
+    ratingCount: getNumber(data, ["ratingCount", "reviewsCount", "reviewCount"], 0),
     imageGradient: gradients[index % gradients.length],
     distance: getString(data, ["distance", "distanceLabel"], "Cerca tuyo"),
     initials: getInitials(name),
-    photoUrl: getString(data, ["photoUrl", "photoURL", "avatar", "image", "imageUrl"], ""),
+    photoUrl: getString(
+      data,
+      ["photoURL", "avatarUrl", "profilePhoto", "imageUrl", "photoUrl", "avatar", "image"],
+      ""
+    ),
   };
 }
 
 function adaptSlot(id: string, data: FirestoreRecord): TimeSlot | null {
-  const bookedBy = data.bookedBy;
-  const available = typeof data.available === "boolean" ? data.available : !bookedBy;
+  const status = getString(data, ["status"], "").toLowerCase();
+  const isAvailable = data.available === true && !hasValue(data.bookedBy) && status !== "booked";
 
-  if (!available) return null;
+  if (!isAvailable) return null;
 
-  const label = getString(data, ["label", "time", "startTime"], "");
+  const label = getString(data, ["startTime", "time", "label"], "");
   if (!label) return null;
 
   return {
     id,
     label,
     available: true,
-    day: getString(data, ["day"], ""),
+    day: getString(data, ["day", "dayLabel", "weekday"], ""),
     endTime: getString(data, ["endTime"], ""),
   };
 }
@@ -113,9 +126,7 @@ export async function getBarberSlots(barberId: string): Promise<TimeSlot[]> {
   if (!db) return [];
 
   const snapshot = await getDocs(query(collection(db, "users", barberId, "slots")));
-  const slots = snapshot.docs
+  return snapshot.docs
     .map((slotDoc) => adaptSlot(slotDoc.id, slotDoc.data()))
     .filter((slot): slot is TimeSlot => Boolean(slot));
-
-  return slots.length ? slots : mockTimeSlots;
 }
