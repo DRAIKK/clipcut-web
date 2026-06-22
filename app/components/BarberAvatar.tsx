@@ -1,5 +1,11 @@
 import type { Barber } from "../types/booking";
 
+const defaultAvatarSrc = "/default-avatar.svg";
+
+function getAvatarSrc(photoUrl?: string) {
+  return photoUrl?.trim() || defaultAvatarSrc;
+}
+
 export function BarberAvatar({ barber, size = "md" }: { barber: Barber; size?: "sm" | "md" | "lg" }) {
   const sizes = {
     sm: "h-14 w-14 text-sm",
@@ -7,21 +13,11 @@ export function BarberAvatar({ barber, size = "md" }: { barber: Barber; size?: "
     lg: "h-28 w-28 text-3xl",
   };
 
-  if (barber.photoUrl) {
-    return (
-      <img
-        alt={barber.name}
-        className={`${sizes[size]} shrink-0 rounded-full object-cover shadow-lg shadow-green-950/15 ring-4 ring-white`}
-        src={barber.photoUrl}
-      />
-    );
-  }
-
   return (
-    <div
-      className={`grid shrink-0 place-items-center rounded-full bg-gradient-to-br ${barber.imageGradient} ${sizes[size]} font-black text-white shadow-lg shadow-green-950/15 ring-4 ring-white`}
-    >
-      {barber.initials}
-    </div>
+    <img
+      alt={barber.photoUrl?.trim() ? barber.name : "Avatar por defecto"}
+      className={`${sizes[size]} shrink-0 rounded-full bg-green-50 object-cover shadow-lg shadow-green-950/15 ring-4 ring-white`}
+      src={getAvatarSrc(barber.photoUrl)}
+    />
   );
 }
