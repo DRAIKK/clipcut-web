@@ -1,0 +1,8 @@
+<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Avatar por defecto Clipcut</title>
+  <desc id="desc">Placeholder para usuarios sin foto de perfil</desc>
+  <rect width="160" height="160" rx="80" fill="#DCFCE7"/>
+  <circle cx="80" cy="64" r="30" fill="#16A34A"/>
+  <path d="M34 140C39.5 111.5 57 96 80 96C103 96 120.5 111.5 126 140" fill="#16A34A"/>
+  <path d="M49 134C56.2 118.8 66.5 112 80 112C93.5 112 103.8 118.8 111 134" stroke="#F0FDF4" stroke-width="8" stroke-linecap="round"/>
+</svg>

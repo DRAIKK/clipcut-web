@@ -1,4 +1,5 @@
 import type { Barber } from "../types/booking";
+import { BarberAvatar } from "./BarberAvatar";
 
 type BarberHeroProps = {
   barber: Barber;
@@ -21,7 +22,9 @@ export function BarberHero({ barber, onReserve }: BarberHeroProps) {
           </span>
         </div>
         <div className="absolute bottom-5 left-5 right-5">
-          <div className="mb-4 h-24 w-24 rounded-[2rem] border-4 border-white/70 bg-white/20 shadow-xl backdrop-blur-md" />
+          <div className="mb-4">
+            <BarberAvatar barber={barber} size="lg" />
+          </div>
           <h1 className="text-4xl font-black tracking-tight">{barber.name}</h1>
           <p className="mt-2 max-w-sm text-sm leading-6 text-white/85">
             {barber.description}
