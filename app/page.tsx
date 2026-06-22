@@ -155,7 +155,17 @@ export default function Home() {
       </section>
     );
   } else if (activeTab === "home") {
-    content = <HomeScreen barbers={visibleBarbers} loading={barbersLoading} onSelectBarber={openBarberProfile} />;
+    content = (
+      <HomeScreen
+        barbers={visibleBarbers}
+        loading={barbersLoading}
+        onSearchBarbers={() => {
+          setSelectedBarber(undefined);
+          setActiveTab("search");
+        }}
+        onSelectBarber={openBarberProfile}
+      />
+    );
   } else if (activeTab === "search") {
     content = selectedBarber ? renderReservationFlow() : <SearchScreen barbers={visibleSearchBarbers} loading={barbersLoading} onSelectBarber={openBarberProfile} />;
   } else if (activeTab === "bookings") {
