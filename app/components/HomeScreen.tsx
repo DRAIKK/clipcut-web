@@ -5,10 +5,16 @@ import { LogoHeader } from "./LogoHeader";
 type HomeScreenProps = {
   barbers: Barber[];
   onSelectBarber: (barber: Barber) => void;
+  onSearchBarbers: () => void;
   loading?: boolean;
 };
 
-export function HomeScreen({ barbers, loading = false, onSelectBarber }: HomeScreenProps) {
+export function HomeScreen({
+  barbers,
+  loading = false,
+  onSearchBarbers,
+  onSelectBarber,
+}: HomeScreenProps) {
   return (
     <div className="space-y-8">
       <LogoHeader />
@@ -19,12 +25,12 @@ export function HomeScreen({ barbers, loading = false, onSelectBarber }: HomeScr
         </h2>
         <div className="scrollbar-hide -mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
           {loading ? (
-            <div className="min-w-36 rounded-[1.75rem] bg-white p-4 text-sm font-black text-zinc-400 shadow-sm ring-1 ring-zinc-200">
+            <div className="h-44 w-36 shrink-0 rounded-[1.75rem] bg-white p-4 text-sm font-black text-zinc-400 shadow-sm ring-1 ring-zinc-200">
               Cargando...
             </div>
           ) : null}
           {!loading && barbers.length === 0 ? (
-            <div className="min-w-36 rounded-[1.75rem] bg-white p-4 text-sm font-black text-zinc-400 shadow-sm ring-1 ring-zinc-200">
+            <div className="h-44 w-36 shrink-0 rounded-[1.75rem] bg-white p-4 text-sm font-black text-zinc-400 shadow-sm ring-1 ring-zinc-200">
               No hay peluqueros disponibles.
             </div>
           ) : null}
@@ -48,6 +54,13 @@ export function HomeScreen({ barbers, loading = false, onSelectBarber }: HomeScr
           <p className="mt-2 text-sm font-semibold leading-6 text-zinc-500">
             Cuando finalices una reserva, aparecerán aquí para que puedas calificarlos.
           </p>
+          <button
+            className="mt-5 h-12 rounded-full border border-green-200 bg-green-100 px-6 text-sm font-black text-green-700 transition active:scale-[0.98]"
+            onClick={onSearchBarbers}
+            type="button"
+          >
+            Buscar peluqueros
+          </button>
         </div>
       </section>
     </div>
