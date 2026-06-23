@@ -5,7 +5,7 @@ import { mockBarber } from "../data/mockBooking";
 import { BarberAvatar } from "./BarberAvatar";
 import { LogoHeader } from "./LogoHeader";
 
-export function ProfileScreen() {
+export function ProfileScreen({ onLogout }: { onLogout: () => void }) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -23,7 +23,7 @@ export function ProfileScreen() {
         </button>
         {menuOpen ? (
           <div className="absolute right-4 top-24 z-10 w-48 rounded-2xl bg-white p-2 shadow-2xl shadow-zinc-950/15 ring-1 ring-zinc-200">
-            <button className="w-full rounded-xl px-4 py-3 text-left text-sm font-black text-red-600 hover:bg-red-50" type="button">
+            <button className="w-full rounded-xl px-4 py-3 text-left text-sm font-black text-red-600 hover:bg-red-50" onClick={onLogout} type="button">
               Cerrar sesión
             </button>
             <button className="w-full rounded-xl px-4 py-3 text-left text-sm font-black text-red-600 hover:bg-red-50" type="button">
