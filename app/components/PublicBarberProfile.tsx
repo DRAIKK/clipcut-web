@@ -1,14 +1,11 @@
-import type { Barber, Service, TimeSlot } from "../types/booking";
+import type { Barber, TimeSlot } from "../types/booking";
 import { BarberAvatar } from "./BarberAvatar";
 import { LogoHeader } from "./LogoHeader";
 
 type PublicBarberProfileProps = {
   barber: Barber;
-  services: Service[];
-  selectedService?: Service;
   selectedSlot?: TimeSlot;
   slots: TimeSlot[];
-  onSelectService: (service: Service) => void;
   onSelectSlot: (slot: TimeSlot) => void;
   onBackToSearch: () => void;
   onReserve: () => void;

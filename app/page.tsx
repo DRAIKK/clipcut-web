@@ -21,7 +21,7 @@ import {
 } from "./data/mockBooking";
 import { getAuthErrorMessage, getOrCreateClientProfile, loginClient, logoutClient, registerClient } from "../lib/client-auth";
 import { auth } from "../lib/firebase";
-import { getBarberById, getBarbers, getBarberSlots } from "../lib/firestore-read";
+import { getBarberById, getBarberServices, getBarbers, getBarberSlots } from "../lib/firestore-read";
 import { BarberAppModal } from "./components/BarberAppModal";
 import type { Barber, Service, TimeSlot } from "./types/booking";
 
@@ -41,7 +41,9 @@ export default function Home() {
   const [firebaseBarbers, setFirebaseBarbers] = useState<Barber[]>([]);
   const [barbersLoading, setBarbersLoading] = useState(false);
   const [profileSlots, setProfileSlots] = useState<TimeSlot[]>([]);
+  const [profileServices, setProfileServices] = useState<Service[]>([]);
   const [profileLoading, setProfileLoading] = useState(false);
+  const [servicesLoading, setServicesLoading] = useState(false);
   const [firebaseFailed, setFirebaseFailed] = useState(false);
 
   const selectedBarberId = selectedBarber?.id;
@@ -162,7 +164,9 @@ export default function Home() {
   const openBarberProfile = (barber: Barber) => {
     setSelectedBarber(barber);
     setSelectedSlot(undefined);
+    setSelectedService(undefined);
     setProfileSlots(firebaseFailed ? mockTimeSlots : []);
+    setProfileServices(firebaseFailed ? mockServices : []);
     setActiveTab("search");
   };
 
@@ -173,20 +177,32 @@ export default function Home() {
 
     async function loadProfile() {
       setProfileLoading(true);
+      setServicesLoading(true);
       try {
-        const [freshBarber, slots] = await Promise.all([
+        const [freshBarber, slots, services] = await Promise.all([
           getBarberById(selectedBarberId),
           getBarberSlots(selectedBarberId),
+          getBarberServices(selectedBarberId),
         ]);
 
         if (ignore) return;
         setSelectedBarber(freshBarber);
         setProfileSlots(slots);
+        setProfileServices(services);
+        setSelectedService((currentService) =>
+          currentService && services.some((service) => service.id === currentService.id) ? currentService : undefined
+        );
       } catch (error) {
         console.warn("No se pudo cargar el perfil desde Firebase. Usando mocks.", error);
-        if (!ignore) setProfileSlots(mockTimeSlots);
+        if (!ignore) {
+          setProfileSlots(mockTimeSlots);
+          setProfileServices(mockServices);
+        }
       } finally {
-        if (!ignore) setProfileLoading(false);
+        if (!ignore) {
+          setProfileLoading(false);
+          setServicesLoading(false);
+        }
       }
     }
 
@@ -205,11 +221,8 @@ export default function Home() {
         setActiveTab("search");
       }}
       onReserve={() => setModalOpen(true)}
-      onSelectService={setSelectedService}
       onSelectSlot={setSelectedSlot}
-      selectedService={selectedService}
       selectedSlot={selectedSlot}
-      services={mockServices}
       loading={profileLoading}
       slots={profileSlots}
     />
@@ -313,7 +326,11 @@ export default function Home() {
         activeTab={activeTab}
         onChange={(tab) => {
           setConfirmed(false);
-          if (tab === "search") setSelectedBarber(undefined);
+          if (tab === "search") {
+            setSelectedBarber(undefined);
+            setSelectedService(undefined);
+            setSelectedSlot(undefined);
+          }
           setActiveTab(tab);
         }}
       />
@@ -325,7 +342,9 @@ export default function Home() {
         }}
         open={modalOpen}
         service={selectedService}
-        services={mockServices}
+        services={profileServices}
+        servicesLoading={servicesLoading}
+        emptyServicesMessage="Este peluquero todavía no agregó servicios."
         slot={selectedSlot}
         onSelectService={setSelectedService}
       />

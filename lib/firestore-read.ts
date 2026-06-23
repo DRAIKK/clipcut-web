@@ -1,5 +1,5 @@
 import { collection, doc, getDoc, getDocs, query } from "firebase/firestore";
-import type { Barber, TimeSlot } from "../app/types/booking";
+import type { Barber, Service, TimeSlot } from "../app/types/booking";
 import { db } from "./firebase";
 
 type FirestoreRecord = Record<string, unknown>;
@@ -105,6 +105,31 @@ function adaptBarber(id: string, data: FirestoreRecord, index = 0): Barber {
   };
 }
 
+function formatPrice(value: unknown) {
+  if (typeof value === "number" && Number.isFinite(value)) return `$${value.toLocaleString("es-AR")}`;
+  if (typeof value === "string" && value.trim()) {
+    const trimmed = value.trim();
+    return trimmed.startsWith("$") ? trimmed : `$${trimmed}`;
+  }
+
+  return "Precio a consultar";
+}
+
+function adaptService(id: string, data: FirestoreRecord): Service | null {
+  const name = getString(data, ["name", "title", "serviceName", "nombre"], "");
+  if (!name) return null;
+
+  const duration = getString(data, ["duration", "minutes", "serviceDuration"], "");
+
+  return {
+    id,
+    name,
+    duration,
+    price: formatPrice(data.price ?? data.amount ?? data.servicePrice ?? data.precio),
+    description: "",
+  };
+}
+
 function getSlotLabel(day: string, startTime: string, endTime: string) {
   const timeLabel = startTime && endTime && startTime !== endTime ? `${startTime} - ${endTime}` : startTime || endTime;
 
@@ -168,4 +193,22 @@ export async function getBarberSlots(barberId: string): Promise<TimeSlot[]> {
   return snapshot.docs
     .map((slotDoc) => adaptSlot(slotDoc.id, slotDoc.data()))
     .filter((slot): slot is TimeSlot => Boolean(slot));
+}
+
+
+export async function getBarberServices(barberId: string): Promise<Service[]> {
+  if (!db) throw new Error("Firebase no está configurado.");
+
+  const servicesSnapshot = await getDocs(query(collection(db, "users", barberId, "services")));
+  const services = servicesSnapshot.docs
+    .map((serviceDoc) => adaptService(serviceDoc.id, serviceDoc.data()))
+    .filter((service): service is Service => Boolean(service));
+
+  if (services.length > 0) return services;
+
+  const serviciosSnapshot = await getDocs(query(collection(db, "users", barberId, "servicios")));
+
+  return serviciosSnapshot.docs
+    .map((serviceDoc) => adaptService(serviceDoc.id, serviceDoc.data()))
+    .filter((service): service is Service => Boolean(service));
 }
