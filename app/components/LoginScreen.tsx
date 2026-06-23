@@ -1,9 +1,14 @@
+"use client";
+
+import { useState } from "react";
 import { AuthInput } from "./AuthInput";
 import { AuthLayout } from "./AuthLayout";
 
 type LoginScreenProps = {
+  error?: string;
+  loading?: boolean;
   onCreateAccount: () => void;
-  onEnter: () => void;
+  onEnter: (email: string, password: string) => void;
 };
 
 function SocialButton({ className, label }: { className: string; label: string }) {
@@ -14,20 +19,30 @@ function SocialButton({ className, label }: { className: string; label: string }
   );
 }
 
-export function LoginScreen({ onCreateAccount, onEnter }: LoginScreenProps) {
+export function LoginScreen({ error, loading = false, onCreateAccount, onEnter }: LoginScreenProps) {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
   return (
     <AuthLayout title="Iniciar sesión">
       <div className="space-y-4">
-        <AuthInput label="Correo electrónico" type="email" />
-        <AuthInput label="Contraseña" type="password" />
+        <AuthInput label="Correo electrónico" onChange={setEmail} type="email" value={email} />
+        <AuthInput label="Contraseña" onChange={setPassword} type="password" value={password} />
       </div>
 
+      {error ? (
+        <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm font-bold leading-5 text-red-600" role="alert">
+          {error}
+        </p>
+      ) : null}
+
       <button
-        className="mt-7 h-14 w-full rounded-[1.15rem] bg-green-600 text-base font-black text-white shadow-xl shadow-green-600/25 transition active:scale-[0.98]"
-        onClick={onEnter}
+        className="mt-7 h-14 w-full rounded-[1.15rem] bg-green-600 text-base font-black text-white shadow-xl shadow-green-600/25 transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
+        disabled={loading}
+        onClick={() => onEnter(email, password)}
         type="button"
       >
-        Ingresar
+        {loading ? "Ingresando..." : "Ingresar"}
       </button>
 
       <div className="my-7 flex items-center gap-4 text-xs font-bold text-zinc-400">

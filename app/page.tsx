@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { onAuthStateChanged } from "firebase/auth";
 import { BookingModal } from "./components/BookingModal";
 import { LoginScreen } from "./components/LoginScreen";
 import { RegisterScreen } from "./components/RegisterScreen";
@@ -18,10 +19,13 @@ import {
   nearbyBarbers,
   searchBarbers,
 } from "./data/mockBooking";
+import { getAuthErrorMessage, getOrCreateClientProfile, loginClient, logoutClient, registerClient } from "../lib/client-auth";
+import { auth } from "../lib/firebase";
 import { getBarberById, getBarbers, getBarberSlots } from "../lib/firestore-read";
+import { BarberAppModal } from "./components/BarberAppModal";
 import type { Barber, Service, TimeSlot } from "./types/booking";
 
-type AuthView = "login" | "register" | "app";
+type AuthView = "checking" | "login" | "register" | "app";
 
 export default function Home() {
   const [selectedBarber, setSelectedBarber] = useState<Barber>();
@@ -30,7 +34,10 @@ export default function Home() {
   const [modalOpen, setModalOpen] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>("home");
-  const [authView, setAuthView] = useState<AuthView>("login");
+  const [authView, setAuthView] = useState<AuthView>("checking");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState("");
+  const [barberModalOpen, setBarberModalOpen] = useState(false);
   const [firebaseBarbers, setFirebaseBarbers] = useState<Barber[]>([]);
   const [barbersLoading, setBarbersLoading] = useState(false);
   const [profileSlots, setProfileSlots] = useState<TimeSlot[]>([]);
@@ -66,6 +73,91 @@ export default function Home() {
       ignore = true;
     };
   }, []);
+
+
+  useEffect(() => {
+    if (!auth) {
+      setAuthView("login");
+      return;
+    }
+
+    return onAuthStateChanged(auth, async (user) => {
+      setAuthError("");
+
+      if (!user) {
+        setAuthView("login");
+        return;
+      }
+
+      try {
+        const result = await getOrCreateClientProfile(user);
+
+        if (result.status === "barber") {
+          setBarberModalOpen(true);
+          await logoutClient();
+          setAuthView("login");
+          return;
+        }
+
+        setAuthView("app");
+      } catch (error) {
+        setAuthError(getAuthErrorMessage(error));
+        setAuthView("login");
+      }
+    });
+  }, []);
+
+  const handleLogin = async (email: string, password: string) => {
+    if (!email.trim() || !password) {
+      setAuthError("Completá tu correo y contraseña para ingresar.");
+      return;
+    }
+
+    setAuthLoading(true);
+    setAuthError("");
+
+    try {
+      const result = await loginClient(email.trim(), password);
+
+      if (result.status === "barber") {
+        setBarberModalOpen(true);
+        await logoutClient();
+        setAuthView("login");
+        return;
+      }
+
+      setAuthView("app");
+    } catch (error) {
+      setAuthError(getAuthErrorMessage(error));
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleRegister = async (fullName: string, email: string, password: string) => {
+    if (!fullName.trim() || !email.trim() || !password) {
+      setAuthError("Completá nombre, correo y contraseña para crear tu cuenta.");
+      return;
+    }
+
+    setAuthLoading(true);
+    setAuthError("");
+
+    try {
+      await registerClient(fullName, email.trim(), password);
+      setAuthView("app");
+    } catch (error) {
+      setAuthError(getAuthErrorMessage(error));
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    await logoutClient();
+    setActiveTab("home");
+    setAuthView("login");
+  };
 
   const openBarberProfile = (barber: Barber) => {
     setSelectedBarber(barber);
@@ -171,24 +263,45 @@ export default function Home() {
   } else if (activeTab === "bookings") {
     content = <BookingsScreen />;
   } else {
-    content = <ProfileScreen />;
+    content = <ProfileScreen onLogout={handleLogout} />;
   }
 
 
+  if (authView === "checking") {
+    return (
+      <main className="grid min-h-dvh place-items-center bg-zinc-50 px-4 text-center text-sm font-black text-zinc-500">
+        Cargando Clipcut...
+      </main>
+    );
+  }
+
   if (authView === "login") {
     return (
-      <LoginScreen
-        onCreateAccount={() => setAuthView("register")}
-        onEnter={() => setAuthView("app")}
-      />
+      <>
+        <LoginScreen
+          error={authError}
+          loading={authLoading}
+          onCreateAccount={() => {
+            setAuthError("");
+            setAuthView("register");
+          }}
+          onEnter={handleLogin}
+        />
+        <BarberAppModal onClose={() => setBarberModalOpen(false)} open={barberModalOpen} />
+      </>
     );
   }
 
   if (authView === "register") {
     return (
       <RegisterScreen
-        onEnter={() => setAuthView("app")}
-        onLogin={() => setAuthView("login")}
+        error={authError}
+        loading={authLoading}
+        onEnter={handleRegister}
+        onLogin={() => {
+          setAuthError("");
+          setAuthView("login");
+        }}
       />
     );
   }
