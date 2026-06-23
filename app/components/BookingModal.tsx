@@ -5,6 +5,8 @@ type BookingModalProps = {
   open: boolean;
   service?: Service;
   services: Service[];
+  servicesLoading?: boolean;
+  emptyServicesMessage?: string;
   slot?: TimeSlot;
   onClose: () => void;
   onConfirm: () => void;
@@ -15,6 +17,8 @@ export function BookingModal({
   open,
   service,
   services,
+  servicesLoading = false,
+  emptyServicesMessage = "Este peluquero todavía no agregó servicios.",
   slot,
   onClose,
   onConfirm,
@@ -53,14 +57,26 @@ export function BookingModal({
         </div>
 
         <div className="mt-5 space-y-3">
-          {services.map((item) => (
-            <ServiceCard
-              key={item.id}
-              onSelect={onSelectService}
-              selected={service?.id === item.id}
-              service={item}
-            />
-          ))}
+          {servicesLoading ? (
+            <div className="rounded-3xl bg-zinc-50 p-5 text-sm font-black text-zinc-400 ring-1 ring-zinc-200">
+              Cargando servicios...
+            </div>
+          ) : null}
+          {!servicesLoading && services.length === 0 ? (
+            <div className="rounded-3xl bg-zinc-50 p-5 text-sm font-black text-zinc-500 ring-1 ring-zinc-200">
+              {emptyServicesMessage}
+            </div>
+          ) : null}
+          {!servicesLoading
+            ? services.map((item) => (
+                <ServiceCard
+                  key={item.id}
+                  onSelect={onSelectService}
+                  selected={service?.id === item.id}
+                  service={item}
+                />
+              ))
+            : null}
         </div>
 
         <button
