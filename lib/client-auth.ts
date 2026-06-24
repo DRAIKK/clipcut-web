@@ -23,18 +23,42 @@ function requireFirebase() {
   return { auth, db };
 }
 
+function getRecord(value: unknown): Record<string, unknown> | undefined {
+  return typeof value === "object" && value !== null ? (value as Record<string, unknown>) : undefined;
+}
+
+function getCoordinateNumber(data: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = data[key];
+    if (typeof value === "number" && Number.isFinite(value)) return value;
+    if (typeof value === "string") {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) return parsed;
+    }
+  }
+
+  return Number.NaN;
+}
+
 function getProfileCoordinates(data: Record<string, unknown>): Coordinates | undefined {
-  const location = typeof data.location === "object" && data.location !== null ? (data.location as Record<string, unknown>) : undefined;
-  const coordinates = typeof data.coordinates === "object" && data.coordinates !== null ? (data.coordinates as Record<string, unknown>) : undefined;
-  const merged = { ...data, ...(location ?? {}), ...(coordinates ?? {}) };
-  const rawLatitude = merged.latitude ?? merged.lat;
-  const rawLongitude = merged.longitude ?? merged.lng ?? merged.lon;
-  const latitude = typeof rawLatitude === "number" ? rawLatitude : Number(rawLatitude);
-  const longitude = typeof rawLongitude === "number" ? rawLongitude : Number(rawLongitude);
+  const coordinateSources = [
+    data,
+    getRecord(data.location),
+    getRecord(data.coords),
+    getRecord(data.coordinates),
+    getRecord(data.geo),
+    getRecord(data.geoPoint),
+    getRecord(data.geopoint),
+  ].filter((source): source is Record<string, unknown> => Boolean(source));
 
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return undefined;
+  for (const source of coordinateSources) {
+    const latitude = getCoordinateNumber(source, ["lat", "latitude", "_lat"]);
+    const longitude = getCoordinateNumber(source, ["lng", "longitude", "lon", "_long"]);
 
-  return { latitude, longitude };
+    if (Number.isFinite(latitude) && Number.isFinite(longitude)) return { latitude, longitude };
+  }
+
+  return undefined;
 }
 
 function normalizeRole(role: unknown) {
