@@ -165,21 +165,6 @@ export function PublicBarberProfile({
           </div>
         </div>
 
-        <div className="mt-4 rounded-[1.5rem] bg-zinc-50 p-4 ring-1 ring-zinc-200">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-400">Métodos de pago</p>
-          {barber.paymentMethods && barber.paymentMethods.length > 0 ? (
-            <div className="mt-3 flex flex-wrap gap-2">
-              {barber.paymentMethods.map((method) => (
-                <span className="rounded-full bg-white px-3 py-2 text-xs font-black text-zinc-950 ring-1 ring-zinc-200" key={method.id}>
-                  {method.label}
-                </span>
-              ))}
-            </div>
-          ) : (
-            <p className="mt-2 text-sm font-bold text-zinc-500">Este peluquero todavía no configuró métodos de pago.</p>
-          )}
-        </div>
-
         <div className="mt-7 text-center">
           <h2 className="text-3xl font-black tracking-tight text-zinc-950">Haz tu reserva</h2>
         </div>
@@ -221,11 +206,19 @@ export function PublicBarberProfile({
                     </div>
                     <button
                       aria-label={`Elegir servicio para ${formatSlotRange(slot)}`}
-                      className="grid h-11 w-11 place-items-center rounded-full bg-[#16A34A] text-lg text-white shadow-lg shadow-green-600/25 transition active:scale-95"
+                      className="grid h-11 w-11 place-items-center rounded-full bg-white text-zinc-900 shadow-lg shadow-zinc-900/10 ring-1 ring-zinc-200 transition active:scale-95"
                       onClick={() => handleCalendarClick(slot)}
                       type="button"
                     >
-                      🗓
+                      <svg aria-hidden="true" className="h-5 w-5" fill="none" viewBox="0 0 24 24">
+                        <path
+                          d="M7 3v3M17 3v3M4.5 9.25h15M6.75 5h10.5A2.75 2.75 0 0 1 20 7.75v9.5A2.75 2.75 0 0 1 17.25 20H6.75A2.75 2.75 0 0 1 4 17.25v-9.5A2.75 2.75 0 0 1 6.75 5Z"
+                          stroke="currentColor"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth="2"
+                        />
+                      </svg>
                     </button>
                   </div>
                 ))}

@@ -252,6 +252,11 @@ export default function Home() {
     };
   }, [authView, currentUserId]);
 
+  const handleSelectService = (service: Service) => {
+    setSelectedService(service);
+    setSelectedPaymentMethod(undefined);
+  };
+
   const handleConfirmBooking = async () => {
     setBookingError("");
 
@@ -441,7 +446,7 @@ export default function Home() {
         onSelectPaymentMethod={setSelectedPaymentMethod}
         error={bookingError}
         submitting={bookingSubmitting}
-        onSelectService={setSelectedService}
+        onSelectService={handleSelectService}
       />
     </main>
   );
