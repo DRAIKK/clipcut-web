@@ -1,3 +1,10 @@
+export type PaymentMethodId = "transfer" | "cash";
+
+export type PaymentMethod = {
+  id: PaymentMethodId;
+  label: string;
+};
+
 export type Barber = {
   id: string;
   name: string;
@@ -10,6 +17,7 @@ export type Barber = {
   distance: string;
   initials: string;
   photoUrl?: string;
+  paymentMethods?: PaymentMethod[];
 };
 
 export type Service = {
@@ -29,10 +37,21 @@ export type TimeSlot = {
   endTime?: string;
 };
 
+export type BookingStatus = "pending_payment" | "cash_pending" | string;
+
 export type Booking = {
-  barberName: string;
+  id: string;
+  barberId: string;
+  barberName?: string;
+  serviceId?: string;
   serviceName: string;
+  servicePrice?: number | string;
+  slotId?: string;
+  day?: string;
+  startTime?: string;
+  endTime?: string;
   dateTime: string;
-  address: string;
-  status: string;
+  address?: string;
+  status: BookingStatus;
+  paymentMethod?: PaymentMethodId | string;
 };

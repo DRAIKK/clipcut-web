@@ -165,6 +165,21 @@ export function PublicBarberProfile({
           </div>
         </div>
 
+        <div className="mt-4 rounded-[1.5rem] bg-zinc-50 p-4 ring-1 ring-zinc-200">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-400">Métodos de pago</p>
+          {barber.paymentMethods && barber.paymentMethods.length > 0 ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {barber.paymentMethods.map((method) => (
+                <span className="rounded-full bg-white px-3 py-2 text-xs font-black text-zinc-950 ring-1 ring-zinc-200" key={method.id}>
+                  {method.label}
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="mt-2 text-sm font-bold text-zinc-500">Este peluquero todavía no configuró métodos de pago.</p>
+          )}
+        </div>
+
         <div className="mt-7 text-center">
           <h2 className="text-3xl font-black tracking-tight text-zinc-950">Haz tu reserva</h2>
         </div>

@@ -1,5 +1,5 @@
-import { collection, doc, getDoc, getDocs, query } from "firebase/firestore";
-import type { Barber, Service, TimeSlot } from "../app/types/booking";
+import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+import type { Barber, Booking, PaymentMethod, Service, TimeSlot } from "../app/types/booking";
 import { db } from "./firebase";
 
 type FirestoreRecord = Record<string, unknown>;
@@ -45,6 +45,59 @@ function getNumber(data: FirestoreRecord, keys: string[], fallback: number) {
   }
 
   return fallback;
+}
+
+
+function isPaymentEnabled(value: unknown) {
+  if (value === true) return true;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    return ["true", "active", "enabled", "habilitado", "si", "sí"].includes(normalized);
+  }
+  if (typeof value === "object" && value !== null) {
+    const record = value as FirestoreRecord;
+    return isPaymentEnabled(record.active ?? record.enabled ?? record.isActive ?? record.available);
+  }
+
+  return false;
+}
+
+function candidateIncludes(candidate: unknown, names: string[]) {
+  if (Array.isArray(candidate)) {
+    return candidate.some((item) => {
+      if (typeof item === "string") return names.includes(item.trim().toLowerCase());
+      if (typeof item !== "object" || item === null) return false;
+      const record = item as FirestoreRecord;
+      const id = getString(record, ["id", "type", "name", "key", "label"], "").trim().toLowerCase();
+      return names.includes(id) && isPaymentEnabled(record.active ?? record.enabled ?? record.isActive ?? true);
+    });
+  }
+
+  if (typeof candidate !== "object" || candidate === null) return false;
+  const record = candidate as FirestoreRecord;
+  return names.some((name) => isPaymentEnabled(record[name]));
+}
+
+function getPaymentMethods(data: FirestoreRecord): PaymentMethod[] {
+  const methods: PaymentMethod[] = [];
+  const candidates = [data.paymentMethods, data.payments, data.payment, data.metodosPago, data.paymentOptions];
+
+  const hasTransfer =
+    isPaymentEnabled(data.transfer) ||
+    isPaymentEnabled(data.transferencia) ||
+    isPaymentEnabled(data.bankTransfer) ||
+    isPaymentEnabled(data.mercadoPago) ||
+    candidates.some((candidate) => candidateIncludes(candidate, ["transfer", "transferencia", "banktransfer", "mercadopago"]));
+
+  const hasCash =
+    isPaymentEnabled(data.cash) ||
+    isPaymentEnabled(data.efectivo) ||
+    candidates.some((candidate) => candidateIncludes(candidate, ["cash", "efectivo"]));
+
+  if (hasTransfer) methods.push({ id: "transfer", label: "Transferencia" });
+  if (hasCash) methods.push({ id: "cash", label: "Efectivo" });
+
+  return methods;
 }
 
 function getInitials(name: string) {
@@ -102,6 +155,7 @@ function adaptBarber(id: string, data: FirestoreRecord, index = 0): Barber {
       ["photoURL", "avatarUrl", "profilePhoto", "profileImage", "imageUrl", "photo", "photoUrl", "avatar", "image"],
       ""
     ),
+    paymentMethods: getPaymentMethods(data),
   };
 }
 
@@ -213,4 +267,37 @@ export async function getBarberServices(barberId: string): Promise<Service[]> {
   return serviciosSnapshot.docs
     .map((serviceDoc) => adaptService(serviceDoc.id, serviceDoc.data()))
     .filter((service): service is Service => Boolean(service));
+}
+
+
+function adaptBooking(id: string, data: FirestoreRecord): Booking {
+  const serviceName = getString(data, ["serviceName", "service", "serviceTitle"], "Reserva Clipcut");
+  const startTime = getString(data, ["startTime", "start", "time"], "");
+  const endTime = getString(data, ["endTime", "end"], "");
+  const day = getString(data, ["day", "date", "dayLabel"], "");
+
+  return {
+    id,
+    barberId: getString(data, ["barberId", "professionalId"], ""),
+    barberName: getString(data, ["barberName", "professionalName"], ""),
+    serviceId: getString(data, ["serviceId"], ""),
+    serviceName,
+    servicePrice: data.servicePrice as number | string | undefined,
+    slotId: getString(data, ["slotId"], ""),
+    day,
+    startTime,
+    endTime,
+    dateTime: [day, startTime && endTime ? `${startTime} - ${endTime}` : startTime].filter(Boolean).join(" · "),
+    address: getString(data, ["address", "barberAddress"], ""),
+    status: getString(data, ["status"], ""),
+    paymentMethod: getString(data, ["paymentMethod"], ""),
+  };
+}
+
+export async function getClientBookings(clientId: string): Promise<Booking[]> {
+  if (!db) throw new Error("Firebase no está configurado.");
+
+  const snapshot = await getDocs(query(collection(db, "bookings"), where("clientId", "==", clientId)));
+
+  return snapshot.docs.map((bookingDoc) => adaptBooking(bookingDoc.id, bookingDoc.data()));
 }
