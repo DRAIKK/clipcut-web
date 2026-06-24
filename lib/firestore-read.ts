@@ -1,5 +1,6 @@
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import type { Barber, Booking, PaymentMethod, Service, TimeSlot } from "../app/types/booking";
+import type { Coordinates } from "./distance";
 import { db } from "./firebase";
 
 type FirestoreRecord = Record<string, unknown>;
@@ -47,6 +48,26 @@ function getNumber(data: FirestoreRecord, keys: string[], fallback: number) {
   return fallback;
 }
 
+function getCoordinates(data: FirestoreRecord): Coordinates | undefined {
+  const location = typeof data.location === "object" && data.location !== null ? (data.location as FirestoreRecord) : undefined;
+  const coordinates = typeof data.coordinates === "object" && data.coordinates !== null ? (data.coordinates as FirestoreRecord) : undefined;
+  const geopoint = typeof data.geopoint === "object" && data.geopoint !== null ? (data.geopoint as FirestoreRecord) : undefined;
+
+  const latitude = getNumber(
+    { ...data, ...(location ?? {}), ...(coordinates ?? {}), ...(geopoint ?? {}) },
+    ["latitude", "lat", "_lat"],
+    Number.NaN
+  );
+  const longitude = getNumber(
+    { ...data, ...(location ?? {}), ...(coordinates ?? {}), ...(geopoint ?? {}) },
+    ["longitude", "lng", "lon", "_long"],
+    Number.NaN
+  );
+
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return undefined;
+
+  return { latitude, longitude };
+}
 
 function isPaymentEnabled(value: unknown) {
   if (value === true) return true;
@@ -148,7 +169,8 @@ function adaptBarber(id: string, data: FirestoreRecord, index = 0): Barber {
     rating: getNumber(data, ["ratingAvg", "ratingAverage", "rating", "score", "averageRating"], 5),
     ratingCount: getNumber(data, ["ratingCount", "reviewsCount", "reviewCount"], 0),
     imageGradient: gradients[index % gradients.length],
-    distance: getString(data, ["distance", "distanceLabel"], "Cerca tuyo"),
+    distance: getString(data, ["distance", "distanceLabel"], ""),
+    coordinates: getCoordinates(data),
     initials: getInitials(name),
     photoUrl: getString(
       data,
