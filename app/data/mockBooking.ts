@@ -11,6 +11,8 @@ export const mockBarber: Barber = {
   ratingCount: 128,
   imageGradient: "from-emerald-400 via-green-600 to-zinc-950",
   distance: "1.2 km",
+  distanceKm: 1.2,
+  coordinates: { latitude: -34.5875, longitude: -58.4245 },
   initials: "MA",
 };
 
@@ -24,7 +26,9 @@ export const nearbyBarbers: Barber[] = [
     address: "Gorriti 5120, Palermo",
     rating: 4.8,
     imageGradient: "from-lime-300 via-emerald-500 to-green-900",
-    distance: "850 m",
+    distance: "0.9 km",
+    distanceKm: 0.85,
+    coordinates: { latitude: -34.5829, longitude: -58.4332 },
     initials: "NF",
   },
   {
@@ -36,6 +40,8 @@ export const nearbyBarbers: Barber[] = [
     rating: 4.7,
     imageGradient: "from-green-300 via-teal-600 to-zinc-900",
     distance: "2.4 km",
+    distanceKm: 2.4,
+    coordinates: { latitude: -34.5962, longitude: -58.4218 },
     initials: "TB",
   },
 ];
@@ -51,6 +57,8 @@ export const searchBarbers: Barber[] = [
     rating: 4.9,
     imageGradient: "from-emerald-200 via-green-500 to-black",
     distance: "3.1 km",
+    distanceKm: 3.1,
+    coordinates: { latitude: -34.5881, longitude: -58.4351 },
     initials: "LS",
   },
 ];

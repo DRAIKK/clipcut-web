@@ -23,6 +23,7 @@ import { getAuthErrorMessage, getOrCreateClientProfile, loginClient, logoutClien
 import { auth } from "../lib/firebase";
 import { getBarberById, getBarberServices, getBarbers, getBarberSlots, getClientBookings } from "../lib/firestore-read";
 import { createBooking } from "../lib/firestore-bookings";
+import { calculateDistanceKm, formatDistanceKm, parseDistanceKm, type Coordinates } from "../lib/distance";
 import { BarberAppModal } from "./components/BarberAppModal";
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "./types/booking";
 
@@ -51,10 +52,27 @@ export default function Home() {
   const [bookingSubmitting, setBookingSubmitting] = useState(false);
   const [clientBookings, setClientBookings] = useState<Booking[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [clientCoordinates, setClientCoordinates] = useState<Coordinates>();
 
   const selectedBarberId = selectedBarber?.id;
-  const visibleBarbers = firebaseFailed ? nearbyBarbers : firebaseBarbers;
-  const visibleSearchBarbers = firebaseFailed ? searchBarbers : firebaseBarbers;
+  const prepareDistanceList = (barbers: Barber[]) =>
+    barbers
+      .map((barber) => {
+        const realDistanceKm = calculateDistanceKm(clientCoordinates, barber.coordinates);
+        const fallbackDistanceKm = barber.distanceKm ?? parseDistanceKm(barber.distance);
+        const distanceKm = realDistanceKm ?? fallbackDistanceKm;
+
+        return {
+          ...barber,
+          distance: realDistanceKm !== undefined ? formatDistanceKm(realDistanceKm) : barber.distance || "Ubicación no disponible",
+          distanceKm,
+        };
+      })
+      .filter((barber) => barber.distanceKm === undefined || barber.distanceKm <= 20)
+      .sort((firstBarber, secondBarber) => (firstBarber.distanceKm ?? Number.POSITIVE_INFINITY) - (secondBarber.distanceKm ?? Number.POSITIVE_INFINITY))
+      .slice(0, 20);
+  const visibleBarbers = prepareDistanceList(firebaseFailed ? nearbyBarbers : firebaseBarbers);
+  const visibleSearchBarbers = prepareDistanceList(firebaseFailed ? searchBarbers : firebaseBarbers);
   const currentUserId = auth?.currentUser?.uid ?? "";
   const activeBooking = useMemo(() => clientBookings.find((booking) => booking.status !== "cancelled"), [clientBookings]);
 
@@ -109,6 +127,7 @@ export default function Home() {
           return;
         }
 
+        setClientCoordinates(result.profile.coordinates);
         setAuthView("app");
       } catch (error) {
         setAuthError(getAuthErrorMessage(error));
@@ -136,6 +155,7 @@ export default function Home() {
         return;
       }
 
+      setClientCoordinates(result.profile.coordinates);
       setAuthView("app");
     } catch (error) {
       setAuthError(getAuthErrorMessage(error));
@@ -155,6 +175,7 @@ export default function Home() {
 
     try {
       await registerClient(fullName, email.trim(), password);
+      setClientCoordinates(undefined);
       setAuthView("app");
     } catch (error) {
       setAuthError(getAuthErrorMessage(error));

@@ -19,17 +19,6 @@ export function SearchScreen({ barbers, loading = false, onSelectBarber }: Searc
           type="search"
         />
       </div>
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        {['Ubicación', 'Precio', 'Todas'].map((chip) => (
-          <button
-            className="rounded-full bg-white px-5 py-3 text-sm font-black text-zinc-700 shadow-sm ring-1 ring-zinc-200 first:bg-green-600 first:text-white first:ring-green-600"
-            key={chip}
-            type="button"
-          >
-            {chip}
-          </button>
-        ))}
-      </div>
       <section className="space-y-3">
         {loading ? (
           <div className="rounded-[1.75rem] bg-white p-4 text-sm font-black text-zinc-400 shadow-sm ring-1 ring-zinc-200">

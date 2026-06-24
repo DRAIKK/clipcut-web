@@ -1,12 +1,14 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
+import type { Coordinates } from "./distance";
 
 export type ClientProfile = {
   uid: string;
   fullName: string;
   email: string;
   role: string;
+  coordinates?: Coordinates;
 };
 
 export type AuthResult =
@@ -19,6 +21,20 @@ const CLIENT_ROLES = new Set(["client", "cliente"]);
 function requireFirebase() {
   if (!auth || !db) throw new Error("firebase-not-configured");
   return { auth, db };
+}
+
+function getProfileCoordinates(data: Record<string, unknown>): Coordinates | undefined {
+  const location = typeof data.location === "object" && data.location !== null ? (data.location as Record<string, unknown>) : undefined;
+  const coordinates = typeof data.coordinates === "object" && data.coordinates !== null ? (data.coordinates as Record<string, unknown>) : undefined;
+  const merged = { ...data, ...(location ?? {}), ...(coordinates ?? {}) };
+  const rawLatitude = merged.latitude ?? merged.lat;
+  const rawLongitude = merged.longitude ?? merged.lng ?? merged.lon;
+  const latitude = typeof rawLatitude === "number" ? rawLatitude : Number(rawLatitude);
+  const longitude = typeof rawLongitude === "number" ? rawLongitude : Number(rawLongitude);
+
+  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return undefined;
+
+  return { latitude, longitude };
 }
 
 function normalizeRole(role: unknown) {
@@ -74,6 +90,7 @@ export async function getOrCreateClientProfile(user: User, fullName?: string): P
           fullName: typeof data.fullName === "string" && data.fullName.trim() ? data.fullName : user.email ?? "Cliente Clipcut",
           email: typeof data.email === "string" && data.email.trim() ? data.email : user.email ?? "",
           role: role || "cliente",
+          coordinates: getProfileCoordinates(data),
         },
       };
     }

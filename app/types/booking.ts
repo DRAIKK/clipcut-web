@@ -1,3 +1,5 @@
+import type { Coordinates } from "../../lib/distance";
+
 export type PaymentMethodId = "transfer" | "cash";
 
 export type PaymentMethod = {
@@ -15,6 +17,8 @@ export type Barber = {
   ratingCount?: number;
   imageGradient: string;
   distance: string;
+  distanceKm?: number;
+  coordinates?: Coordinates;
   initials: string;
   photoUrl?: string;
   paymentMethods?: PaymentMethod[];
