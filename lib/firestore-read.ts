@@ -130,11 +130,11 @@ function adaptService(id: string, data: FirestoreRecord): Service | null {
   };
 }
 
-function getSlotLabel(day: string, startTime: string, endTime: string) {
-  const timeLabel = startTime && endTime && startTime !== endTime ? `${startTime} - ${endTime}` : startTime || endTime;
-
-  if (day && timeLabel) return `${day} · ${timeLabel}`;
-  return day || timeLabel;
+function getSlotLabel(startTime: string, endTime: string, label: string) {
+  if (startTime && endTime && startTime !== endTime) return `${startTime} - ${endTime}`;
+  if (startTime) return startTime;
+  if (endTime) return endTime;
+  return label;
 }
 
 function adaptSlot(id: string, data: FirestoreRecord): TimeSlot | null {
@@ -145,9 +145,10 @@ function adaptSlot(id: string, data: FirestoreRecord): TimeSlot | null {
   if (!isAvailable) return null;
 
   const day = getString(data, ["day", "dayLabel", "weekday", "dayName"], "");
-  const startTime = getString(data, ["startTime", "start", "time", "label"], "");
+  const startTime = getString(data, ["startTime", "start", "time"], "");
   const endTime = getString(data, ["endTime", "end"], "");
-  const label = getSlotLabel(day, startTime, endTime);
+  const rawLabel = getString(data, ["label"], "");
+  const label = getSlotLabel(startTime, endTime, rawLabel);
 
   if (!label) return null;
 
@@ -156,6 +157,7 @@ function adaptSlot(id: string, data: FirestoreRecord): TimeSlot | null {
     label,
     available: true,
     day,
+    startTime,
     endTime,
   };
 }

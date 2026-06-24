@@ -25,6 +25,7 @@ export type TimeSlot = {
   label: string;
   available: boolean;
   day?: string;
+  startTime?: string;
   endTime?: string;
 };
 
