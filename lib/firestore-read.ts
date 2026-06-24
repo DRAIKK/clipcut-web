@@ -48,25 +48,29 @@ function getNumber(data: FirestoreRecord, keys: string[], fallback: number) {
   return fallback;
 }
 
+function getRecord(value: unknown): FirestoreRecord | undefined {
+  return typeof value === "object" && value !== null ? (value as FirestoreRecord) : undefined;
+}
+
 function getCoordinates(data: FirestoreRecord): Coordinates | undefined {
-  const location = typeof data.location === "object" && data.location !== null ? (data.location as FirestoreRecord) : undefined;
-  const coordinates = typeof data.coordinates === "object" && data.coordinates !== null ? (data.coordinates as FirestoreRecord) : undefined;
-  const geopoint = typeof data.geopoint === "object" && data.geopoint !== null ? (data.geopoint as FirestoreRecord) : undefined;
+  const coordinateSources = [
+    data,
+    getRecord(data.location),
+    getRecord(data.coords),
+    getRecord(data.coordinates),
+    getRecord(data.geo),
+    getRecord(data.geoPoint),
+    getRecord(data.geopoint),
+  ].filter((source): source is FirestoreRecord => Boolean(source));
 
-  const latitude = getNumber(
-    { ...data, ...(location ?? {}), ...(coordinates ?? {}), ...(geopoint ?? {}) },
-    ["latitude", "lat", "_lat"],
-    Number.NaN
-  );
-  const longitude = getNumber(
-    { ...data, ...(location ?? {}), ...(coordinates ?? {}), ...(geopoint ?? {}) },
-    ["longitude", "lng", "lon", "_long"],
-    Number.NaN
-  );
+  for (const source of coordinateSources) {
+    const latitude = getNumber(source, ["lat", "latitude", "_lat"], Number.NaN);
+    const longitude = getNumber(source, ["lng", "longitude", "lon", "_long"], Number.NaN);
 
-  if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return undefined;
+    if (Number.isFinite(latitude) && Number.isFinite(longitude)) return { latitude, longitude };
+  }
 
-  return { latitude, longitude };
+  return undefined;
 }
 
 function isPaymentEnabled(value: unknown) {

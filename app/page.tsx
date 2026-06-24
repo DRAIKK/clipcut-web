@@ -23,7 +23,7 @@ import { getAuthErrorMessage, getOrCreateClientProfile, loginClient, logoutClien
 import { auth } from "../lib/firebase";
 import { getBarberById, getBarberServices, getBarbers, getBarberSlots, getClientBookings } from "../lib/firestore-read";
 import { createBooking } from "../lib/firestore-bookings";
-import { calculateDistanceKm, formatDistanceKm, parseDistanceKm, type Coordinates } from "../lib/distance";
+import { calculateDistanceKm, formatDistanceKm, type Coordinates } from "../lib/distance";
 import { BarberAppModal } from "./components/BarberAppModal";
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "./types/booking";
 
@@ -55,22 +55,50 @@ export default function Home() {
   const [clientCoordinates, setClientCoordinates] = useState<Coordinates>();
 
   const selectedBarberId = selectedBarber?.id;
-  const prepareDistanceList = (barbers: Barber[]) =>
-    barbers
-      .map((barber) => {
-        const realDistanceKm = calculateDistanceKm(clientCoordinates, barber.coordinates);
-        const fallbackDistanceKm = barber.distanceKm ?? parseDistanceKm(barber.distance);
-        const distanceKm = realDistanceKm ?? fallbackDistanceKm;
+  const prepareDistanceList = (barbers: Barber[]) => {
+    if (process.env.NODE_ENV === "development") {
+      console.log("client location", clientCoordinates);
+    }
 
-        return {
+    return barbers
+      .map((barber, index) => {
+        const distanceKm = calculateDistanceKm(clientCoordinates, barber.coordinates);
+        const hasRealDistance = distanceKm !== undefined;
+        const mappedBarber = {
           ...barber,
-          distance: realDistanceKm !== undefined ? formatDistanceKm(realDistanceKm) : barber.distance || "Ubicación no disponible",
+          distance: hasRealDistance ? formatDistanceKm(distanceKm) : "Distancia no disponible",
           distanceKm,
+          originalIndex: index,
         };
+
+        if (process.env.NODE_ENV === "development") {
+          console.log("barber location", barber.id, barber.coordinates);
+          console.log("distance km", barber.id, mappedBarber.distanceKm);
+        }
+
+        return mappedBarber;
       })
       .filter((barber) => barber.distanceKm === undefined || barber.distanceKm <= 20)
-      .sort((firstBarber, secondBarber) => (firstBarber.distanceKm ?? Number.POSITIVE_INFINITY) - (secondBarber.distanceKm ?? Number.POSITIVE_INFINITY))
-      .slice(0, 20);
+      .sort((firstBarber, secondBarber) => {
+        const firstDistance = firstBarber.distanceKm;
+        const secondDistance = secondBarber.distanceKm;
+
+        if (firstDistance !== undefined && secondDistance !== undefined) return firstDistance - secondDistance;
+        if (firstDistance !== undefined) return -1;
+        if (secondDistance !== undefined) return 1;
+
+        return (
+          firstBarber.name.localeCompare(secondBarber.name, "es", { sensitivity: "base" }) ||
+          firstBarber.originalIndex - secondBarber.originalIndex
+        );
+      })
+      .slice(0, 20)
+      .map((barber) => {
+        const { originalIndex, ...visibleBarber } = barber;
+        void originalIndex;
+        return visibleBarber;
+      });
+  };
   const visibleBarbers = prepareDistanceList(firebaseFailed ? nearbyBarbers : firebaseBarbers);
   const visibleSearchBarbers = prepareDistanceList(firebaseFailed ? searchBarbers : firebaseBarbers);
   const currentUserId = auth?.currentUser?.uid ?? "";
