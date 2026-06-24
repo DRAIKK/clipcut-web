@@ -1,6 +1,7 @@
 import type { Barber, TimeSlot } from "../types/booking";
 import { BarberAvatar } from "./BarberAvatar";
 import { LogoHeader } from "./LogoHeader";
+import { formatSlotRange, getSlotStartTime } from "./slot-format";
 
 type PublicBarberProfileProps = {
   barber: Barber;
@@ -15,7 +16,6 @@ type PublicBarberProfileProps = {
 const scheduleDays = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 const zeroBasedScheduleDays = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
 const dayOrder = new Map(scheduleDays.map((day, index) => [day, index]));
-const timePattern = /\b\d{1,2}:\d{2}\b/g;
 const dayAliases: Record<string, string> = {
   domingo: "Dom",
   dom: "Dom",
@@ -67,37 +67,10 @@ function getDayLabels(slots: TimeSlot[]) {
   });
 }
 
-function getSlotStartTime(slot: TimeSlot) {
-  const labelTimes = slot.label.match(timePattern) ?? [];
-
-  return slot.startTime || labelTimes[0] || "";
-}
-
-function getSlotEndTime(slot: TimeSlot) {
-  const labelTimes = slot.label.match(timePattern) ?? [];
-
-  return slot.endTime || labelTimes[1] || "";
-}
-
-function formatSlotRange(slot: TimeSlot) {
-  const startTime = getSlotStartTime(slot);
-  const endTime = getSlotEndTime(slot);
-
-  if (startTime && endTime) return `${startTime} - ${endTime}`;
-  if (startTime) return startTime;
-  if (endTime) return endTime;
-
-  if (slot.label.includes(" - ")) return slot.label;
-
-  const [hour, minute] = slot.label.split(":").map(Number);
-  if (!Number.isFinite(hour) || !Number.isFinite(minute)) return slot.label;
-
-  const start = new Date(2026, 0, 1, hour, minute);
-  const end = new Date(start.getTime() + 30 * 60 * 1000);
-  const endLabel = `${String(end.getHours()).padStart(2, "0")}:${String(end.getMinutes()).padStart(2, "0")}`;
-
-  return `${slot.label} - ${endLabel}`;
-}
+type GroupedSlot = {
+  dayLabel: string;
+  slots: TimeSlot[];
+};
 
 export function PublicBarberProfile({
   barber,
@@ -110,8 +83,16 @@ export function PublicBarberProfile({
 }: PublicBarberProfileProps) {
   const availableSlots = slots.filter((slot) => slot.available);
   const dayLabels = getDayLabels(availableSlots);
-  const sortedAvailableSlots = availableSlots
-    .map((slot, index) => ({ slot, dayLabel: dayLabels[index] }))
+  const uniqueSlots = new Map<string, { slot: TimeSlot; dayLabel: string }>();
+
+  availableSlots.forEach((slot, index) => {
+    const dayLabel = dayLabels[index] || scheduleDays[index % scheduleDays.length];
+    const slotKey = `${dayLabel}-${formatSlotRange(slot)}`;
+
+    if (!uniqueSlots.has(slotKey)) uniqueSlots.set(slotKey, { slot, dayLabel });
+  });
+
+  const groupedSlots = Array.from(uniqueSlots.values())
     .sort((firstSlot, secondSlot) => {
       const firstDayOrder = dayOrder.get(firstSlot.dayLabel) ?? Number.MAX_SAFE_INTEGER;
       const secondDayOrder = dayOrder.get(secondSlot.dayLabel) ?? Number.MAX_SAFE_INTEGER;
@@ -119,7 +100,15 @@ export function PublicBarberProfile({
       if (firstDayOrder !== secondDayOrder) return firstDayOrder - secondDayOrder;
 
       return getSlotStartTime(firstSlot.slot).localeCompare(getSlotStartTime(secondSlot.slot));
-    });
+    })
+    .reduce<GroupedSlot[]>((groups, item) => {
+      const currentGroup = groups.find((group) => group.dayLabel === item.dayLabel);
+
+      if (currentGroup) currentGroup.slots.push(item.slot);
+      else groups.push({ dayLabel: item.dayLabel, slots: [item.slot] });
+
+      return groups;
+    }, []);
   const ratingCount = barber.ratingCount ?? 128;
 
   const handleCalendarClick = (slot: TimeSlot) => {
@@ -141,22 +130,13 @@ export function PublicBarberProfile({
                   {barber.name}
                 </h1>
               </div>
-              <div className="flex shrink-0 gap-2 pt-1">
-                <button
-                  aria-label="Seguir peluquero"
-                  className="grid h-10 w-10 place-items-center rounded-full bg-zinc-50 text-lg ring-1 ring-zinc-200 transition active:scale-95"
-                  type="button"
-                >
-                  ♡
-                </button>
-                <button
-                  aria-label="Enviar mensaje"
-                  className="grid h-10 w-10 place-items-center rounded-full bg-zinc-50 text-lg ring-1 ring-zinc-200 transition active:scale-95"
-                  type="button"
-                >
-                  ✉
-                </button>
-              </div>
+              <button
+                aria-label="Seguir peluquero"
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-zinc-50 text-lg ring-1 ring-zinc-200 transition active:scale-95"
+                type="button"
+              >
+                ♡
+              </button>
             </div>
             <div className="mt-5 flex flex-nowrap items-center gap-3 text-sm font-black">
               <span className="whitespace-nowrap rounded-full bg-zinc-50 px-3 py-1.5 text-zinc-950 ring-1 ring-zinc-200">
@@ -202,33 +182,39 @@ export function PublicBarberProfile({
               Este peluquero aún no configuró sus horarios.
             </div>
           ) : null}
-          {sortedAvailableSlots.map(({ slot, dayLabel }, index) => (
-            <div
-              className={`flex w-full items-center gap-3 rounded-[1.35rem] p-3 text-left ring-1 transition ${
-                selectedSlot?.id === slot.id
-                  ? "bg-green-50 ring-[#16A34A]"
-                  : "bg-white ring-zinc-200"
-              }`}
-              key={slot.id}
-            >
-              <div className="grid h-11 w-11 place-items-center rounded-2xl bg-zinc-50 text-sm font-black text-zinc-950 ring-1 ring-zinc-200">
-                {dayLabel || scheduleDays[index % scheduleDays.length]}
+          {groupedSlots.map((group) => (
+            <div className="space-y-2" key={group.dayLabel}>
+              <div className="inline-flex rounded-full bg-[#16A34A] px-4 py-2 text-sm font-black text-white shadow-sm shadow-green-600/20">
+                {group.dayLabel}
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-base font-black text-zinc-950">{formatSlotRange(slot)}</p>
-                <p className="mt-1 flex items-center gap-2 text-xs font-black text-[#16A34A]">
-                  <span className="h-2 w-2 rounded-full bg-[#16A34A]" />
-                  Disponible
-                </p>
+              <div className="space-y-2">
+                {group.slots.map((slot) => (
+                  <div
+                    className={`flex w-full items-center gap-3 rounded-[1.35rem] p-3 text-left ring-1 transition ${
+                      selectedSlot?.id === slot.id
+                        ? "bg-green-50 ring-[#16A34A]"
+                        : "bg-white ring-zinc-200"
+                    }`}
+                    key={slot.id}
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-base font-black text-zinc-950">{formatSlotRange(slot)}</p>
+                      <p className="mt-1 flex items-center gap-2 text-xs font-black text-[#16A34A]">
+                        <span className="h-2 w-2 rounded-full bg-[#16A34A]" />
+                        Disponible
+                      </p>
+                    </div>
+                    <button
+                      aria-label={`Elegir servicio para ${formatSlotRange(slot)}`}
+                      className="grid h-11 w-11 place-items-center rounded-full bg-[#16A34A] text-lg text-white shadow-lg shadow-green-600/25 transition active:scale-95"
+                      onClick={() => handleCalendarClick(slot)}
+                      type="button"
+                    >
+                      🗓
+                    </button>
+                  </div>
+                ))}
               </div>
-              <button
-                aria-label={`Elegir servicio para ${formatSlotRange(slot)}`}
-                className="grid h-11 w-11 place-items-center rounded-full bg-[#16A34A] text-lg text-white shadow-lg shadow-green-600/25 transition active:scale-95"
-                onClick={() => handleCalendarClick(slot)}
-                type="button"
-              >
-                ◷
-              </button>
             </div>
           ))}
         </div>
