@@ -338,7 +338,7 @@ export default function Home() {
         onClose={() => setModalOpen(false)}
         onConfirm={() => {
           setModalOpen(false);
-          setConfirmed(true);
+          setConfirmed(false);
         }}
         open={modalOpen}
         service={selectedService}

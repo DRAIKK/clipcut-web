@@ -1,5 +1,6 @@
 import type { Service, TimeSlot } from "../types/booking";
 import { ServiceCard } from "./ServiceCard";
+import { formatSlotRange } from "./slot-format";
 
 type BookingModalProps = {
   open: boolean;
@@ -34,10 +35,10 @@ export function BookingModal({
         <div className="mx-auto mb-5 h-1.5 w-12 rounded-full bg-zinc-200" />
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#16A34A]">
-              Elegí tu servicio
+            <h2 className="text-2xl font-black text-zinc-950">Elige un servicio</h2>
+            <p className="mt-1 text-xs font-bold uppercase tracking-[0.2em] text-[#16A34A]">
+              Selección visual
             </p>
-            <h2 className="mt-1 text-2xl font-black text-zinc-950">Confirmá tu turno</h2>
           </div>
           <button
             aria-label="Cerrar modal"
@@ -53,7 +54,7 @@ export function BookingModal({
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">
             Horario seleccionado
           </p>
-          <p className="mt-1 font-black text-zinc-950">{slot?.label ?? "Elegí un horario"}</p>
+          <p className="mt-1 font-black text-zinc-950">{slot ? formatSlotRange(slot) : "Elegí un horario"}</p>
         </div>
 
         <div className="mt-5 space-y-3">
@@ -85,7 +86,7 @@ export function BookingModal({
           onClick={onConfirm}
           type="button"
         >
-          Continuar mock
+          Continuar visual
         </button>
       </div>
     </div>
