@@ -13,9 +13,81 @@ type PublicBarberProfileProps = {
 };
 
 const scheduleDays = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
+const zeroBasedScheduleDays = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+const dayOrder = new Map(scheduleDays.map((day, index) => [day, index]));
+const timePattern = /\b\d{1,2}:\d{2}\b/g;
+const dayAliases: Record<string, string> = {
+  domingo: "Dom",
+  dom: "Dom",
+  jueves: "Jue",
+  jue: "Jue",
+  lunes: "Lun",
+  lun: "Lun",
+  martes: "Mar",
+  mar: "Mar",
+  miercoles: "Mié",
+  miércoles: "Mié",
+  mie: "Mié",
+  mié: "Mié",
+  sabado: "Sáb",
+  sábado: "Sáb",
+  sab: "Sáb",
+  sáb: "Sáb",
+  viernes: "Vie",
+  vie: "Vie",
+};
+
+function getDayNumber(slot: TimeSlot) {
+  if (!slot.day) return null;
+
+  const parsedDay = Number(slot.day);
+  return Number.isInteger(parsedDay) ? parsedDay : null;
+}
+
+function getDayLabels(slots: TimeSlot[]) {
+  const dayNumbers = slots
+    .map(getDayNumber)
+    .filter((dayNumber): dayNumber is number => dayNumber !== null);
+  const usesZeroBasedWeek = dayNumbers.some((dayNumber) => dayNumber === 0);
+
+  return slots.map((slot) => {
+    const dayNumber = getDayNumber(slot);
+
+    if (dayNumber !== null) {
+      const numericLabel = usesZeroBasedWeek
+        ? zeroBasedScheduleDays[dayNumber]
+        : scheduleDays[dayNumber - 1];
+
+      return numericLabel ?? "";
+    }
+
+    const normalizedDay = dayAliases[slot.day?.trim().toLowerCase() ?? ""];
+
+    return normalizedDay ?? slot.day?.trim() ?? "";
+  });
+}
+
+function getSlotStartTime(slot: TimeSlot) {
+  const labelTimes = slot.label.match(timePattern) ?? [];
+
+  return slot.startTime || labelTimes[0] || "";
+}
+
+function getSlotEndTime(slot: TimeSlot) {
+  const labelTimes = slot.label.match(timePattern) ?? [];
+
+  return slot.endTime || labelTimes[1] || "";
+}
 
 function formatSlotRange(slot: TimeSlot) {
-  if (slot.endTime) return `${slot.label}–${slot.endTime}`;
+  const startTime = getSlotStartTime(slot);
+  const endTime = getSlotEndTime(slot);
+
+  if (startTime && endTime) return `${startTime} - ${endTime}`;
+  if (startTime) return startTime;
+  if (endTime) return endTime;
+
+  if (slot.label.includes(" - ")) return slot.label;
 
   const [hour, minute] = slot.label.split(":").map(Number);
   if (!Number.isFinite(hour) || !Number.isFinite(minute)) return slot.label;
@@ -24,7 +96,7 @@ function formatSlotRange(slot: TimeSlot) {
   const end = new Date(start.getTime() + 30 * 60 * 1000);
   const endLabel = `${String(end.getHours()).padStart(2, "0")}:${String(end.getMinutes()).padStart(2, "0")}`;
 
-  return `${slot.label}–${endLabel}`;
+  return `${slot.label} - ${endLabel}`;
 }
 
 export function PublicBarberProfile({
@@ -37,6 +109,17 @@ export function PublicBarberProfile({
   loading = false,
 }: PublicBarberProfileProps) {
   const availableSlots = slots.filter((slot) => slot.available);
+  const dayLabels = getDayLabels(availableSlots);
+  const sortedAvailableSlots = availableSlots
+    .map((slot, index) => ({ slot, dayLabel: dayLabels[index] }))
+    .sort((firstSlot, secondSlot) => {
+      const firstDayOrder = dayOrder.get(firstSlot.dayLabel) ?? Number.MAX_SAFE_INTEGER;
+      const secondDayOrder = dayOrder.get(secondSlot.dayLabel) ?? Number.MAX_SAFE_INTEGER;
+
+      if (firstDayOrder !== secondDayOrder) return firstDayOrder - secondDayOrder;
+
+      return getSlotStartTime(firstSlot.slot).localeCompare(getSlotStartTime(secondSlot.slot));
+    });
   const ratingCount = barber.ratingCount ?? 128;
 
   const handleCalendarClick = (slot: TimeSlot) => {
@@ -119,7 +202,7 @@ export function PublicBarberProfile({
               Este peluquero aún no configuró sus horarios.
             </div>
           ) : null}
-          {availableSlots.map((slot, index) => (
+          {sortedAvailableSlots.map(({ slot, dayLabel }, index) => (
             <div
               className={`flex w-full items-center gap-3 rounded-[1.35rem] p-3 text-left ring-1 transition ${
                 selectedSlot?.id === slot.id
@@ -129,7 +212,7 @@ export function PublicBarberProfile({
               key={slot.id}
             >
               <div className="grid h-11 w-11 place-items-center rounded-2xl bg-zinc-50 text-sm font-black text-zinc-950 ring-1 ring-zinc-200">
-                {slot.day || scheduleDays[index % scheduleDays.length]}
+                {dayLabel || scheduleDays[index % scheduleDays.length]}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="text-base font-black text-zinc-950">{formatSlotRange(slot)}</p>
