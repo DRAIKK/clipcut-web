@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { BookingModal } from "./components/BookingModal";
 import { LoginScreen } from "./components/LoginScreen";
@@ -21,9 +21,10 @@ import {
 } from "./data/mockBooking";
 import { getAuthErrorMessage, getOrCreateClientProfile, loginClient, logoutClient, registerClient } from "../lib/client-auth";
 import { auth } from "../lib/firebase";
-import { getBarberById, getBarberServices, getBarbers, getBarberSlots } from "../lib/firestore-read";
+import { getBarberById, getBarberServices, getBarbers, getBarberSlots, getClientBookings } from "../lib/firestore-read";
+import { createBooking } from "../lib/firestore-bookings";
 import { BarberAppModal } from "./components/BarberAppModal";
-import type { Barber, Service, TimeSlot } from "./types/booking";
+import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "./types/booking";
 
 type AuthView = "checking" | "login" | "register" | "app";
 
@@ -45,10 +46,17 @@ export default function Home() {
   const [profileLoading, setProfileLoading] = useState(false);
   const [servicesLoading, setServicesLoading] = useState(false);
   const [firebaseFailed, setFirebaseFailed] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodId>();
+  const [bookingError, setBookingError] = useState("");
+  const [bookingSubmitting, setBookingSubmitting] = useState(false);
+  const [clientBookings, setClientBookings] = useState<Booking[]>([]);
+  const [bookingsLoading, setBookingsLoading] = useState(false);
 
   const selectedBarberId = selectedBarber?.id;
   const visibleBarbers = firebaseFailed ? nearbyBarbers : firebaseBarbers;
   const visibleSearchBarbers = firebaseFailed ? searchBarbers : firebaseBarbers;
+  const currentUserId = auth?.currentUser?.uid ?? "";
+  const activeBooking = useMemo(() => clientBookings.find((booking) => booking.status !== "cancelled"), [clientBookings]);
 
   useEffect(() => {
     let ignore = false;
@@ -165,6 +173,8 @@ export default function Home() {
     setSelectedBarber(barber);
     setSelectedSlot(undefined);
     setSelectedService(undefined);
+    setSelectedPaymentMethod(undefined);
+    setBookingError("");
     setProfileSlots(firebaseFailed ? mockTimeSlots : []);
     setProfileServices(firebaseFailed ? mockServices : []);
     setActiveTab("search");
@@ -192,6 +202,9 @@ export default function Home() {
         setSelectedService((currentService) =>
           currentService && services.some((service) => service.id === currentService.id) ? currentService : undefined
         );
+        setSelectedPaymentMethod((currentMethod) =>
+          currentMethod && freshBarber.paymentMethods?.some((method) => method.id === currentMethod) ? currentMethod : undefined
+        );
       } catch (error) {
         console.warn("No se pudo cargar el perfil desde Firebase. Usando mocks.", error);
         if (!ignore) {
@@ -212,6 +225,83 @@ export default function Home() {
       ignore = true;
     };
   }, [firebaseFailed, selectedBarberId]);
+
+
+  useEffect(() => {
+    if (!currentUserId || authView !== "app") return;
+
+    let ignore = false;
+
+    async function loadBookings() {
+      setBookingsLoading(true);
+      try {
+        const bookings = await getClientBookings(currentUserId);
+        if (!ignore) setClientBookings(bookings);
+      } catch (error) {
+        console.warn("No se pudieron cargar reservas reales.", error);
+        if (!ignore) setClientBookings([]);
+      } finally {
+        if (!ignore) setBookingsLoading(false);
+      }
+    }
+
+    loadBookings();
+
+    return () => {
+      ignore = true;
+    };
+  }, [authView, currentUserId]);
+
+  const handleConfirmBooking = async () => {
+    setBookingError("");
+
+    if (!currentUserId) {
+      setBookingError("Iniciá sesión para reservar.");
+      return;
+    }
+    if (!selectedBarber || !selectedService || !selectedSlot || !selectedPaymentMethod) {
+      setBookingError("Elegí servicio, horario y método de pago para continuar.");
+      return;
+    }
+    if (!selectedSlot.available) {
+      setBookingError("Ese horario ya fue reservado. Elegí otro turno.");
+      return;
+    }
+
+    setBookingSubmitting(true);
+    try {
+      const booking = await createBooking({
+        barber: selectedBarber,
+        clientId: currentUserId,
+        paymentMethod: selectedPaymentMethod,
+        service: selectedService,
+        slot: selectedSlot,
+      });
+
+      if (selectedPaymentMethod === "transfer") {
+        const response = await fetch("/api/mp/create-preference", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ bookingId: booking.id, barberId: selectedBarber.id, clientId: currentUserId }),
+        });
+
+        if (!response.ok) throw new Error("No se pudo iniciar Mercado Pago. Probá nuevamente.");
+        const preference = await response.json();
+        const checkoutUrl = preference.init_point ?? preference.url ?? preference.checkoutUrl;
+        if (!checkoutUrl) throw new Error("Mercado Pago no devolvió un link de pago.");
+        window.location.href = checkoutUrl;
+        return;
+      }
+
+      setClientBookings((current) => [{ ...booking, dateTime: [booking.day, booking.startTime].filter(Boolean).join(" · ") }, ...current]);
+      setModalOpen(false);
+      setConfirmed(true);
+    } catch (error) {
+      setBookingError(error instanceof Error ? error.message : "No se pudo crear la reserva. Intentá nuevamente.");
+    } finally {
+      setBookingSubmitting(false);
+    }
+  };
 
   const renderReservationFlow = () => (
     <PublicBarberProfile
@@ -243,7 +333,7 @@ export default function Home() {
           </p>
           <h1 className="mt-2 text-3xl font-black tracking-tight">¡Tu turno está listo!</h1>
           <p className="mt-3 text-sm leading-6 text-zinc-500">
-            Te esperamos para {selectedService?.name} a las {selectedSlot?.label}. Esta es una confirmación mock para la versión web de Clipcut.
+            Solicitud enviada al peluquero.
           </p>
           <div className="mt-6 rounded-3xl bg-zinc-50 p-4 text-left">
             <p className="text-sm font-black text-zinc-950">{(selectedBarber ?? mockBarber).name}</p>
@@ -269,12 +359,13 @@ export default function Home() {
           setActiveTab("search");
         }}
         onSelectBarber={openBarberProfile}
+        activeBooking={activeBooking}
       />
     );
   } else if (activeTab === "search") {
     content = selectedBarber ? renderReservationFlow() : <SearchScreen barbers={visibleSearchBarbers} loading={barbersLoading} onSelectBarber={openBarberProfile} />;
   } else if (activeTab === "bookings") {
-    content = <BookingsScreen />;
+    content = <BookingsScreen bookings={clientBookings} loading={bookingsLoading} />;
   } else {
     content = <ProfileScreen onLogout={handleLogout} />;
   }
@@ -330,22 +421,26 @@ export default function Home() {
             setSelectedBarber(undefined);
             setSelectedService(undefined);
             setSelectedSlot(undefined);
+            setSelectedPaymentMethod(undefined);
+            setBookingError("");
           }
           setActiveTab(tab);
         }}
       />
       <BookingModal
         onClose={() => setModalOpen(false)}
-        onConfirm={() => {
-          setModalOpen(false);
-          setConfirmed(false);
-        }}
+        onConfirm={handleConfirmBooking}
         open={modalOpen}
         service={selectedService}
         services={profileServices}
         servicesLoading={servicesLoading}
         emptyServicesMessage="Este peluquero todavía no agregó servicios."
         slot={selectedSlot}
+        paymentMethods={selectedBarber?.paymentMethods ?? []}
+        selectedPaymentMethod={selectedPaymentMethod}
+        onSelectPaymentMethod={setSelectedPaymentMethod}
+        error={bookingError}
+        submitting={bookingSubmitting}
         onSelectService={setSelectedService}
       />
     </main>

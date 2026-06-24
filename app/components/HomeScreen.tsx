@@ -1,4 +1,4 @@
-import type { Barber } from "../types/booking";
+import type { Barber, Booking } from "../types/booking";
 import { BarberMiniCard } from "./BarberMiniCard";
 import { LogoHeader } from "./LogoHeader";
 
@@ -7,17 +7,28 @@ type HomeScreenProps = {
   onSelectBarber: (barber: Barber) => void;
   onSearchBarbers: () => void;
   loading?: boolean;
+  activeBooking?: Booking;
 };
 
 export function HomeScreen({
   barbers,
   loading = false,
+  activeBooking,
   onSearchBarbers,
   onSelectBarber,
 }: HomeScreenProps) {
   return (
     <div className="space-y-8">
       <LogoHeader />
+
+      {activeBooking ? (
+        <section className="rounded-[2rem] bg-white p-5 shadow-sm ring-1 ring-green-200">
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-green-600">Tu próxima reserva</p>
+          <h2 className="mt-2 text-xl font-black text-zinc-950">{activeBooking.serviceName}</h2>
+          <p className="mt-2 text-sm font-bold text-zinc-500">{activeBooking.dateTime || "Horario a confirmar"}</p>
+          {activeBooking.barberName ? <p className="mt-1 text-sm font-black text-zinc-800">{activeBooking.barberName}</p> : null}
+        </section>
+      ) : null}
 
       <section className="space-y-4">
         <h2 className="text-sm font-black uppercase tracking-[0.18em] text-zinc-900">
