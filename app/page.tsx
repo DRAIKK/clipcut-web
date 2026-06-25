@@ -24,6 +24,7 @@ import {
   getAuthErrorMessage,
   getOrCreateClientProfile,
   loginClient,
+  loginWithGoogle,
   logoutClient,
   registerClient,
   removeClientPhoto,
@@ -207,6 +208,32 @@ export default function Home() {
 
     try {
       const result = await loginClient(email.trim(), password);
+
+      if (result.status === "barber") {
+        setBarberModalOpen(true);
+        await logoutClient();
+        setClientProfile(undefined);
+        setAuthView("login");
+        return;
+      }
+
+      console.log("client profile loaded", result.profile.uid, result.profile);
+      setClientProfile(result.profile);
+      setAuthView("app");
+    } catch (error) {
+      setAuthError(getAuthErrorMessage(error));
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+
+  const handleGoogleLogin = async () => {
+    setAuthLoading(true);
+    setAuthError("");
+
+    try {
+      const result = await loginWithGoogle();
 
       if (result.status === "barber") {
         setBarberModalOpen(true);
@@ -524,6 +551,7 @@ export default function Home() {
             setAuthView("register");
           }}
           onEnter={handleLogin}
+          onGoogle={handleGoogleLogin}
         />
         <BarberAppModal onClose={() => setBarberModalOpen(false)} open={barberModalOpen} />
       </>
@@ -532,15 +560,19 @@ export default function Home() {
 
   if (authView === "register") {
     return (
-      <RegisterScreen
-        error={authError}
-        loading={authLoading}
-        onEnter={handleRegister}
-        onLogin={() => {
-          setAuthError("");
-          setAuthView("login");
-        }}
-      />
+      <>
+        <RegisterScreen
+          error={authError}
+          loading={authLoading}
+          onEnter={handleRegister}
+          onGoogle={handleGoogleLogin}
+          onLogin={() => {
+            setAuthError("");
+            setAuthView("login");
+          }}
+        />
+        <BarberAppModal onClose={() => setBarberModalOpen(false)} open={barberModalOpen} />
+      </>
     );
   }
 

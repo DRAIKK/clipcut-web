@@ -9,17 +9,30 @@ type LoginScreenProps = {
   loading?: boolean;
   onCreateAccount: () => void;
   onEnter: (email: string, password: string) => void;
+  onGoogle: () => void;
 };
 
-function SocialButton({ className, label }: { className: string; label: string }) {
+type SocialButtonProps = {
+  className: string;
+  disabled?: boolean;
+  label: string;
+  onClick?: () => void;
+};
+
+function SocialButton({ className, disabled = false, label, onClick }: SocialButtonProps) {
   return (
-    <button className={`h-14 w-full rounded-[1.15rem] text-sm font-black transition active:scale-[0.98] ${className}`} type="button">
+    <button
+      className={`h-14 w-full rounded-[1.15rem] text-sm font-black transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 ${className}`}
+      disabled={disabled}
+      onClick={onClick}
+      type="button"
+    >
       {label}
     </button>
   );
 }
 
-export function LoginScreen({ error, loading = false, onCreateAccount, onEnter }: LoginScreenProps) {
+export function LoginScreen({ error, loading = false, onCreateAccount, onEnter, onGoogle }: LoginScreenProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -52,7 +65,12 @@ export function LoginScreen({ error, loading = false, onCreateAccount, onEnter }
       </div>
 
       <div className="space-y-3">
-        <SocialButton className="border border-zinc-200 bg-white text-zinc-950 shadow-sm" label="Continuar con Google" />
+        <SocialButton
+          className="border border-zinc-200 bg-white text-zinc-950 shadow-sm"
+          disabled={loading}
+          label={loading ? "Conectando con Google..." : "Continuar con Google"}
+          onClick={onGoogle}
+        />
         <SocialButton className="bg-zinc-950 text-white shadow-lg shadow-zinc-950/15" label="Continuar con Apple" />
       </div>
 
