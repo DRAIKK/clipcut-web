@@ -1,7 +1,7 @@
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
-import type { Coordinates } from "./distance";
+import { normalizeCoordinates, type Coordinates } from "./distance";
 
 export type ClientProfile = {
   uid: string;
@@ -52,10 +52,12 @@ function getProfileCoordinates(data: Record<string, unknown>): Coordinates | und
   ].filter((source): source is Record<string, unknown> => Boolean(source));
 
   for (const source of coordinateSources) {
-    const latitude = getCoordinateNumber(source, ["lat", "latitude", "_lat"]);
-    const longitude = getCoordinateNumber(source, ["lng", "longitude", "lon", "_long"]);
+    const coordinates = normalizeCoordinates({
+      latitude: getCoordinateNumber(source, ["lat", "latitude", "_lat"]),
+      longitude: getCoordinateNumber(source, ["lng", "longitude", "lon", "_long"]),
+    });
 
-    if (Number.isFinite(latitude) && Number.isFinite(longitude)) return { latitude, longitude };
+    if (coordinates) return coordinates;
   }
 
   return undefined;
