@@ -8,6 +8,8 @@ type HomeScreenProps = {
   onSearchBarbers: () => void;
   loading?: boolean;
   activeBooking?: Booking;
+  onRequestLocation?: () => void;
+  showLocationHint?: boolean;
 };
 
 export function HomeScreen({
@@ -16,6 +18,8 @@ export function HomeScreen({
   activeBooking,
   onSearchBarbers,
   onSelectBarber,
+  onRequestLocation,
+  showLocationHint = false,
 }: HomeScreenProps) {
   return (
     <div className="space-y-8">
@@ -34,6 +38,15 @@ export function HomeScreen({
         <h2 className="text-sm font-black uppercase tracking-[0.18em] text-zinc-900">
           Peluqueros cerca
         </h2>
+        {showLocationHint ? (
+          <button
+            className="rounded-full bg-white px-4 py-2 text-xs font-black text-green-700 shadow-sm ring-1 ring-green-100 transition active:scale-[0.98]"
+            onClick={onRequestLocation}
+            type="button"
+          >
+            Activar ubicación para ver peluqueros cerca
+          </button>
+        ) : null}
         <div className="scrollbar-hide -mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
           {loading ? (
             <div className="h-44 w-36 shrink-0 rounded-[1.75rem] bg-white p-4 text-sm font-black text-zinc-400 shadow-sm ring-1 ring-zinc-200">

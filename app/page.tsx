@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { BookingModal } from "./components/BookingModal";
 import { LoginScreen } from "./components/LoginScreen";
@@ -52,20 +52,39 @@ export default function Home() {
   const [bookingSubmitting, setBookingSubmitting] = useState(false);
   const [clientBookings, setClientBookings] = useState<Booking[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
-  const [clientCoordinates, setClientCoordinates] = useState<Coordinates>();
+  const [browserLocation, setBrowserLocation] = useState<Coordinates>();
+  const [locationRequested, setLocationRequested] = useState(false);
 
   const selectedBarberId = selectedBarber?.id;
-  const prepareDistanceList = (barbers: Barber[]) => {
-    console.log("client location", clientCoordinates);
+  const requestBrowserLocation = useCallback(() => {
+    if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
+      setLocationRequested(true);
+      setBrowserLocation(undefined);
+      return;
+    }
+
+    setLocationRequested(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setBrowserLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+      },
+      () => {
+        setBrowserLocation(undefined);
+      },
+      { enableHighAccuracy: false, maximumAge: 5 * 60 * 1000, timeout: 8000 }
+    );
+  }, []);
+
+  const prepareDistanceList = useCallback((barbers: Barber[]) => {
+    console.log("browser location", browserLocation);
 
     return barbers
       .map((barber, index) => {
-        const distanceKm = calculateDistanceKm(
-          clientCoordinates?.latitude,
-          clientCoordinates?.longitude,
-          barber.coordinates?.latitude,
-          barber.coordinates?.longitude
-        );
+        const barberLocation = barber.location ?? barber.coordinates;
+        const distanceKm = calculateDistanceKm(browserLocation, barberLocation);
         const hasRealDistance = distanceKm !== undefined;
         const mappedBarber = {
           ...barber,
@@ -74,12 +93,12 @@ export default function Home() {
           originalIndex: index,
         };
 
-        console.log("barber location", barber.id, barber.coordinates);
+        console.log("barber location", barber.id, barberLocation);
         console.log("distance km", barber.id, mappedBarber.distanceKm);
 
         return mappedBarber;
       })
-      .filter((barber) => barber.distanceKm === undefined || barber.distanceKm <= 20)
+      .filter((barber) => !browserLocation || (barber.distanceKm !== undefined && barber.distanceKm <= 20))
       .sort((firstBarber, secondBarber) => {
         const firstDistance = firstBarber.distanceKm;
         const secondDistance = secondBarber.distanceKm;
@@ -88,10 +107,7 @@ export default function Home() {
         if (firstDistance !== undefined) return -1;
         if (secondDistance !== undefined) return 1;
 
-        return (
-          firstBarber.name.localeCompare(secondBarber.name, "es", { sensitivity: "base" }) ||
-          firstBarber.originalIndex - secondBarber.originalIndex
-        );
+        return firstBarber.originalIndex - secondBarber.originalIndex;
       })
       .slice(0, 20)
       .map((barber) => {
@@ -99,9 +115,15 @@ export default function Home() {
         void originalIndex;
         return visibleBarber;
       });
-  };
-  const visibleBarbers = prepareDistanceList(firebaseFailed ? nearbyBarbers : firebaseBarbers);
-  const visibleSearchBarbers = prepareDistanceList(firebaseFailed ? searchBarbers : firebaseBarbers);
+  }, [browserLocation]);
+  const visibleBarbers = useMemo(
+    () => prepareDistanceList(firebaseFailed ? nearbyBarbers : firebaseBarbers),
+    [firebaseBarbers, firebaseFailed, prepareDistanceList]
+  );
+  const visibleSearchBarbers = useMemo(
+    () => prepareDistanceList(firebaseFailed ? searchBarbers : firebaseBarbers),
+    [firebaseBarbers, firebaseFailed, prepareDistanceList]
+  );
   const currentUserId = auth?.currentUser?.uid ?? "";
   const activeBooking = useMemo(() => clientBookings.find((booking) => booking.status !== "cancelled"), [clientBookings]);
 
@@ -157,8 +179,6 @@ export default function Home() {
         }
 
         console.log("client profile loaded", user.uid, result.profile);
-        console.log("client location", result.profile.coordinates);
-        setClientCoordinates(result.profile.coordinates);
         setAuthView("app");
       } catch (error) {
         setAuthError(getAuthErrorMessage(error));
@@ -187,8 +207,6 @@ export default function Home() {
       }
 
       console.log("client profile loaded", result.profile.uid, result.profile);
-      console.log("client location", result.profile.coordinates);
-      setClientCoordinates(result.profile.coordinates);
       setAuthView("app");
     } catch (error) {
       setAuthError(getAuthErrorMessage(error));
@@ -208,7 +226,6 @@ export default function Home() {
 
     try {
       await registerClient(fullName, email.trim(), password);
-      setClientCoordinates(undefined);
       setAuthView("app");
     } catch (error) {
       setAuthError(getAuthErrorMessage(error));
@@ -233,6 +250,13 @@ export default function Home() {
     setProfileServices(firebaseFailed ? mockServices : []);
     setActiveTab("search");
   };
+  useEffect(() => {
+    if (authView !== "app" || locationRequested) return;
+    if (activeTab !== "home" && activeTab !== "search") return;
+
+    requestBrowserLocation();
+  }, [activeTab, authView, locationRequested, requestBrowserLocation]);
+
 
   useEffect(() => {
     if (!selectedBarberId) return;
@@ -419,10 +443,18 @@ export default function Home() {
         }}
         onSelectBarber={openBarberProfile}
         activeBooking={activeBooking}
+        onRequestLocation={requestBrowserLocation}
+        showLocationHint={!browserLocation}
       />
     );
   } else if (activeTab === "search") {
-    content = selectedBarber ? renderReservationFlow() : <SearchScreen barbers={visibleSearchBarbers} loading={barbersLoading} onSelectBarber={openBarberProfile} />;
+    content = selectedBarber ? renderReservationFlow() : <SearchScreen
+        barbers={visibleSearchBarbers}
+        loading={barbersLoading}
+        onRequestLocation={requestBrowserLocation}
+        onSelectBarber={openBarberProfile}
+        showLocationHint={!browserLocation}
+      />;
   } else if (activeTab === "bookings") {
     content = <BookingsScreen bookings={clientBookings} loading={bookingsLoading} />;
   } else {

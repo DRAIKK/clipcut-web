@@ -19,6 +19,7 @@ export type Barber = {
   distance: string;
   distanceKm?: number;
   coordinates?: Coordinates;
+  location?: Coordinates;
   initials: string;
   photoUrl?: string;
   paymentMethods?: PaymentMethod[];
