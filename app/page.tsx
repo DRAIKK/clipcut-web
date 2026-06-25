@@ -19,7 +19,17 @@ import {
   nearbyBarbers,
   searchBarbers,
 } from "./data/mockBooking";
-import { getAuthErrorMessage, getOrCreateClientProfile, loginClient, logoutClient, registerClient } from "../lib/client-auth";
+import {
+  deleteClientAccount,
+  getAuthErrorMessage,
+  getOrCreateClientProfile,
+  loginClient,
+  logoutClient,
+  registerClient,
+  removeClientPhoto,
+  updateClientPhoto,
+  type ClientProfile,
+} from "../lib/client-auth";
 import { auth } from "../lib/firebase";
 import { getBarberById, getBarberServices, getBarbers, getBarberSlots, getClientBookings } from "../lib/firestore-read";
 import { createBooking } from "../lib/firestore-bookings";
@@ -54,6 +64,7 @@ export default function Home() {
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [browserLocation, setBrowserLocation] = useState<Coordinates>();
   const [locationRequested, setLocationRequested] = useState(false);
+  const [clientProfile, setClientProfile] = useState<ClientProfile>();
 
   const selectedBarberId = selectedBarber?.id;
   const requestBrowserLocation = useCallback(() => {
@@ -78,9 +89,7 @@ export default function Home() {
     );
   }, []);
 
-  const prepareDistanceList = useCallback((barbers: Barber[]) => {
-    console.log("browser location", browserLocation);
-
+  const prepareDistanceList = useCallback((barbers: Barber[], options?: { maxDistanceKm?: number; limit?: number }) => {
     return barbers
       .map((barber, index) => {
         const barberLocation = barber.location ?? barber.coordinates;
@@ -93,12 +102,9 @@ export default function Home() {
           originalIndex: index,
         };
 
-        console.log("barber location", barber.id, barberLocation);
-        console.log("distance km", barber.id, mappedBarber.distanceKm);
-
         return mappedBarber;
       })
-      .filter((barber) => !browserLocation || (barber.distanceKm !== undefined && barber.distanceKm <= 20))
+      .filter((barber) => !browserLocation || options?.maxDistanceKm === undefined || (barber.distanceKm !== undefined && barber.distanceKm <= options.maxDistanceKm))
       .sort((firstBarber, secondBarber) => {
         const firstDistance = firstBarber.distanceKm;
         const secondDistance = secondBarber.distanceKm;
@@ -109,7 +115,7 @@ export default function Home() {
 
         return firstBarber.originalIndex - secondBarber.originalIndex;
       })
-      .slice(0, 20)
+      .slice(0, options?.limit)
       .map((barber) => {
         const { originalIndex, ...visibleBarber } = barber;
         void originalIndex;
@@ -117,7 +123,7 @@ export default function Home() {
       });
   }, [browserLocation]);
   const visibleBarbers = useMemo(
-    () => prepareDistanceList(firebaseFailed ? nearbyBarbers : firebaseBarbers),
+    () => prepareDistanceList(firebaseFailed ? nearbyBarbers : firebaseBarbers, { maxDistanceKm: 20, limit: 20 }),
     [firebaseBarbers, firebaseFailed, prepareDistanceList]
   );
   const visibleSearchBarbers = useMemo(
@@ -164,6 +170,7 @@ export default function Home() {
       setAuthError("");
 
       if (!user) {
+        setClientProfile(undefined);
         setAuthView("login");
         return;
       }
@@ -174,11 +181,13 @@ export default function Home() {
         if (result.status === "barber") {
           setBarberModalOpen(true);
           await logoutClient();
+          setClientProfile(undefined);
           setAuthView("login");
           return;
         }
 
         console.log("client profile loaded", user.uid, result.profile);
+        setClientProfile(result.profile);
         setAuthView("app");
       } catch (error) {
         setAuthError(getAuthErrorMessage(error));
@@ -202,11 +211,13 @@ export default function Home() {
       if (result.status === "barber") {
         setBarberModalOpen(true);
         await logoutClient();
+        setClientProfile(undefined);
         setAuthView("login");
         return;
       }
 
       console.log("client profile loaded", result.profile.uid, result.profile);
+      setClientProfile(result.profile);
       setAuthView("app");
     } catch (error) {
       setAuthError(getAuthErrorMessage(error));
@@ -225,7 +236,8 @@ export default function Home() {
     setAuthError("");
 
     try {
-      await registerClient(fullName, email.trim(), password);
+      const result = await registerClient(fullName, email.trim(), password);
+      setClientProfile(result.profile);
       setAuthView("app");
     } catch (error) {
       setAuthError(getAuthErrorMessage(error));
@@ -236,8 +248,26 @@ export default function Home() {
 
   const handleLogout = async () => {
     await logoutClient();
+    setClientProfile(undefined);
     setActiveTab("home");
     setAuthView("login");
+  };
+
+  const handleDeleteAccount = async () => {
+    await deleteClientAccount();
+    setClientProfile(undefined);
+    setActiveTab("home");
+    setAuthView("login");
+  };
+
+  const handleUpdatePhoto = async (file: File) => {
+    const photoURL = await updateClientPhoto(file);
+    setClientProfile((profile) => (profile ? { ...profile, photoURL } : profile));
+  };
+
+  const handleRemovePhoto = async () => {
+    await removeClientPhoto();
+    setClientProfile((profile) => (profile ? { ...profile, photoURL: "" } : profile));
   };
 
   const openBarberProfile = (barber: Barber) => {
@@ -448,17 +478,29 @@ export default function Home() {
       />
     );
   } else if (activeTab === "search") {
-    content = selectedBarber ? renderReservationFlow() : <SearchScreen
+    content = selectedBarber ? (
+      renderReservationFlow()
+    ) : (
+      <SearchScreen
         barbers={visibleSearchBarbers}
         loading={barbersLoading}
         onRequestLocation={requestBrowserLocation}
         onSelectBarber={openBarberProfile}
         showLocationHint={!browserLocation}
-      />;
+      />
+    );
   } else if (activeTab === "bookings") {
     content = <BookingsScreen bookings={clientBookings} loading={bookingsLoading} />;
   } else {
-    content = <ProfileScreen onLogout={handleLogout} />;
+    content = (
+      <ProfileScreen
+        profile={clientProfile}
+        onDeleteAccount={handleDeleteAccount}
+        onLogout={handleLogout}
+        onRemovePhoto={handleRemovePhoto}
+        onUpdatePhoto={handleUpdatePhoto}
+      />
+    );
   }
 
 

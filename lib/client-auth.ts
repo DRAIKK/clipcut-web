@@ -1,6 +1,7 @@
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
-import { auth, db } from "./firebase";
+import { createUserWithEmailAndPassword, deleteUser, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
+import { deleteDoc, doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { auth, db, storage } from "./firebase";
 import { normalizeCoordinates, type Coordinates } from "./distance";
 
 export type ClientProfile = {
@@ -9,6 +10,7 @@ export type ClientProfile = {
   email: string;
   role: string;
   coordinates?: Coordinates;
+  photoURL?: string;
 };
 
 export type AuthResult =
@@ -117,6 +119,7 @@ export async function getOrCreateClientProfile(user: User, fullName?: string): P
           email: typeof data.email === "string" && data.email.trim() ? data.email : user.email ?? "",
           role: role || "cliente",
           coordinates: getProfileCoordinates(data),
+          photoURL: typeof data.photoURL === "string" ? data.photoURL : "",
         },
       };
     }
@@ -140,6 +143,7 @@ export async function getOrCreateClientProfile(user: User, fullName?: string): P
       fullName: profile.fullName,
       email: profile.email,
       role: profile.role,
+      photoURL: "",
     },
   };
 }
@@ -175,4 +179,36 @@ export async function registerClient(fullName: string, email: string, password: 
 export async function logoutClient() {
   const { auth } = requireFirebase();
   await signOut(auth);
+}
+
+export async function deleteClientAccount() {
+  const { auth, db } = requireFirebase();
+  const user = auth.currentUser;
+  if (!user) throw new Error("auth/no-current-user");
+
+  await deleteDoc(doc(db, "users", user.uid));
+  await deleteUser(user);
+}
+
+export async function updateClientPhoto(file: File) {
+  const { auth, db } = requireFirebase();
+  if (!storage) throw new Error("firebase-not-configured");
+  const user = auth.currentUser;
+  if (!user) throw new Error("auth/no-current-user");
+
+  const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
+  const photoRef = ref(storage, `users/${user.uid}/profile-photo.${extension}`);
+  await uploadBytes(photoRef, file);
+  const photoURL = await getDownloadURL(photoRef);
+  await updateDoc(doc(db, "users", user.uid), { photoURL });
+
+  return photoURL;
+}
+
+export async function removeClientPhoto() {
+  const { auth, db } = requireFirebase();
+  const user = auth.currentUser;
+  if (!user) throw new Error("auth/no-current-user");
+
+  await updateDoc(doc(db, "users", user.uid), { photoURL: "" });
 }
