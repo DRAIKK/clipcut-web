@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { BookingModal } from "./components/BookingModal";
+import { LandingScreen } from "./components/LandingScreen";
 import { LoginScreen } from "./components/LoginScreen";
 import { RegisterScreen } from "./components/RegisterScreen";
 import { BookingsScreen } from "./components/BookingsScreen";
@@ -38,7 +39,7 @@ import { calculateDistanceKm, formatDistanceKm, type Coordinates } from "../lib/
 import { BarberAppModal } from "./components/BarberAppModal";
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "./types/booking";
 
-type AuthView = "checking" | "login" | "register" | "app";
+type AuthView = "checking" | "landing" | "login" | "register" | "app";
 
 export default function Home() {
   const [selectedBarber, setSelectedBarber] = useState<Barber>();
@@ -163,7 +164,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!auth) {
-      setAuthView("login");
+      setAuthView("landing");
       return;
     }
 
@@ -172,7 +173,7 @@ export default function Home() {
 
       if (!user) {
         setClientProfile(undefined);
-        setAuthView("login");
+        setAuthView((currentView) => (currentView === "checking" ? "landing" : currentView));
         return;
       }
 
@@ -537,6 +538,15 @@ export default function Home() {
       <main className="grid min-h-dvh place-items-center bg-zinc-50 px-4 text-center text-sm font-black text-zinc-500">
         Cargando Clipcut...
       </main>
+    );
+  }
+
+  if (authView === "landing") {
+    return (
+      <>
+        <LandingScreen onBarberClick={() => setBarberModalOpen(true)} onUseClipcut={() => setAuthView("login")} />
+        <BarberAppModal onClose={() => setBarberModalOpen(false)} open={barberModalOpen} />
+      </>
     );
   }
 
