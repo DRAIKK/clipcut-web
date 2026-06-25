@@ -56,13 +56,16 @@ export default function Home() {
 
   const selectedBarberId = selectedBarber?.id;
   const prepareDistanceList = (barbers: Barber[]) => {
-    if (process.env.NODE_ENV === "development") {
-      console.log("client location", clientCoordinates);
-    }
+    console.log("client location", clientCoordinates);
 
     return barbers
       .map((barber, index) => {
-        const distanceKm = calculateDistanceKm(clientCoordinates, barber.coordinates);
+        const distanceKm = calculateDistanceKm(
+          clientCoordinates?.latitude,
+          clientCoordinates?.longitude,
+          barber.coordinates?.latitude,
+          barber.coordinates?.longitude
+        );
         const hasRealDistance = distanceKm !== undefined;
         const mappedBarber = {
           ...barber,
@@ -71,10 +74,8 @@ export default function Home() {
           originalIndex: index,
         };
 
-        if (process.env.NODE_ENV === "development") {
-          console.log("barber location", barber.id, barber.coordinates);
-          console.log("distance km", barber.id, mappedBarber.distanceKm);
-        }
+        console.log("barber location", barber.id, barber.coordinates);
+        console.log("distance km", barber.id, mappedBarber.distanceKm);
 
         return mappedBarber;
       })
@@ -155,6 +156,8 @@ export default function Home() {
           return;
         }
 
+        console.log("client profile loaded", user.uid, result.profile);
+        console.log("client location", result.profile.coordinates);
         setClientCoordinates(result.profile.coordinates);
         setAuthView("app");
       } catch (error) {
@@ -183,6 +186,8 @@ export default function Home() {
         return;
       }
 
+      console.log("client profile loaded", result.profile.uid, result.profile);
+      console.log("client location", result.profile.coordinates);
       setClientCoordinates(result.profile.coordinates);
       setAuthView("app");
     } catch (error) {
