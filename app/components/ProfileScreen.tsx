@@ -56,7 +56,7 @@ export function ProfileScreen({
       await onUpdatePhoto(file);
       setPhotoMenuOpen(false);
     } catch {
-      setMessage("No pudimos actualizar la foto. Intentá nuevamente.");
+      setMessage("No pudimos subir la foto. Revisá los permisos de Storage.");
     } finally {
       setBusy(false);
     }
