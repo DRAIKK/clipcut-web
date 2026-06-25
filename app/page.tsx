@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
 import { BookingModal } from "./components/BookingModal";
 import { LandingScreen } from "./components/LandingScreen";
+import { PrivacyPolicyScreen } from "./components/PrivacyPolicyScreen";
 import { LoginScreen } from "./components/LoginScreen";
 import { RegisterScreen } from "./components/RegisterScreen";
 import { BookingsScreen } from "./components/BookingsScreen";
@@ -39,7 +40,7 @@ import { calculateDistanceKm, formatDistanceKm, type Coordinates } from "../lib/
 import { BarberAppModal } from "./components/BarberAppModal";
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "./types/booking";
 
-type AuthView = "checking" | "landing" | "login" | "register" | "app";
+type AuthView = "checking" | "landing" | "privacy" | "login" | "register" | "app";
 
 export default function Home() {
   const [selectedBarber, setSelectedBarber] = useState<Barber>();
@@ -544,10 +545,18 @@ export default function Home() {
   if (authView === "landing") {
     return (
       <>
-        <LandingScreen onBarberClick={() => setBarberModalOpen(true)} onUseClipcut={() => setAuthView("login")} />
+        <LandingScreen
+          onBarberClick={() => setBarberModalOpen(true)}
+          onPrivacy={() => setAuthView("privacy")}
+          onUseClipcut={() => setAuthView("login")}
+        />
         <BarberAppModal onClose={() => setBarberModalOpen(false)} open={barberModalOpen} />
       </>
     );
+  }
+
+  if (authView === "privacy") {
+    return <PrivacyPolicyScreen onBack={() => setAuthView("landing")} />;
   }
 
   if (authView === "login") {
