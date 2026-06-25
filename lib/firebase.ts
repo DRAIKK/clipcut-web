@@ -1,11 +1,13 @@
 import { getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import { getAuth, type Auth } from "firebase/auth";
 import { getFirestore, type Firestore } from "firebase/firestore";
+import { getStorage, type FirebaseStorage } from "firebase/storage";
 
 type FirebaseExports = {
   app: FirebaseApp | null;
   db: Firestore | null;
   auth: Auth | null;
+  storage: FirebaseStorage | null;
 };
 
 const firebaseConfig = {
@@ -21,7 +23,7 @@ const hasFirebaseConfig = Object.values(firebaseConfig).every(Boolean);
 
 function createFirebase(): FirebaseExports {
   if (!hasFirebaseConfig) {
-    return { app: null, db: null, auth: null };
+    return { app: null, db: null, auth: null, storage: null };
   }
 
   const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
@@ -30,7 +32,8 @@ function createFirebase(): FirebaseExports {
     app,
     db: getFirestore(app),
     auth: getAuth(app),
+    storage: getStorage(app),
   };
 }
 
-export const { app, db, auth } = createFirebase();
+export const { app, db, auth, storage } = createFirebase();

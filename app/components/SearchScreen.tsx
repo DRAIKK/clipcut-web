@@ -1,3 +1,6 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import type { Barber } from "../types/booking";
 import { BarberAvatar } from "./BarberAvatar";
 import { LogoHeader } from "./LogoHeader";
@@ -17,14 +20,25 @@ export function SearchScreen({
   onSelectBarber,
   showLocationHint = false,
 }: SearchScreenProps) {
+  const [searchTerm, setSearchTerm] = useState("");
+  const normalizedSearchTerm = searchTerm.trim().toLocaleLowerCase("es-AR");
+  const filteredBarbers = useMemo(() => {
+    if (!normalizedSearchTerm) return barbers;
+
+    return barbers.filter((barber) => barber.name.toLocaleLowerCase("es-AR").includes(normalizedSearchTerm));
+  }, [barbers, normalizedSearchTerm]);
+  const emptyMessage = normalizedSearchTerm ? "No encontramos peluqueros con ese nombre." : "No hay peluqueros disponibles.";
+
   return (
     <div className="space-y-6">
       <LogoHeader />
       <div className="rounded-[1.6rem] bg-white px-5 py-4 shadow-sm ring-1 ring-zinc-200">
         <input
           className="w-full bg-transparent text-lg font-bold text-zinc-950 outline-none placeholder:text-zinc-400"
+          onChange={(event) => setSearchTerm(event.target.value)}
           placeholder="Buscar peluqueros..."
           type="search"
+          value={searchTerm}
         />
       </div>
       {showLocationHint ? (
@@ -42,12 +56,12 @@ export function SearchScreen({
             Cargando peluqueros...
           </div>
         ) : null}
-        {!loading && barbers.length === 0 ? (
+        {!loading && filteredBarbers.length === 0 ? (
           <div className="rounded-[1.75rem] bg-white p-4 text-sm font-black text-zinc-400 shadow-sm ring-1 ring-zinc-200">
-            No hay peluqueros disponibles.
+            {emptyMessage}
           </div>
         ) : null}
-        {barbers.map((barber) => (
+        {filteredBarbers.map((barber) => (
           <button
             className="flex w-full items-center gap-4 rounded-[1.75rem] bg-white p-4 text-left shadow-sm ring-1 ring-zinc-200 transition active:scale-[0.99]"
             key={barber.id}
@@ -59,7 +73,7 @@ export function SearchScreen({
               <h3 className="truncate text-lg font-black text-zinc-950">{barber.name}</h3>
               <p className="mt-1 text-sm font-bold text-green-600">Ver perfil →</p>
             </div>
-            <p className="text-sm font-black text-zinc-400">{barber.distance}</p>
+            <p className="text-right text-sm font-black text-zinc-400">{barber.distance || "Distancia no disponible"}</p>
           </button>
         ))}
       </section>
