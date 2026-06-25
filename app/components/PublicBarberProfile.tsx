@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+import { followBarber, isFollowingBarber, unfollowBarber } from "../../lib/firestore-followers";
 import type { Barber, TimeSlot } from "../types/booking";
 import { BarberAvatar } from "./BarberAvatar";
 import { LogoHeader } from "./LogoHeader";
@@ -11,6 +13,7 @@ type PublicBarberProfileProps = {
   onBackToSearch: () => void;
   onReserve: () => void;
   loading?: boolean;
+  clientId?: string;
 };
 
 const scheduleDays = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
@@ -80,6 +83,7 @@ export function PublicBarberProfile({
   onBackToSearch,
   onReserve,
   loading = false,
+  clientId = "",
 }: PublicBarberProfileProps) {
   const availableSlots = slots.filter((slot) => slot.available);
   const dayLabels = getDayLabels(availableSlots);
@@ -110,10 +114,70 @@ export function PublicBarberProfile({
       return groups;
     }, []);
   const ratingCount = barber.ratingCount ?? 128;
+  const initialFollowersCount = Number.parseInt(String(barber.followers ?? "0"), 10) || 0;
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(initialFollowersCount);
+  const [followSaving, setFollowSaving] = useState(false);
+  const [followError, setFollowError] = useState("");
+
+  useEffect(() => {
+    setFollowersCount(initialFollowersCount);
+  }, [initialFollowersCount]);
+
+  useEffect(() => {
+    if (!barber.id || !clientId) {
+      setIsFollowing(false);
+      return;
+    }
+
+    let ignore = false;
+
+    async function loadFollowState() {
+      setFollowError("");
+      try {
+        const following = await isFollowingBarber(barber.id, clientId);
+        if (!ignore) setIsFollowing(following);
+      } catch (error) {
+        console.warn("No se pudo revisar el seguimiento del peluquero.", error);
+        if (!ignore) setFollowError("No pudimos revisar si seguís a este peluquero.");
+      }
+    }
+
+    loadFollowState();
+
+    return () => {
+      ignore = true;
+    };
+  }, [barber.id, clientId]);
 
   const handleCalendarClick = (slot: TimeSlot) => {
     onSelectSlot(slot);
     onReserve();
+  };
+
+  const handleToggleFollow = async () => {
+    if (!clientId || followSaving) return;
+
+    const previousFollowing = isFollowing;
+    const previousFollowersCount = followersCount;
+    const nextFollowing = !previousFollowing;
+
+    setFollowSaving(true);
+    setFollowError("");
+    setIsFollowing(nextFollowing);
+    setFollowersCount(Math.max(0, previousFollowersCount + (nextFollowing ? 1 : -1)));
+
+    try {
+      if (nextFollowing) await followBarber(barber.id, clientId);
+      else await unfollowBarber(barber.id, clientId);
+    } catch (error) {
+      console.warn("No se pudo actualizar el seguimiento del peluquero.", error);
+      setIsFollowing(previousFollowing);
+      setFollowersCount(previousFollowersCount);
+      setFollowError("No pudimos actualizar el seguimiento. Intentá nuevamente.");
+    } finally {
+      setFollowSaving(false);
+    }
   };
 
   return (
@@ -131,16 +195,23 @@ export function PublicBarberProfile({
                 </h1>
               </div>
               <button
-                aria-label="Seguir peluquero"
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-zinc-50 text-lg ring-1 ring-zinc-200 transition active:scale-95"
+                aria-label={isFollowing ? "Dejar de seguir peluquero" : "Seguir peluquero"}
+                aria-pressed={isFollowing}
+                className={`grid h-10 w-10 shrink-0 place-items-center rounded-full text-lg ring-1 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 ${
+                  isFollowing
+                    ? "bg-green-50 text-green-600 ring-green-200"
+                    : "bg-zinc-50 text-zinc-500 ring-zinc-200"
+                }`}
+                disabled={followSaving || !clientId}
+                onClick={handleToggleFollow}
                 type="button"
               >
-                ♡
+                {isFollowing ? "♥" : "♡"}
               </button>
             </div>
             <div className="mt-5 flex flex-nowrap items-center gap-3 text-sm font-black">
               <span className="whitespace-nowrap rounded-full bg-zinc-50 px-3 py-1.5 text-zinc-950 ring-1 ring-zinc-200">
-                {barber.followers} seguidores
+                {followersCount} seguidores
               </span>
               <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-zinc-950 ring-1 ring-amber-100">
                 <span className="text-base leading-none text-amber-500">★</span>
@@ -148,6 +219,7 @@ export function PublicBarberProfile({
                 <span className="text-zinc-400">({ratingCount})</span>
               </span>
             </div>
+            {followError ? <p className="mt-3 text-xs font-bold text-red-600">{followError}</p> : null}
           </div>
         </div>
 

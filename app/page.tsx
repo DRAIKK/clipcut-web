@@ -428,6 +428,7 @@ export default function Home() {
       selectedSlot={selectedSlot}
       loading={profileLoading}
       slots={profileSlots}
+      clientId={currentUserId}
     />
   );
 

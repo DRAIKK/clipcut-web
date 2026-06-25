@@ -196,9 +196,8 @@ export async function updateClientPhoto(file: File) {
   const user = auth.currentUser;
   if (!user) throw new Error("auth/no-current-user");
 
-  const extension = file.name.split(".").pop()?.toLowerCase() || "jpg";
-  const photoRef = ref(storage, `users/${user.uid}/profile-photo.${extension}`);
-  await uploadBytes(photoRef, file);
+  const photoRef = ref(storage, `users/${user.uid}/profile.jpg`);
+  await uploadBytes(photoRef, file, { contentType: file.type || "image/jpeg" });
   const photoURL = await getDownloadURL(photoRef);
   await updateDoc(doc(db, "users", user.uid), { photoURL });
 
