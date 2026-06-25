@@ -147,6 +147,8 @@ function adaptBarber(id: string, data: FirestoreRecord, index = 0): Barber {
     "Peluquero Clipcut"
   );
 
+  const coordinates = getCoordinates(data);
+
   return {
     id,
     name,
@@ -174,7 +176,8 @@ function adaptBarber(id: string, data: FirestoreRecord, index = 0): Barber {
     ratingCount: getNumber(data, ["ratingCount", "reviewsCount", "reviewCount"], 0),
     imageGradient: gradients[index % gradients.length],
     distance: getString(data, ["distance", "distanceLabel"], ""),
-    coordinates: getCoordinates(data),
+    coordinates,
+    location: coordinates,
     initials: getInitials(name),
     photoUrl: getString(
       data,

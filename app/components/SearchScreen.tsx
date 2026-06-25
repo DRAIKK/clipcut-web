@@ -6,9 +6,17 @@ type SearchScreenProps = {
   barbers: Barber[];
   onSelectBarber: (barber: Barber) => void;
   loading?: boolean;
+  onRequestLocation?: () => void;
+  showLocationHint?: boolean;
 };
 
-export function SearchScreen({ barbers, loading = false, onSelectBarber }: SearchScreenProps) {
+export function SearchScreen({
+  barbers,
+  loading = false,
+  onRequestLocation,
+  onSelectBarber,
+  showLocationHint = false,
+}: SearchScreenProps) {
   return (
     <div className="space-y-6">
       <LogoHeader />
@@ -19,6 +27,15 @@ export function SearchScreen({ barbers, loading = false, onSelectBarber }: Searc
           type="search"
         />
       </div>
+      {showLocationHint ? (
+        <button
+          className="rounded-full bg-white px-4 py-2 text-xs font-black text-green-700 shadow-sm ring-1 ring-green-100 transition active:scale-[0.98]"
+          onClick={onRequestLocation}
+          type="button"
+        >
+          Activar ubicación para ver peluqueros cerca
+        </button>
+      ) : null}
       <section className="space-y-3">
         {loading ? (
           <div className="rounded-[1.75rem] bg-white p-4 text-sm font-black text-zinc-400 shadow-sm ring-1 ring-zinc-200">
