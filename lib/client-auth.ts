@@ -1,4 +1,12 @@
-import { createUserWithEmailAndPassword, deleteUser, signInWithEmailAndPassword, signOut, type User } from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  createUserWithEmailAndPassword,
+  deleteUser,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  type User,
+} from "firebase/auth";
 import { deleteDoc, doc, getDoc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import { auth, db, storage } from "./firebase";
@@ -130,6 +138,7 @@ export async function getOrCreateClientProfile(user: User, fullName?: string): P
   const profile = {
     fullName: fullName?.trim() || user.displayName || user.email || "Cliente Clipcut",
     email: user.email ?? "",
+    photoURL: user.photoURL ?? "",
     role: "cliente",
     createdAt: serverTimestamp(),
   };
@@ -143,7 +152,7 @@ export async function getOrCreateClientProfile(user: User, fullName?: string): P
       fullName: profile.fullName,
       email: profile.email,
       role: profile.role,
-      photoURL: "",
+      photoURL: profile.photoURL,
     },
   };
 }
@@ -151,6 +160,15 @@ export async function getOrCreateClientProfile(user: User, fullName?: string): P
 export async function loginClient(email: string, password: string) {
   const { auth } = requireFirebase();
   const credential = await signInWithEmailAndPassword(auth, email, password);
+  return getOrCreateClientProfile(credential.user);
+}
+
+export async function loginWithGoogle() {
+  const { auth } = requireFirebase();
+  const provider = new GoogleAuthProvider();
+  provider.setCustomParameters({ prompt: "select_account" });
+
+  const credential = await signInWithPopup(auth, provider);
   return getOrCreateClientProfile(credential.user);
 }
 
