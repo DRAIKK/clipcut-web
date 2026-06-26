@@ -12,11 +12,11 @@ const clientSteps = ["Buscá un peluquero", "Elegí horario y servicio", "Confir
 
 export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
   return (
-    <main className="flex h-dvh justify-center overflow-y-auto bg-zinc-100 px-3 text-zinc-950">
-      <div className="flex h-dvh w-full max-w-[420px] flex-col overflow-y-auto bg-white shadow-2xl shadow-zinc-950/10 ring-1 ring-zinc-200/80 sm:my-0 sm:rounded-[2.25rem]">
+    <main className="flex h-dvh justify-center overflow-y-auto bg-white px-3 text-zinc-950">
+      <div className="flex h-dvh w-full max-w-[420px] flex-col overflow-y-auto bg-white sm:my-0 sm:rounded-[2.25rem]">
         <section className="flex flex-col justify-start gap-1 px-4 pb-0 pt-0.5">
           <header className="flex shrink-0 items-center justify-between gap-3 pb-0">
-            <ClipcutLogo className="h-[4.15rem] w-auto object-contain" height={67} priority width={150} />
+            <ClipcutLogo className="h-[4.6rem] w-auto object-contain" height={74} priority width={166} />
             <div className="flex shrink-0 items-center gap-2">
               <button
                 className="h-9 rounded-[0.9rem] bg-zinc-950 px-3 text-[0.7rem] font-black text-white shadow-lg shadow-zinc-950/15 transition hover:bg-zinc-800 active:scale-[0.98]"
@@ -58,7 +58,7 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
           </div>
         </section>
 
-        <section className="grid gap-1 bg-zinc-50 px-4 py-2">
+        <section className="grid gap-2 bg-white px-4 py-2">
           <article className="rounded-[1.4rem] bg-white p-2.5 shadow-sm ring-1 ring-zinc-200/70">
             <h2 className="text-lg font-black tracking-[-0.03em] text-zinc-950">Para clientes</h2>
             <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-zinc-500">
@@ -73,7 +73,7 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
             </p>
           </article>
 
-          <section className="rounded-[1.4rem] bg-zinc-950 p-2.5 text-white shadow-xl shadow-zinc-950/10">
+          <section className="rounded-[1.4rem] bg-zinc-950 p-2.5 text-white shadow-sm">
             <h2 className="text-lg font-black tracking-[-0.03em]">Cómo funciona</h2>
             <ol className="mt-1 grid gap-1">
               {clientSteps.map((step, index) => (
