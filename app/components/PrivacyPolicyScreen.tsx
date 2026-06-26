@@ -58,14 +58,14 @@ export function PrivacyPolicyScreen({ onBack }: PrivacyPolicyScreenProps) {
     <main className="min-h-dvh bg-zinc-100 px-3 py-4 text-zinc-950">
       <div className="mx-auto min-h-[calc(100dvh-2rem)] w-full max-w-[420px] overflow-hidden rounded-[2.25rem] bg-zinc-50 shadow-2xl shadow-zinc-950/10 ring-1 ring-zinc-200/80">
         <header className="sticky top-0 z-10 bg-white/95 px-4 pb-4 pt-5 shadow-sm shadow-zinc-950/5 backdrop-blur">
-          <button
-            className="mb-4 inline-flex h-10 items-center rounded-full bg-zinc-950 px-4 text-sm font-black text-white transition hover:bg-zinc-800 active:scale-[0.98]"
-            onClick={onBack}
-            type="button"
-          >
-            ← Volver
-          </button>
-          <div className="flex items-center justify-between gap-4">
+          <div className="relative flex min-h-12 items-center justify-center">
+            <button
+              className="absolute left-0 inline-flex h-10 items-center rounded-full bg-zinc-950 px-4 text-sm font-black text-white transition hover:bg-zinc-800 active:scale-[0.98]"
+              onClick={onBack}
+              type="button"
+            >
+              ← Volver
+            </button>
             <ClipcutLogo className="h-12 w-auto object-contain" height={48} priority width={108} />
           </div>
           <h1 className="mt-5 text-3xl font-black leading-none tracking-[-0.06em] text-zinc-950">
