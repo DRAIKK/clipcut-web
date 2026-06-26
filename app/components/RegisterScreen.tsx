@@ -11,6 +11,7 @@ type RegisterScreenProps = {
   onEnter: (fullName: string, email: string, password: string) => void;
   onGoogle: () => void;
   onLogin: () => void;
+  onBack: () => void;
 };
 
 type Role = "client";
@@ -56,7 +57,7 @@ function SocialButton({ className, disabled = false, label, onClick, showGoogleI
   );
 }
 
-export function RegisterScreen({ error, loading = false, onEnter, onGoogle, onLogin }: RegisterScreenProps) {
+export function RegisterScreen({ error, loading = false, onBack, onEnter, onGoogle, onLogin }: RegisterScreenProps) {
   const [role, setRole] = useState<Role>("client");
   const [barberModalOpen, setBarberModalOpen] = useState(false);
   const [fullName, setFullName] = useState("");
@@ -64,7 +65,7 @@ export function RegisterScreen({ error, loading = false, onEnter, onGoogle, onLo
   const [password, setPassword] = useState("");
 
   return (
-    <AuthLayout>
+    <AuthLayout onBack={onBack}>
       <div className="space-y-4">
         <AuthInput label="Nombre completo" onChange={setFullName} value={fullName} />
         <AuthInput label="Correo electrónico" onChange={setEmail} type="email" value={email} />
