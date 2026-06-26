@@ -14,7 +14,7 @@ export function AuthLayout({ children, onBack, title }: AuthLayoutProps) {
         {onBack ? (
           <button
             aria-label="Volver a la landing"
-            className="absolute left-0 top-0 grid h-11 w-11 place-items-center rounded-full bg-white text-2xl font-black leading-none text-zinc-950 shadow-sm ring-1 ring-zinc-200 transition active:scale-[0.98]"
+            className="absolute left-0 top-0 z-10 grid h-11 w-11 place-items-center rounded-full bg-white text-2xl font-black leading-none text-zinc-950 shadow-sm ring-1 ring-zinc-200 transition active:scale-[0.98]"
             onClick={onBack}
             type="button"
           >
