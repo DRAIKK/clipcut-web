@@ -10,6 +10,7 @@ type LoginScreenProps = {
   onCreateAccount: () => void;
   onEnter: (email: string, password: string) => void;
   onGoogle: () => void;
+  onBack: () => void;
 };
 
 type SocialButtonProps = {
@@ -53,12 +54,12 @@ function SocialButton({ className, disabled = false, label, onClick, showGoogleI
   );
 }
 
-export function LoginScreen({ error, loading = false, onCreateAccount, onEnter, onGoogle }: LoginScreenProps) {
+export function LoginScreen({ error, loading = false, onBack, onCreateAccount, onEnter, onGoogle }: LoginScreenProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   return (
-    <AuthLayout title="Iniciar sesión">
+    <AuthLayout onBack={onBack} title="Iniciar sesión">
       <div className="space-y-4">
         <AuthInput label="Correo electrónico" onChange={setEmail} type="email" value={email} />
         <AuthInput label="Contraseña" onChange={setPassword} type="password" value={password} />

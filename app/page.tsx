@@ -565,6 +565,10 @@ export default function Home() {
         <LoginScreen
           error={authError}
           loading={authLoading}
+          onBack={() => {
+            setAuthError("");
+            setAuthView("landing");
+          }}
           onCreateAccount={() => {
             setAuthError("");
             setAuthView("register");
@@ -583,6 +587,10 @@ export default function Home() {
         <RegisterScreen
           error={authError}
           loading={authLoading}
+          onBack={() => {
+            setAuthError("");
+            setAuthView("landing");
+          }}
           onEnter={handleRegister}
           onGoogle={handleGoogleLogin}
           onLogin={() => {
