@@ -75,10 +75,10 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
           </div>
         </section>
 
-        <section className="relative grid flex-1 justify-items-center gap-2 bg-[#232323] px-4 pb-4 pt-4">
+        <section className="relative grid flex-1 justify-items-center gap-1.5 bg-[#232323] px-4 pb-3 pt-2">
           <svg
             aria-hidden="true"
-            className="pointer-events-none absolute -top-14 left-0 h-14 w-full text-[#232323]"
+            className="pointer-events-none absolute -top-10 left-0 h-10 w-full text-[#232323]"
             preserveAspectRatio="none"
             viewBox="0 0 420 56"
           >
@@ -87,23 +87,23 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
               fill="currentColor"
             />
           </svg>
-          <article className="relative z-10 w-[90%] rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] p-[0.5625rem] shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
+          <article className="relative z-10 w-[90%] rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-[0.5625rem] py-[0.4375rem] shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
             <h2 className="text-[1.0125rem] font-black tracking-[-0.03em] text-[#16A34A]">Para clientes</h2>
             <p className="mt-0.5 text-[0.7875rem] font-semibold leading-[1.035rem] text-[#E5E5E5]">
               Buscá peluqueros, elegí un horario y reservá en segundos.
             </p>
           </article>
 
-          <article className="relative z-10 w-[90%] rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] p-[0.5625rem] shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
+          <article className="relative z-10 w-[90%] rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-[0.5625rem] py-[0.4375rem] shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
             <h2 className="text-[1.0125rem] font-black tracking-[-0.03em] text-[#16A34A]">Para peluqueros</h2>
             <p className="mt-0.5 text-[0.7875rem] font-semibold leading-[1.035rem] text-[#E5E5E5]">
               Gestioná horarios, servicios, reservas y pagos desde la app móvil.
             </p>
           </article>
 
-          <section className="relative z-10 w-[90%] rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-[0.5625rem] py-[0.7875rem] text-[#E5E5E5] shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
+          <section className="relative z-10 w-[90%] rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-[0.5625rem] py-[0.5rem] text-[#E5E5E5] shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
             <h2 className="text-[1.0125rem] font-black tracking-[-0.03em] text-[#16A34A]">Cómo funciona</h2>
-            <ol className="mt-[0.225rem] grid gap-[0.225rem]">
+            <ol className="mt-[0.15rem] grid gap-[0.125rem]">
               {clientSteps.map((step, index) => (
                 <li className="flex items-center gap-[0.5625rem] text-[0.7875rem] font-bold" key={step}>
                   <span className="grid h-[1.35rem] w-[1.35rem] shrink-0 place-items-center rounded-full bg-[#16A34A] text-[#121212]">
@@ -115,12 +115,12 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
             </ol>
           </section>
 
-          <section className="relative z-10 w-[90%] rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] p-[0.5625rem] text-center shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
+          <section className="relative z-10 w-[90%] rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-[0.5625rem] py-[0.4375rem] text-center shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
             <h2 className="text-[0.9rem] font-black tracking-[-0.03em] text-[#16A34A]">Descargá Clipcut para peluqueros</h2>
             <p className="mt-0.5 text-[0.7875rem] font-semibold leading-[1.035rem] text-[#E5E5E5]">
               Gestioná tus horarios, reservas, clientes y pagos desde la aplicación oficial.
             </p>
-            <div className="mt-[0.675rem] flex flex-wrap items-center justify-center gap-[0.9rem]">
+            <div className="mt-[0.4rem] flex flex-wrap items-center justify-center gap-[0.9rem]">
               {storeButtons.map((button) => (
                 <a
                   aria-label={`Descargar en ${button.label}`}
