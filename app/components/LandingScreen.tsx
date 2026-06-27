@@ -75,10 +75,10 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
           </div>
         </section>
 
-        <section className="relative grid flex-1 auto-rows-max content-end justify-items-center gap-1 bg-[#232323] px-4 pb-3 pt-1.5">
+        <section className="relative grid flex-1 auto-rows-max content-end justify-items-center gap-[0.3rem] bg-white px-4 pb-3 pt-1.5">
           <svg
             aria-hidden="true"
-            className="pointer-events-none absolute -top-10 left-0 h-10 w-full text-[#232323]"
+            className="pointer-events-none absolute top-6 left-0 h-10 w-full text-[#232323]"
             preserveAspectRatio="none"
             viewBox="0 0 420 56"
           >
@@ -87,6 +87,8 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
               fill="currentColor"
             />
           </svg>
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 top-16 bg-[#232323]" />
+
           <article className="relative z-10 w-[90%] rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-[0.5625rem] py-[0.35rem] shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
             <h2 className="text-[1.0125rem] font-black tracking-[-0.03em] text-[#16A34A]">Para clientes</h2>
             <p className="mt-0.5 text-[0.7875rem] font-semibold leading-[1.035rem] text-[#E5E5E5]">
