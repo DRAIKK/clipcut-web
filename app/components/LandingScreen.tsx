@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { ClipcutLogo } from "./ClipcutLogo";
 
 type LandingScreenProps = {
@@ -9,6 +10,22 @@ type LandingScreenProps = {
 };
 
 const clientSteps = ["Buscá un peluquero", "Elegí horario y servicio", "Confirmá tu reserva"];
+
+const GOOGLE_PLAY_URL = "https://play.google.com/store";
+const APP_STORE_URL = "https://www.apple.com/app-store/";
+
+const storeButtons = [
+  {
+    href: GOOGLE_PLAY_URL,
+    image: "/google-play.svg",
+    label: "Google Play",
+  },
+  {
+    href: APP_STORE_URL,
+    image: "/app-store.svg",
+    label: "App Store",
+  },
+];
 
 export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
   return (
@@ -73,7 +90,7 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
             </p>
           </article>
 
-          <section className="rounded-[1.4rem] bg-zinc-950 p-2.5 text-white shadow-sm">
+          <section className="rounded-[1.4rem] bg-zinc-950 px-2.5 py-3.5 text-white shadow-sm">
             <h2 className="text-lg font-black tracking-[-0.03em]">Cómo funciona</h2>
             <ol className="mt-1 grid gap-1">
               {clientSteps.map((step, index) => (
@@ -85,6 +102,30 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
                 </li>
               ))}
             </ol>
+          </section>
+
+          <section className="flex flex-col items-center pt-1 text-center">
+            <h2 className="text-base font-black tracking-[-0.03em] text-zinc-950">Descargá Clipcut para peluqueros</h2>
+            <div className="mt-3 grid justify-items-center gap-2">
+              {storeButtons.map((button) => (
+                <a
+                  aria-label={`Descargar en ${button.label}`}
+                  className="block transition active:scale-[0.98]"
+                  href={button.href}
+                  key={button.label}
+                  rel="noreferrer"
+                  target="_blank"
+                >
+                  <Image
+                    alt={`Descargar en ${button.label}`}
+                    className="h-auto w-[10rem] object-contain drop-shadow-sm"
+                    height={108}
+                    src={button.image}
+                    width={360}
+                  />
+                </a>
+              ))}
+            </div>
           </section>
         </section>
       </div>
