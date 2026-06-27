@@ -76,23 +76,23 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
         </section>
 
         <section className="grid gap-2 bg-white px-4 py-2">
-          <article className="rounded-[1.4rem] bg-[#3B82F6] p-2.5 shadow-sm ring-[1.5px] ring-zinc-200/70">
-            <h2 className="text-lg font-black tracking-[-0.03em] text-white">Para clientes</h2>
-            <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-white/90">
+          <article className="relative overflow-hidden rounded-[1.4rem] bg-[radial-gradient(circle_at_18%_0%,rgba(255,255,255,0.34),transparent_34%),radial-gradient(circle_at_92%_118%,rgba(15,23,42,0.18),transparent_38%),linear-gradient(135deg,rgba(255,255,255,0.18),rgba(255,255,255,0)_32%,rgba(15,23,42,0.08)_68%,rgba(255,255,255,0.12)),#3B82F6] p-2.5 shadow-[0_14px_30px_-24px_rgba(30,64,175,0.72),inset_0_1px_0_rgba(255,255,255,0.42),inset_0_-1px_0_rgba(30,64,175,0.22)] ring-[1.5px] ring-white/35 before:pointer-events-none before:absolute before:inset-0 before:bg-[linear-gradient(115deg,transparent_16%,rgba(255,255,255,0.16)_35%,transparent_54%)] after:pointer-events-none after:absolute after:inset-px after:rounded-[1.35rem] after:shadow-[inset_0_0_18px_rgba(255,255,255,0.10)]">
+            <h2 className="relative text-lg font-black tracking-[-0.03em] text-white">Para clientes</h2>
+            <p className="relative mt-0.5 text-sm font-semibold leading-[1.15rem] text-white/90">
               Buscá peluqueros, elegí un horario y reservá en segundos.
             </p>
           </article>
 
-          <article className="rounded-[1.4rem] bg-[#16A34A] p-2.5 shadow-sm ring-[1.5px] ring-zinc-200/70">
-            <h2 className="text-lg font-black tracking-[-0.03em] text-white">Para peluqueros</h2>
-            <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-white/90">
+          <article className="relative overflow-hidden rounded-[1.4rem] bg-[radial-gradient(circle_at_18%_0%,rgba(255,255,255,0.32),transparent_34%),radial-gradient(circle_at_92%_118%,rgba(5,46,22,0.18),transparent_38%),linear-gradient(135deg,rgba(255,255,255,0.16),rgba(255,255,255,0)_32%,rgba(5,46,22,0.10)_68%,rgba(255,255,255,0.11)),#16A34A] p-2.5 shadow-[0_14px_30px_-24px_rgba(21,128,61,0.74),inset_0_1px_0_rgba(255,255,255,0.40),inset_0_-1px_0_rgba(5,46,22,0.20)] ring-[1.5px] ring-white/35 before:pointer-events-none before:absolute before:inset-0 before:bg-[linear-gradient(115deg,transparent_16%,rgba(255,255,255,0.15)_35%,transparent_54%)] after:pointer-events-none after:absolute after:inset-px after:rounded-[1.35rem] after:shadow-[inset_0_0_18px_rgba(255,255,255,0.09)]">
+            <h2 className="relative text-lg font-black tracking-[-0.03em] text-white">Para peluqueros</h2>
+            <p className="relative mt-0.5 text-sm font-semibold leading-[1.15rem] text-white/90">
               Gestioná horarios, servicios, reservas y pagos desde la app móvil.
             </p>
           </article>
 
-          <section className="rounded-[1.4rem] bg-[#FACC15] px-2.5 py-3.5 text-zinc-950 shadow-sm ring-[1.5px] ring-zinc-200/70">
-            <h2 className="text-lg font-black tracking-[-0.03em]">Cómo funciona</h2>
-            <ol className="mt-1 grid gap-1">
+          <section className="relative overflow-hidden rounded-[1.4rem] bg-[radial-gradient(circle_at_18%_0%,rgba(255,255,255,0.44),transparent_34%),radial-gradient(circle_at_92%_118%,rgba(113,63,18,0.18),transparent_40%),linear-gradient(135deg,rgba(255,255,255,0.20),rgba(255,255,255,0)_34%,rgba(113,63,18,0.08)_70%,rgba(255,255,255,0.14)),#FACC15] px-2.5 py-3.5 text-zinc-950 shadow-[0_14px_30px_-24px_rgba(161,98,7,0.68),inset_0_1px_0_rgba(255,255,255,0.56),inset_0_-1px_0_rgba(113,63,18,0.16)] ring-[1.5px] ring-white/45 before:pointer-events-none before:absolute before:inset-0 before:bg-[linear-gradient(115deg,transparent_16%,rgba(255,255,255,0.18)_35%,transparent_54%)] after:pointer-events-none after:absolute after:inset-px after:rounded-[1.35rem] after:shadow-[inset_0_0_18px_rgba(255,255,255,0.12)]">
+            <h2 className="relative text-lg font-black tracking-[-0.03em]">Cómo funciona</h2>
+            <ol className="relative mt-1 grid gap-1">
               {clientSteps.map((step, index) => (
                 <li className="flex items-center gap-2.5 text-sm font-bold" key={step}>
                   <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-zinc-950 text-[#FACC15]">
