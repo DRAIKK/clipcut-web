@@ -75,22 +75,33 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
           </div>
         </section>
 
-        <section className="grid gap-2 bg-white px-4 py-2">
-          <article className="rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] p-2.5 shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-[0.9px] ring-[#000000]">
+        <section className="relative grid flex-1 gap-2 bg-[#232323] px-4 pb-4 pt-4">
+          <svg
+            aria-hidden="true"
+            className="pointer-events-none absolute -top-14 left-0 h-14 w-full text-[#232323]"
+            preserveAspectRatio="none"
+            viewBox="0 0 420 56"
+          >
+            <path
+              d="M0 36C48 12 88 4 132 16C178 29 204 55 252 42C305 27 330 0 420 14V56H0V36Z"
+              fill="currentColor"
+            />
+          </svg>
+          <article className="relative z-10 rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] p-2.5 shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
             <h2 className="text-lg font-black tracking-[-0.03em] text-[#16A34A]">Para clientes</h2>
             <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-white">
               Buscá peluqueros, elegí un horario y reservá en segundos.
             </p>
           </article>
 
-          <article className="rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] p-2.5 shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-[0.9px] ring-[#000000]">
+          <article className="relative z-10 rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] p-2.5 shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
             <h2 className="text-lg font-black tracking-[-0.03em] text-[#16A34A]">Para peluqueros</h2>
             <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-white">
               Gestioná horarios, servicios, reservas y pagos desde la app móvil.
             </p>
           </article>
 
-          <section className="rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-2.5 py-3.5 text-white shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-[0.9px] ring-[#000000]">
+          <section className="relative z-10 rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-2.5 py-3.5 text-white shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
             <h2 className="text-lg font-black tracking-[-0.03em] text-[#16A34A]">Cómo funciona</h2>
             <ol className="mt-1 grid gap-1">
               {clientSteps.map((step, index) => (
@@ -104,7 +115,7 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
             </ol>
           </section>
 
-          <section className="rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] p-2.5 text-center shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-[0.9px] ring-[#000000]">
+          <section className="relative z-10 rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] p-2.5 text-center shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
             <h2 className="text-base font-black tracking-[-0.03em] text-[#16A34A]">Descargá Clipcut para peluqueros</h2>
             <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-white">
               Gestioná tus horarios, reservas, clientes y pagos desde la aplicación oficial.
