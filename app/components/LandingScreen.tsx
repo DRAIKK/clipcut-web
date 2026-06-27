@@ -36,7 +36,7 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
             <ClipcutLogo className="h-[4.6rem] w-auto object-contain" height={74} priority width={166} />
             <div className="flex shrink-0 items-center gap-1.5">
               <button
-                className="h-7 rounded-[0.75rem] bg-zinc-950 px-1.5 text-[0.64rem] font-black text-white shadow-lg shadow-zinc-950/15 transition hover:bg-zinc-800 active:scale-[0.98]"
+                className="h-7 w-[3.95rem] rounded-[0.75rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-1 text-[0.64rem] font-black text-white shadow-lg shadow-zinc-950/15 transition hover:bg-[#2C2C2C] active:scale-[0.98]"
                 onClick={onPrivacy}
                 type="button"
               >
@@ -76,21 +76,21 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
         </section>
 
         <section className="grid gap-2 bg-white px-4 py-2">
-          <article className="rounded-[1.4rem] bg-[linear-gradient(45deg,#121212_0%,#1B1B1B_100%)] p-2.5 shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-[0.9px] ring-[#000000]">
+          <article className="rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] p-2.5 shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-[0.9px] ring-[#000000]">
             <h2 className="text-lg font-black tracking-[-0.03em] text-[#16A34A]">Para clientes</h2>
             <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-white">
               Buscá peluqueros, elegí un horario y reservá en segundos.
             </p>
           </article>
 
-          <article className="rounded-[1.4rem] bg-[linear-gradient(45deg,#121212_0%,#1B1B1B_100%)] p-2.5 shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-[0.9px] ring-[#000000]">
+          <article className="rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] p-2.5 shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-[0.9px] ring-[#000000]">
             <h2 className="text-lg font-black tracking-[-0.03em] text-[#16A34A]">Para peluqueros</h2>
             <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-white">
               Gestioná horarios, servicios, reservas y pagos desde la app móvil.
             </p>
           </article>
 
-          <section className="rounded-[1.4rem] bg-[linear-gradient(45deg,#121212_0%,#1B1B1B_100%)] px-2.5 py-3.5 text-white shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-[0.9px] ring-[#000000]">
+          <section className="rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-2.5 py-3.5 text-white shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-[0.9px] ring-[#000000]">
             <h2 className="text-lg font-black tracking-[-0.03em] text-[#16A34A]">Cómo funciona</h2>
             <ol className="mt-1 grid gap-1">
               {clientSteps.map((step, index) => (
@@ -104,7 +104,7 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
             </ol>
           </section>
 
-          <section className="rounded-[1.4rem] bg-[linear-gradient(45deg,#121212_0%,#1B1B1B_100%)] p-2.5 text-center shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-[0.9px] ring-[#000000]">
+          <section className="rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] p-2.5 text-center shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-[0.9px] ring-[#000000]">
             <h2 className="text-base font-black tracking-[-0.03em] text-[#16A34A]">Descargá Clipcut para peluqueros</h2>
             <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-white">
               Gestioná tus horarios, reservas, clientes y pagos desde la aplicación oficial.
