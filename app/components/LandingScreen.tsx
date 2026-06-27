@@ -76,21 +76,21 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
         </section>
 
         <section className="grid gap-2 bg-white px-4 py-2">
-          <article className="rounded-[1.4rem] bg-[#D6EEFF] p-2.5 shadow-sm ring-1 ring-zinc-200/70">
+          <article className="rounded-[1.4rem] bg-[#D6EEFF] p-2.5 shadow-sm ring-[1.5px] ring-zinc-200/70">
             <h2 className="text-lg font-black tracking-[-0.03em] text-zinc-950">Para clientes</h2>
             <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-zinc-500">
               Buscá peluqueros, elegí un horario y reservá en segundos.
             </p>
           </article>
 
-          <article className="rounded-[1.4rem] bg-[#D8F7D9] p-2.5 shadow-sm ring-1 ring-zinc-200/70">
+          <article className="rounded-[1.4rem] bg-[#D8F7D9] p-2.5 shadow-sm ring-[1.5px] ring-zinc-200/70">
             <h2 className="text-lg font-black tracking-[-0.03em] text-zinc-950">Para peluqueros</h2>
             <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-zinc-500">
               Gestioná horarios, servicios, reservas y pagos desde la app móvil.
             </p>
           </article>
 
-          <section className="rounded-[1.4rem] bg-white px-2.5 py-3.5 text-zinc-950 shadow-sm ring-1 ring-zinc-200/70">
+          <section className="rounded-[1.4rem] bg-[#FFF6CC] px-2.5 py-3.5 text-zinc-950 shadow-sm ring-[1.5px] ring-zinc-200/70">
             <h2 className="text-lg font-black tracking-[-0.03em]">Cómo funciona</h2>
             <ol className="mt-1 grid gap-1">
               {clientSteps.map((step, index) => (
@@ -104,7 +104,7 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
             </ol>
           </section>
 
-          <section className="rounded-[1.4rem] bg-white p-2.5 text-center shadow-sm ring-1 ring-zinc-200/70">
+          <section className="rounded-[1.4rem] bg-white p-2.5 text-center shadow-sm ring-[1.5px] ring-zinc-200/70">
             <h2 className="text-base font-black tracking-[-0.03em] text-zinc-950">Descargá Clipcut para peluqueros</h2>
             <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-zinc-500">
               Gestioná tus horarios, reservas, clientes y pagos desde la aplicación oficial.
