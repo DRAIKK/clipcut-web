@@ -36,7 +36,7 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
             <ClipcutLogo className="h-[4.6rem] w-auto object-contain" height={74} priority width={166} />
             <div className="flex shrink-0 items-center gap-1.5">
               <button
-                className="h-7 rounded-[0.75rem] bg-zinc-950 px-2 text-[0.64rem] font-black text-white shadow-lg shadow-zinc-950/15 transition hover:bg-zinc-800 active:scale-[0.98]"
+                className="h-7 rounded-[0.75rem] bg-zinc-950 px-1.5 text-[0.64rem] font-black text-white shadow-lg shadow-zinc-950/15 transition hover:bg-zinc-800 active:scale-[0.98]"
                 onClick={onPrivacy}
                 type="button"
               >
@@ -76,26 +76,26 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
         </section>
 
         <section className="grid gap-2 bg-white px-4 py-2">
-          <article className="rounded-[1.4rem] bg-[#D6EEFF] p-2.5 shadow-sm ring-[1.5px] ring-zinc-200/70">
-            <h2 className="text-lg font-black tracking-[-0.03em] text-zinc-950">Para clientes</h2>
-            <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-zinc-500">
+          <article className="rounded-[1.4rem] bg-[#3B82F6] p-2.5 shadow-sm ring-[1.5px] ring-zinc-200/70">
+            <h2 className="text-lg font-black tracking-[-0.03em] text-white">Para clientes</h2>
+            <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-white/90">
               Buscá peluqueros, elegí un horario y reservá en segundos.
             </p>
           </article>
 
-          <article className="rounded-[1.4rem] bg-[#D8F7D9] p-2.5 shadow-sm ring-[1.5px] ring-zinc-200/70">
-            <h2 className="text-lg font-black tracking-[-0.03em] text-zinc-950">Para peluqueros</h2>
-            <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-zinc-500">
+          <article className="rounded-[1.4rem] bg-[#16A34A] p-2.5 shadow-sm ring-[1.5px] ring-zinc-200/70">
+            <h2 className="text-lg font-black tracking-[-0.03em] text-white">Para peluqueros</h2>
+            <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-white/90">
               Gestioná horarios, servicios, reservas y pagos desde la app móvil.
             </p>
           </article>
 
-          <section className="rounded-[1.4rem] bg-[#FFF6CC] px-2.5 py-3.5 text-zinc-950 shadow-sm ring-[1.5px] ring-zinc-200/70">
+          <section className="rounded-[1.4rem] bg-[#FACC15] px-2.5 py-3.5 text-zinc-950 shadow-sm ring-[1.5px] ring-zinc-200/70">
             <h2 className="text-lg font-black tracking-[-0.03em]">Cómo funciona</h2>
             <ol className="mt-1 grid gap-1">
               {clientSteps.map((step, index) => (
                 <li className="flex items-center gap-2.5 text-sm font-bold" key={step}>
-                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#16A34A] text-white">
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-zinc-950 text-[#FACC15]">
                     {index + 1}
                   </span>
                   <span>{step}</span>
