@@ -90,23 +90,23 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
           <div className="pointer-events-none absolute inset-x-0 bottom-0 top-16 bg-[#232323]" />
 
           <div className="relative z-10 flex w-full flex-1 flex-col items-center justify-center gap-[0.95rem] pt-16">
-            <article className="w-[90%] rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-[0.5625rem] py-[0.35rem] shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
+            <article className="w-[90%] rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-[0.5625rem] py-[0.65rem] shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
               <h2 className="text-[1.0125rem] font-black tracking-[-0.03em] text-[#16A34A]">Para clientes</h2>
-              <p className="mt-0.5 text-[0.7875rem] font-semibold leading-[1.035rem] text-[#E5E5E5]">
+              <p className="mt-1 text-[0.7875rem] font-semibold leading-[1.035rem] text-[#E5E5E5]">
                 Buscá peluqueros, elegí un horario y reservá en segundos.
               </p>
             </article>
 
-            <article className="w-[90%] rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-[0.5625rem] py-[0.35rem] shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
+            <article className="w-[90%] rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-[0.5625rem] py-[0.65rem] shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
               <h2 className="text-[1.0125rem] font-black tracking-[-0.03em] text-[#16A34A]">Para peluqueros</h2>
-              <p className="mt-0.5 text-[0.7875rem] font-semibold leading-[1.035rem] text-[#E5E5E5]">
+              <p className="mt-1 text-[0.7875rem] font-semibold leading-[1.035rem] text-[#E5E5E5]">
                 Gestioná horarios, servicios, reservas y pagos desde la app móvil.
               </p>
             </article>
 
-            <section className="w-[90%] rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-[0.5625rem] py-[0.35rem] text-[#E5E5E5] shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
+            <section className="w-[90%] rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-[0.5625rem] py-[0.65rem] text-[#E5E5E5] shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
               <h2 className="text-[1.0125rem] font-black tracking-[-0.03em] text-[#16A34A]">Cómo funciona</h2>
-              <ol className="mt-[0.15rem] grid gap-[0.125rem]">
+              <ol className="mt-[0.35rem] grid gap-[0.125rem]">
                 {clientSteps.map((step, index) => (
                   <li className="flex items-center gap-[0.5625rem] text-[0.7875rem] font-bold" key={step}>
                     <span className="grid h-[1.35rem] w-[1.35rem] shrink-0 place-items-center rounded-full bg-[#16A34A] text-[#121212]">
@@ -118,12 +118,12 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
               </ol>
             </section>
 
-            <section className="w-[90%] rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-[0.5625rem] py-[0.35rem] text-center shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
+            <section className="w-[90%] rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-[0.5625rem] py-[0.65rem] text-center shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
               <h2 className="text-[0.9rem] font-black tracking-[-0.03em] text-[#16A34A]">Descargá Clipcut para peluqueros</h2>
-              <p className="mt-0.5 text-[0.7875rem] font-semibold leading-[1.035rem] text-[#E5E5E5]">
+              <p className="mt-1 text-[0.7875rem] font-semibold leading-[1.035rem] text-[#E5E5E5]">
                 Gestioná tus horarios, reservas, clientes y pagos desde la aplicación oficial.
               </p>
-              <div className="mt-[0.2rem] flex flex-wrap items-center justify-center gap-[0.9rem]">
+              <div className="mt-[0.45rem] flex flex-wrap items-center justify-center gap-[0.9rem]">
                 {storeButtons.map((button) => (
                   <a
                     aria-label={`Descargar en ${button.label}`}
