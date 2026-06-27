@@ -36,7 +36,7 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
             <ClipcutLogo className="h-[4.6rem] w-auto object-contain" height={74} priority width={166} />
             <div className="flex shrink-0 items-center gap-1.5">
               <button
-                className="flex h-7 w-[3.7rem] items-center justify-center rounded-[0.75rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-0.5 text-[0.59rem] font-black leading-none text-white shadow-lg shadow-zinc-950/15 transition hover:bg-[#2C2C2C] active:scale-[0.98]"
+                className="grid h-7 w-[3.7rem] place-items-center rounded-[0.75rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-0.5 text-center text-[0.52rem] font-black leading-none text-white shadow-lg shadow-zinc-950/15 transition hover:bg-[#2C2C2C] active:scale-[0.98]"
                 onClick={onPrivacy}
                 type="button"
               >
@@ -52,7 +52,7 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
             </div>
           </header>
 
-          <div className="-mt-2 grid grid-cols-[51%_49%] items-center gap-1.5 overflow-hidden py-1">
+          <div className="-mt-5 grid grid-cols-[51%_49%] items-center gap-1.5 overflow-hidden py-1">
             <div className="relative z-10 flex min-w-0 flex-col justify-center pr-1">
               <h1 className="text-[clamp(1.38rem,7.1vw,1.9rem)] font-black leading-[0.92] tracking-[-0.07em] text-zinc-950">
                 <span className="block">Gestioná tu</span>
@@ -89,19 +89,19 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
           </svg>
           <article className="relative z-10 rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] p-2.5 shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
             <h2 className="text-lg font-black tracking-[-0.03em] text-[#16A34A]">Para clientes</h2>
-            <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-white">
+            <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-[#E5E5E5]">
               Buscá peluqueros, elegí un horario y reservá en segundos.
             </p>
           </article>
 
           <article className="relative z-10 rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] p-2.5 shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
             <h2 className="text-lg font-black tracking-[-0.03em] text-[#16A34A]">Para peluqueros</h2>
-            <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-white">
+            <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-[#E5E5E5]">
               Gestioná horarios, servicios, reservas y pagos desde la app móvil.
             </p>
           </article>
 
-          <section className="relative z-10 rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-2.5 py-3.5 text-white shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
+          <section className="relative z-10 rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-2.5 py-3.5 text-[#E5E5E5] shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
             <h2 className="text-lg font-black tracking-[-0.03em] text-[#16A34A]">Cómo funciona</h2>
             <ol className="mt-1 grid gap-1">
               {clientSteps.map((step, index) => (
@@ -117,7 +117,7 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
 
           <section className="relative z-10 rounded-[1.4rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] p-2.5 text-center shadow-[0_18px_45px_-22px_rgba(0,0,0,0.45),0_10px_24px_-20px_rgba(15,23,42,0.28)] ring-1 ring-white/5">
             <h2 className="text-base font-black tracking-[-0.03em] text-[#16A34A]">Descargá Clipcut para peluqueros</h2>
-            <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-white">
+            <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-[#E5E5E5]">
               Gestioná tus horarios, reservas, clientes y pagos desde la aplicación oficial.
             </p>
             <div className="mt-3 flex flex-wrap items-center justify-center gap-4">
