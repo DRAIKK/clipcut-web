@@ -76,26 +76,26 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
         </section>
 
         <section className="grid gap-2 bg-white px-4 py-2">
-          <article className="rounded-[1.4rem] bg-[linear-gradient(45deg,#3B82F6_0%,#66A3FF_100%)] p-2.5 shadow-[0_18px_45px_-22px_rgba(59,130,246,0.55),0_10px_24px_-20px_rgba(15,23,42,0.22)] ring-[1.5px] ring-zinc-200/70">
-            <h2 className="text-lg font-black tracking-[-0.03em] text-white">Para clientes</h2>
-            <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-white/90">
+          <article className="rounded-[1.4rem] bg-[linear-gradient(45deg,#3B82F6_0%,#66A3FF_100%)] p-2.5 shadow-[0_18px_45px_-22px_rgba(59,130,246,0.55),0_10px_24px_-20px_rgba(15,23,42,0.22)] ring-[1.5px] ring-[#121212]">
+            <h2 className="text-lg font-black tracking-[-0.03em] text-[#121212]">Para clientes</h2>
+            <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-white">
               Buscá peluqueros, elegí un horario y reservá en segundos.
             </p>
           </article>
 
-          <article className="rounded-[1.4rem] bg-[linear-gradient(45deg,#16A34A_0%,#42C56F_100%)] p-2.5 shadow-[0_18px_45px_-22px_rgba(22,163,74,0.55),0_10px_24px_-20px_rgba(15,23,42,0.22)] ring-[1.5px] ring-zinc-200/70">
-            <h2 className="text-lg font-black tracking-[-0.03em] text-white">Para peluqueros</h2>
-            <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-white/90">
+          <article className="rounded-[1.4rem] bg-[linear-gradient(45deg,#16A34A_0%,#42C56F_100%)] p-2.5 shadow-[0_18px_45px_-22px_rgba(22,163,74,0.55),0_10px_24px_-20px_rgba(15,23,42,0.22)] ring-[1.5px] ring-[#121212]">
+            <h2 className="text-lg font-black tracking-[-0.03em] text-[#121212]">Para peluqueros</h2>
+            <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-white">
               Gestioná horarios, servicios, reservas y pagos desde la app móvil.
             </p>
           </article>
 
-          <section className="rounded-[1.4rem] bg-[linear-gradient(45deg,#FACC15_0%,#FFE16A_100%)] px-2.5 py-3.5 text-zinc-950 shadow-[0_18px_45px_-22px_rgba(250,204,21,0.58),0_10px_24px_-20px_rgba(15,23,42,0.2)] ring-[1.5px] ring-zinc-200/70">
-            <h2 className="text-lg font-black tracking-[-0.03em]">Cómo funciona</h2>
+          <section className="rounded-[1.4rem] bg-[linear-gradient(45deg,#FACC15_0%,#FFE16A_100%)] px-2.5 py-3.5 text-[#121212] shadow-[0_18px_45px_-22px_rgba(250,204,21,0.58),0_10px_24px_-20px_rgba(15,23,42,0.2)] ring-[1.5px] ring-[#121212]">
+            <h2 className="text-lg font-black tracking-[-0.03em] text-[#121212]">Cómo funciona</h2>
             <ol className="mt-1 grid gap-1">
               {clientSteps.map((step, index) => (
                 <li className="flex items-center gap-2.5 text-sm font-bold" key={step}>
-                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-zinc-950 text-[#FACC15]">
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-[#121212] text-[#FACC15]">
                     {index + 1}
                   </span>
                   <span>{step}</span>
@@ -104,8 +104,8 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
             </ol>
           </section>
 
-          <section className="rounded-[1.4rem] bg-white p-2.5 text-center shadow-[0_18px_45px_-24px_rgba(15,23,42,0.22),0_10px_24px_-22px_rgba(15,23,42,0.18)] ring-[1.5px] ring-zinc-200/70">
-            <h2 className="text-base font-black tracking-[-0.03em] text-zinc-950">Descargá Clipcut para peluqueros</h2>
+          <section className="rounded-[1.4rem] bg-white p-2.5 text-center shadow-[0_18px_45px_-24px_rgba(15,23,42,0.22),0_10px_24px_-22px_rgba(15,23,42,0.18)] ring-[1.5px] ring-[#121212]">
+            <h2 className="text-base font-black tracking-[-0.03em] text-[#121212]">Descargá Clipcut para peluqueros</h2>
             <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-zinc-500">
               Gestioná tus horarios, reservas, clientes y pagos desde la aplicación oficial.
             </p>
