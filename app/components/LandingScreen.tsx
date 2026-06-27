@@ -36,7 +36,7 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
             <ClipcutLogo className="h-[4.6rem] w-auto object-contain" height={74} priority width={166} />
             <div className="flex shrink-0 items-center gap-1.5">
               <button
-                className="h-7 w-[3.95rem] rounded-[0.75rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-1 text-[0.64rem] font-black text-white shadow-lg shadow-zinc-950/15 transition hover:bg-[#2C2C2C] active:scale-[0.98]"
+                className="flex h-7 w-[3.7rem] items-center justify-center rounded-[0.75rem] bg-[linear-gradient(45deg,#232323_0%,#2C2C2C_100%)] px-0.5 text-[0.59rem] font-black leading-none text-white shadow-lg shadow-zinc-950/15 transition hover:bg-[#2C2C2C] active:scale-[0.98]"
                 onClick={onPrivacy}
                 type="button"
               >
@@ -52,7 +52,7 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
             </div>
           </header>
 
-          <div className="grid grid-cols-[51%_49%] items-center gap-1.5 overflow-hidden py-1">
+          <div className="-mt-2 grid grid-cols-[51%_49%] items-center gap-1.5 overflow-hidden py-1">
             <div className="relative z-10 flex min-w-0 flex-col justify-center pr-1">
               <h1 className="text-[clamp(1.38rem,7.1vw,1.9rem)] font-black leading-[0.92] tracking-[-0.07em] text-zinc-950">
                 <span className="block">Gestioná tu</span>
