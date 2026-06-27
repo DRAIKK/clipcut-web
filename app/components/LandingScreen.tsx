@@ -104,8 +104,11 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
             </ol>
           </section>
 
-          <section className="flex flex-col items-center pt-1 text-center">
+          <section className="rounded-[1.4rem] bg-white p-2.5 text-center shadow-sm ring-1 ring-zinc-200/70">
             <h2 className="text-base font-black tracking-[-0.03em] text-zinc-950">Descargá Clipcut para peluqueros</h2>
+            <p className="mt-0.5 text-sm font-semibold leading-[1.15rem] text-zinc-500">
+              Gestioná tus horarios, reservas, clientes y pagos desde la aplicación oficial.
+            </p>
             <div className="mt-3 flex flex-wrap items-center justify-center gap-4">
               {storeButtons.map((button) => (
                 <a
