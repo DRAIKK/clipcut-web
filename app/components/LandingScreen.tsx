@@ -17,16 +17,16 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
         <section className="flex flex-col justify-start gap-1 px-4 pb-0 pt-0.5">
           <header className="flex shrink-0 items-center justify-between gap-3 pb-0">
             <ClipcutLogo className="h-[4.6rem] w-auto object-contain" height={74} priority width={166} />
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex shrink-0 items-center gap-1.5">
               <button
-                className="h-9 rounded-[0.9rem] bg-zinc-950 px-3 text-[0.7rem] font-black text-white shadow-lg shadow-zinc-950/15 transition hover:bg-zinc-800 active:scale-[0.98]"
+                className="h-7 rounded-[0.75rem] bg-zinc-950 px-2 text-[0.64rem] font-black text-white shadow-lg shadow-zinc-950/15 transition hover:bg-zinc-800 active:scale-[0.98]"
                 onClick={onPrivacy}
                 type="button"
               >
                 Privacidad
               </button>
               <button
-                className="h-9 rounded-[0.9rem] bg-[#16A34A] px-3 text-[0.7rem] font-black text-white shadow-lg shadow-green-600/20 transition hover:bg-[#138a3f] active:scale-[0.98]"
+                className="h-8 rounded-[0.8rem] bg-[#16A34A] px-2.5 text-[0.66rem] font-black text-white shadow-lg shadow-green-600/20 transition hover:bg-[#138a3f] active:scale-[0.98]"
                 onClick={onUseClipcut}
                 type="button"
               >
