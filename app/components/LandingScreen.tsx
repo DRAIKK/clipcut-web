@@ -11,8 +11,8 @@ type LandingScreenProps = {
 
 const clientSteps = ["Buscá un peluquero", "Elegí horario y servicio", "Confirmá tu reserva"];
 
-const GOOGLE_PLAY_URL = "https://play.google.com/store";
-const APP_STORE_URL = "https://www.apple.com/app-store/";
+const GOOGLE_PLAY_URL = "https://play.google.com/store/apps/details?id=com.clipcut.app&pcampaignid=web_share";
+const APP_STORE_URL = "https://apps.apple.com/ar/app/clipcut/id6763927698";
 
 const storeButtons = [
   {
@@ -106,19 +106,19 @@ export function LandingScreen({ onPrivacy, onUseClipcut }: LandingScreenProps) {
 
           <section className="flex flex-col items-center pt-1 text-center">
             <h2 className="text-base font-black tracking-[-0.03em] text-zinc-950">Descargá Clipcut para peluqueros</h2>
-            <div className="mt-3 grid justify-items-center gap-2">
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-4">
               {storeButtons.map((button) => (
                 <a
                   aria-label={`Descargar en ${button.label}`}
-                  className="block transition active:scale-[0.98]"
+                  className="block shrink-0 transition active:scale-[0.98]"
                   href={button.href}
                   key={button.label}
-                  rel="noreferrer"
+                  rel="noopener noreferrer"
                   target="_blank"
                 >
                   <Image
                     alt={`Descargar en ${button.label}`}
-                    className="h-auto w-[10rem] object-contain drop-shadow-sm"
+                    className="h-12 w-auto object-contain drop-shadow-sm"
                     height={108}
                     src={button.image}
                     width={360}
