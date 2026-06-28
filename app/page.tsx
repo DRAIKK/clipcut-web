@@ -194,6 +194,7 @@ export default function Home() {
         setClientProfile(result.profile);
         setAuthView("app");
       } catch (error) {
+        console.error("auth state profile error", error);
         setAuthError(getAuthErrorMessage(error));
         setAuthView("login");
       }

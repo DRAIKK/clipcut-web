@@ -158,9 +158,17 @@ export async function getOrCreateClientProfile(user: User, fullName?: string): P
 }
 
 export async function loginClient(email: string, password: string) {
-  const { auth } = requireFirebase();
-  const credential = await signInWithEmailAndPassword(auth, email, password);
-  return getOrCreateClientProfile(credential.user);
+  console.log("firebase auth available", !!auth);
+  console.log("login email", email);
+
+  try {
+    const { auth } = requireFirebase();
+    const credential = await signInWithEmailAndPassword(auth, email, password);
+    return getOrCreateClientProfile(credential.user);
+  } catch (error) {
+    console.error("login error", error);
+    throw error;
+  }
 }
 
 export async function loginWithGoogle() {
