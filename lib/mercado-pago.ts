@@ -1,6 +1,6 @@
 import type { buildBookingPayload } from "./firestore-bookings";
 
-export const MP_CREATE_PREFERENCE_URL = process.env.NEXT_PUBLIC_MP_CREATE_PREFERENCE_URL?.trim() ?? "";
+export const MP_CREATE_PREFERENCE_URL = process.env.NEXT_PUBLIC_MP_CREATE_PREFERENCE_URL;
 
 type BookingPayload = ReturnType<typeof buildBookingPayload>;
 
@@ -13,6 +13,11 @@ export async function createMercadoPagoPreference(payload: BookingPayload) {
   if (!MP_CREATE_PREFERENCE_URL) {
     throw new Error("No está configurado el endpoint de Mercado Pago.");
   }
+
+  console.log(
+    "Mercado Pago endpoint:",
+    MP_CREATE_PREFERENCE_URL
+  );
 
   const response = await fetch(MP_CREATE_PREFERENCE_URL, {
     method: "POST",
