@@ -1,6 +1,6 @@
-import { addDoc, collection, doc, getDoc, serverTimestamp } from "firebase/firestore";
-import type { Barber, PaymentMethodId, Service, TimeSlot } from "../app/types/booking";
-import { db } from "./firebase";
+import { httpsCallable } from "firebase/functions";
+import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "../app/types/booking";
+import { functions } from "./firebase";
 
 type CreateBookingInput = {
   barber: Barber;
@@ -10,6 +10,13 @@ type CreateBookingInput = {
   slot: TimeSlot;
 };
 
+type BookingFunctionResponse = {
+  booking?: Partial<Booking> & { id?: string };
+  bookingId?: string;
+  id?: string;
+  status?: string;
+};
+
 function parsePrice(price: string) {
   const normalized = price.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
   const parsed = Number(normalized);
@@ -17,25 +24,13 @@ function parsePrice(price: string) {
   return Number.isFinite(parsed) ? parsed : price;
 }
 
-function slotIsUnavailable(data: Record<string, unknown>) {
-  const status = typeof data.status === "string" ? data.status.trim().toLowerCase() : "";
-
-  return Boolean(data.bookedBy) || data.booked === true || data.available === false || status === "booked";
-}
-
-export async function createBooking({ barber, clientId, paymentMethod, service, slot }: CreateBookingInput) {
-  if (!db) throw new Error("Firebase no está configurado.");
+export function buildBookingPayload({ barber, clientId, paymentMethod, service, slot }: CreateBookingInput) {
   if (!clientId) throw new Error("Iniciá sesión para reservar.");
   if (!barber.id || !service.id || !slot.id || !paymentMethod) {
     throw new Error("Elegí servicio, horario y método de pago para continuar.");
   }
 
-  const freshSlot = await getDoc(doc(db, "users", barber.id, "slots", slot.id));
-  if (!freshSlot.exists()) throw new Error("El horario seleccionado ya no está disponible.");
-  if (slotIsUnavailable(freshSlot.data())) throw new Error("Ese horario ya fue reservado. Elegí otro turno.");
-
-  const status = paymentMethod === "cash" ? "cash_pending" : "pending_payment";
-  const bookingData = {
+  return {
     clientId,
     barberId: barber.id,
     barberName: barber.name,
@@ -47,13 +42,40 @@ export async function createBooking({ barber, clientId, paymentMethod, service, 
     day: slot.day ?? "",
     startTime: slot.startTime ?? slot.label,
     endTime: slot.endTime ?? "",
-    status,
     paymentMethod,
-    createdAt: serverTimestamp(),
   };
+}
 
-  const bookingRef = await addDoc(collection(db, "bookings"), bookingData);
+function responseToBooking(payload: ReturnType<typeof buildBookingPayload>, response: BookingFunctionResponse): Booking {
+  const booking = response.booking ?? {};
+  const id = booking.id ?? response.bookingId ?? response.id;
 
-  // TODO: Verificar en Clipcut App si el bloqueo del slot lo hace frontend o Cloud Functions antes de actualizar users/{barberId}/slots/{slotId} desde web.
-  return { id: bookingRef.id, ...bookingData };
+  if (!id) throw new Error("La reserva fue creada, pero no recibimos el ID de la reserva.");
+
+  return {
+    id,
+    barberId: payload.barberId,
+    barberName: payload.barberName,
+    serviceId: payload.serviceId,
+    serviceName: payload.serviceName,
+    servicePrice: payload.servicePrice,
+    slotId: payload.slotId,
+    day: payload.day,
+    startTime: payload.startTime,
+    endTime: payload.endTime,
+    dateTime: [payload.day, payload.startTime].filter(Boolean).join(" · "),
+    address: payload.barberAddress,
+    status: booking.status ?? response.status ?? (payload.paymentMethod === "cash" ? "cash_pending" : "pending_payment"),
+    paymentMethod: payload.paymentMethod,
+  };
+}
+
+export async function createBooking(input: CreateBookingInput) {
+  if (!functions) throw new Error("Firebase Functions no está configurado.");
+
+  const payload = buildBookingPayload(input);
+  const callable = httpsCallable<typeof payload, BookingFunctionResponse>(functions, "createBooking");
+  const result = await callable(payload);
+
+  return responseToBooking(payload, result.data);
 }

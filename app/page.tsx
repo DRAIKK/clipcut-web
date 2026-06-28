@@ -35,7 +35,7 @@ import {
 } from "../lib/client-auth";
 import { auth } from "../lib/firebase";
 import { getBarberById, getBarberServices, getBarbers, getBarberSlots, getClientBookings } from "../lib/firestore-read";
-import { createBooking } from "../lib/firestore-bookings";
+import { buildBookingPayload, createBooking } from "../lib/firestore-bookings";
 import { calculateDistanceKm, formatDistanceKm, type Coordinates } from "../lib/distance";
 import { BarberAppModal } from "./components/BarberAppModal";
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "./types/booking";
@@ -412,33 +412,47 @@ export default function Home() {
 
     setBookingSubmitting(true);
     try {
-      const booking = await createBooking({
+      const bookingInput = {
         barber: selectedBarber,
         clientId: currentUserId,
         paymentMethod: selectedPaymentMethod,
         service: selectedService,
         slot: selectedSlot,
-      });
+      };
+      const payload = buildBookingPayload(bookingInput);
+
+      console.log("booking payload", payload);
+      console.log("selected barber", selectedBarber.id);
+      console.log("selected slot", selectedSlot);
+      console.log("selected service", selectedService);
+      console.log("selected payment method", selectedPaymentMethod);
 
       if (selectedPaymentMethod === "transfer") {
         const response = await fetch("/api/mp/create-preference", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ bookingId: booking.id, barberId: selectedBarber.id, clientId: currentUserId }),
+          body: JSON.stringify(payload),
         });
 
-        if (!response.ok) throw new Error("No se pudo iniciar Mercado Pago. Probá nuevamente.");
+        if (!response.ok) {
+          const errorBody = await response.text();
+          throw new Error(errorBody || "No se pudo iniciar Mercado Pago. Probá nuevamente.");
+        }
+
         const preference = await response.json();
-        const checkoutUrl = preference.init_point ?? preference.url ?? preference.checkoutUrl;
+        const checkoutUrl = preference.init_point ?? preference.sandbox_init_point;
         if (!checkoutUrl) throw new Error("Mercado Pago no devolvió un link de pago.");
         window.location.href = checkoutUrl;
         return;
       }
 
+      const booking = await createBooking(bookingInput);
+
       setClientBookings((current) => [{ ...booking, dateTime: [booking.day, booking.startTime].filter(Boolean).join(" · ") }, ...current]);
       setModalOpen(false);
       setConfirmed(true);
     } catch (error) {
+      console.error("booking error", error);
       setBookingError(error instanceof Error ? error.message : "No se pudo crear la reserva. Intentá nuevamente.");
     } finally {
       setBookingSubmitting(false);
