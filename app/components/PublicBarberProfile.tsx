@@ -171,7 +171,7 @@ export function PublicBarberProfile({
       if (nextFollowing) await followBarber(barber.id, clientId);
       else await unfollowBarber(barber.id, clientId);
     } catch (error) {
-      console.warn("No se pudo actualizar el seguimiento del peluquero.", error);
+      console.error("follow error", error);
       setIsFollowing(previousFollowing);
       setFollowersCount(previousFollowersCount);
       setFollowError("No pudimos actualizar el seguimiento. Intentá nuevamente.");
