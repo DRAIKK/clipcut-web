@@ -36,6 +36,7 @@ import {
 import { auth } from "../lib/firebase";
 import { getBarberById, getBarberServices, getBarbers, getBarberSlots, getClientBookings } from "../lib/firestore-read";
 import { buildBookingPayload, createBooking } from "../lib/firestore-bookings";
+import { createMercadoPagoPreference, MP_CREATE_PREFERENCE_URL } from "../lib/mercado-pago";
 import { calculateDistanceKm, formatDistanceKm, type Coordinates } from "../lib/distance";
 import { BarberAppModal } from "./components/BarberAppModal";
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "./types/booking";
@@ -428,18 +429,9 @@ export default function Home() {
       console.log("selected payment method", selectedPaymentMethod);
 
       if (selectedPaymentMethod === "transfer") {
-        const response = await fetch("/api/mp/create-preference", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
+        console.log("mp endpoint", MP_CREATE_PREFERENCE_URL);
 
-        if (!response.ok) {
-          const errorBody = await response.text();
-          throw new Error(errorBody || "No se pudo iniciar Mercado Pago. Probá nuevamente.");
-        }
-
-        const preference = await response.json();
+        const preference = await createMercadoPagoPreference(payload);
         const checkoutUrl = preference.init_point ?? preference.sandbox_init_point;
         if (!checkoutUrl) throw new Error("Mercado Pago no devolvió un link de pago.");
         window.location.href = checkoutUrl;
