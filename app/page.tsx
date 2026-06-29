@@ -435,12 +435,12 @@ export default function Home() {
         const origin = window.location.origin;
         const payload = buildMercadoPagoPreferencePayload({
           booking: bookingPayload,
-          payerEmail: clientProfile?.email ?? auth?.currentUser?.email ?? "",
+          email: clientProfile?.email ?? auth?.currentUser?.email ?? "",
           successUrl: `${origin}/?payment=success`,
           failureUrl: `${origin}/?payment=failure`,
           pendingUrl: `${origin}/?payment=pending`,
         });
-        console.log("WEB MP PAYLOAD FINAL", JSON.stringify(payload, null, 2));
+        console.log("MP PAYLOAD FINAL", JSON.stringify(payload, null, 2));
         alert("Payload MP enviado. Revisar consola.");
         const preference = await createMercadoPagoPreference(payload);
         const checkoutUrl = preference.init_point || preference.sandbox_init_point;
