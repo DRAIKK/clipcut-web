@@ -441,6 +441,7 @@ export default function Home() {
           pendingUrl: `${origin}/?payment=pending`,
         });
         console.log("WEB MP PAYLOAD FINAL", JSON.stringify(payload, null, 2));
+        alert("Payload MP enviado. Revisar consola.");
         const preference = await createMercadoPagoPreference(payload);
         const checkoutUrl = preference.init_point || preference.sandbox_init_point;
         if (!checkoutUrl) throw new Error("Mercado Pago no devolvió un link de pago.");
