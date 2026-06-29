@@ -1,11 +1,16 @@
+import { addDoc, collection, serverTimestamp } from "firebase/firestore";
 import { httpsCallable } from "firebase/functions";
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "../app/types/booking";
-import { functions } from "./firebase";
+import { db, functions } from "./firebase";
+
+type BookingPaymentMethod = PaymentMethodId | "mp";
 
 type CreateBookingInput = {
   barber: Barber;
+  clientEmail?: string;
   clientId: string;
-  paymentMethod: PaymentMethodId;
+  clientName?: string;
+  paymentMethod: BookingPaymentMethod;
   service: Service;
   slot: TimeSlot;
 };
@@ -24,7 +29,7 @@ function parsePrice(price: string) {
   return Number.isFinite(parsed) ? parsed : price;
 }
 
-export function buildBookingPayload({ barber, clientId, paymentMethod, service, slot }: CreateBookingInput) {
+export function buildBookingPayload({ barber, clientEmail, clientId, clientName, paymentMethod, service, slot }: CreateBookingInput) {
   if (!clientId) throw new Error("Iniciá sesión para reservar.");
   if (!barber.id || !service.id || !slot.id || !paymentMethod) {
     throw new Error("Elegí servicio, horario y método de pago para continuar.");
@@ -32,6 +37,8 @@ export function buildBookingPayload({ barber, clientId, paymentMethod, service, 
 
   return {
     clientId,
+    clientName: clientName ?? "",
+    clientEmail: clientEmail ?? "",
     barberId: barber.id,
     barberName: barber.name,
     barberAddress: barber.address,
@@ -46,12 +53,7 @@ export function buildBookingPayload({ barber, clientId, paymentMethod, service, 
   };
 }
 
-function responseToBooking(payload: ReturnType<typeof buildBookingPayload>, response: BookingFunctionResponse): Booking {
-  const booking = response.booking ?? {};
-  const id = booking.id ?? response.bookingId ?? response.id;
-
-  if (!id) throw new Error("La reserva fue creada, pero no recibimos el ID de la reserva.");
-
+function payloadToBooking(id: string, payload: ReturnType<typeof buildBookingPayload>, status: Booking["status"]): Booking {
   return {
     id,
     barberId: payload.barberId,
@@ -65,9 +67,18 @@ function responseToBooking(payload: ReturnType<typeof buildBookingPayload>, resp
     endTime: payload.endTime,
     dateTime: [payload.day, payload.startTime].filter(Boolean).join(" · "),
     address: payload.barberAddress,
-    status: booking.status ?? response.status ?? (payload.paymentMethod === "cash" ? "cash_pending" : "pending_payment"),
+    status,
     paymentMethod: payload.paymentMethod,
   };
+}
+
+function responseToBooking(payload: ReturnType<typeof buildBookingPayload>, response: BookingFunctionResponse): Booking {
+  const booking = response.booking ?? {};
+  const id = booking.id ?? response.bookingId ?? response.id;
+
+  if (!id) throw new Error("La reserva fue creada, pero no recibimos el ID de la reserva.");
+
+  return payloadToBooking(id, payload, booking.status ?? response.status ?? (payload.paymentMethod === "cash" ? "cash_pending" : "pending_payment"));
 }
 
 export async function createBooking(input: CreateBookingInput) {
@@ -78,4 +89,20 @@ export async function createBooking(input: CreateBookingInput) {
   const result = await callable(payload);
 
   return responseToBooking(payload, result.data);
+}
+
+export async function createFirestoreBooking(input: CreateBookingInput) {
+  if (!db) throw new Error("Firebase Firestore no está configurado.");
+
+  const payload = buildBookingPayload(input);
+  const status = payload.paymentMethod === "cash" ? "cash_pending" : "pending_payment";
+  const document = {
+    ...payload,
+    status,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  };
+  const reference = await addDoc(collection(db, "bookings"), document);
+
+  return payloadToBooking(reference.id, payload, status);
 }
