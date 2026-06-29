@@ -5,17 +5,15 @@ export const MP_CREATE_PREFERENCE_URL = process.env.NEXT_PUBLIC_MP_CREATE_PREFER
 type BookingPayload = ReturnType<typeof buildBookingPayload>;
 
 export type MercadoPagoPreferencePayload = {
-  clientId: string;
   barberId: string;
-  barberName: string;
-  barberAddress: string;
+  clientId: string;
+  slotId: string;
   serviceId: string;
   serviceName: string;
   servicePrice: number | string;
-  slotId: string;
-  day: string;
-  startTime: string;
-  endTime: string;
+  start: string;
+  end: string;
+  date: string;
   paymentMethod: BookingPayload["paymentMethod"];
   payerEmail: string;
   successUrl: string;
@@ -49,17 +47,15 @@ function assertRequiredField(fieldName: keyof MercadoPagoPreferencePayload, valu
 
 export function buildMercadoPagoPreferencePayload({ booking, failureUrl, payerEmail, pendingUrl, successUrl }: MercadoPagoPreferenceInput): MercadoPagoPreferencePayload {
   const payload = {
-    clientId: booking.clientId,
     barberId: booking.barberId,
-    barberName: booking.barberName,
-    barberAddress: booking.barberAddress,
+    clientId: booking.clientId,
+    slotId: booking.slotId,
     serviceId: booking.serviceId,
     serviceName: booking.serviceName,
     servicePrice: booking.servicePrice,
-    slotId: booking.slotId,
-    day: booking.day,
-    startTime: booking.startTime,
-    endTime: booking.endTime,
+    start: booking.startTime,
+    end: booking.endTime,
+    date: booking.day,
     paymentMethod: booking.paymentMethod,
     payerEmail,
     successUrl,
@@ -67,17 +63,15 @@ export function buildMercadoPagoPreferencePayload({ booking, failureUrl, payerEm
     pendingUrl,
   } satisfies MercadoPagoPreferencePayload;
 
-  assertRequiredField("clientId", payload.clientId);
   assertRequiredField("barberId", payload.barberId);
-  assertRequiredField("barberName", payload.barberName);
-  assertRequiredField("barberAddress", payload.barberAddress);
+  assertRequiredField("clientId", payload.clientId);
+  assertRequiredField("slotId", payload.slotId);
   assertRequiredField("serviceId", payload.serviceId);
   assertRequiredField("serviceName", payload.serviceName);
   assertRequiredField("servicePrice", payload.servicePrice);
-  assertRequiredField("slotId", payload.slotId);
-  assertRequiredField("day", payload.day);
-  assertRequiredField("startTime", payload.startTime);
-  assertRequiredField("endTime", payload.endTime);
+  assertRequiredField("start", payload.start);
+  assertRequiredField("end", payload.end);
+  assertRequiredField("date", payload.date);
   assertRequiredField("paymentMethod", payload.paymentMethod);
   assertRequiredField("payerEmail", payload.payerEmail);
   assertRequiredField("successUrl", payload.successUrl);
@@ -92,8 +86,8 @@ export async function createMercadoPagoPreference(payload: MercadoPagoPreference
     throw new Error("No está configurado el endpoint de Mercado Pago.");
   }
 
-  console.log("Mercado Pago endpoint:", MP_CREATE_PREFERENCE_URL);
-  console.log("MP payload final", JSON.stringify(payload, null, 2));
+  console.log("MP ENDPOINT", MP_CREATE_PREFERENCE_URL);
+  console.log("MP BODY ENVIADO", JSON.stringify(payload, null, 2));
 
   const response = await fetch(MP_CREATE_PREFERENCE_URL, {
     method: "POST",
