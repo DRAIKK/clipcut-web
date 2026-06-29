@@ -1,6 +1,6 @@
 import type { buildBookingPayload } from "./firestore-bookings";
 
-export const MP_CREATE_PREFERENCE_URL = process.env.NEXT_PUBLIC_MP_CREATE_PREFERENCE_URL;
+export const MP_CREATE_PREFERENCE_URL = process.env.NEXT_PUBLIC_MP_CREATE_PREFERENCE_URL ?? "https://us-central1-clipcut-3053d.cloudfunctions.net/api/mp/create-preference";
 
 type BookingPayload = ReturnType<typeof buildBookingPayload>;
 
@@ -34,8 +34,19 @@ type MercadoPagoPreferenceInput = {
   successUrl: string;
 };
 
+function hasValue(value: number | string) {
+  if (typeof value === "number") return Number.isFinite(value) && value > 0;
+  return value.trim().length > 0;
+}
+
+function assertRequiredField(fieldName: keyof MercadoPagoPreferencePayload, value: number | string) {
+  if (!hasValue(value)) {
+    throw new Error(`Falta ${fieldName} para iniciar el pago.`);
+  }
+}
+
 export function buildMercadoPagoPreferencePayload({ booking, failureUrl, payerEmail, pendingUrl, successUrl }: MercadoPagoPreferenceInput): MercadoPagoPreferencePayload {
-  return {
+  const payload = {
     barberId: booking.barberId,
     clientId: booking.clientId,
     slotId: booking.slotId,
@@ -50,7 +61,24 @@ export function buildMercadoPagoPreferencePayload({ booking, failureUrl, payerEm
     successUrl,
     failureUrl,
     pendingUrl,
-  };
+  } satisfies MercadoPagoPreferencePayload;
+
+  assertRequiredField("barberId", payload.barberId);
+  assertRequiredField("clientId", payload.clientId);
+  assertRequiredField("slotId", payload.slotId);
+  assertRequiredField("serviceId", payload.serviceId);
+  assertRequiredField("serviceName", payload.serviceName);
+  assertRequiredField("servicePrice", payload.servicePrice);
+  assertRequiredField("start", payload.start);
+  assertRequiredField("end", payload.end);
+  assertRequiredField("date", payload.date);
+  assertRequiredField("paymentMethod", payload.paymentMethod);
+  assertRequiredField("payerEmail", payload.payerEmail);
+  assertRequiredField("successUrl", payload.successUrl);
+  assertRequiredField("failureUrl", payload.failureUrl);
+  assertRequiredField("pendingUrl", payload.pendingUrl);
+
+  return payload;
 }
 
 export async function createMercadoPagoPreference(payload: MercadoPagoPreferencePayload) {
@@ -59,7 +87,7 @@ export async function createMercadoPagoPreference(payload: MercadoPagoPreference
   }
 
   console.log("Mercado Pago endpoint:", MP_CREATE_PREFERENCE_URL);
-  console.log("MP payload enviado", payload);
+  console.log("MP payload final", JSON.stringify(payload, null, 2));
 
   const response = await fetch(MP_CREATE_PREFERENCE_URL, {
     method: "POST",
