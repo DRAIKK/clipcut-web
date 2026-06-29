@@ -441,7 +441,7 @@ export default function Home() {
           pendingUrl: `${origin}/?payment=pending`,
         });
         const preference = await createMercadoPagoPreference(mercadoPagoPayload);
-        const checkoutUrl = preference.init_point ?? preference.sandbox_init_point;
+        const checkoutUrl = preference.init_point || preference.sandbox_init_point;
         if (!checkoutUrl) throw new Error("Mercado Pago no devolvió un link de pago.");
         window.location.href = checkoutUrl;
         return;
