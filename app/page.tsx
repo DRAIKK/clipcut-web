@@ -35,7 +35,7 @@ import {
 } from "../lib/client-auth";
 import { auth } from "../lib/firebase";
 import { getBarberById, getBarberServices, getBarbers, getBarberSlots, getClientBookings } from "../lib/firestore-read";
-import { createBooking, createFirestoreBooking } from "../lib/firestore-bookings";
+import { createBooking } from "../lib/firestore-bookings";
 import { buildMercadoPagoPreferencePayload, createMercadoPagoPreference } from "../lib/mercado-pago";
 import { calculateDistanceKm, formatDistanceKm, type Coordinates } from "../lib/distance";
 import { BarberAppModal } from "./components/BarberAppModal";
@@ -427,7 +427,7 @@ export default function Home() {
       };
 
       if (selectedPaymentMethod === "transfer") {
-        const booking = await createFirestoreBooking({ ...bookingInput, paymentMethod: "mp" });
+        const booking = await createBooking({ ...bookingInput, paymentMethod: "mp" });
         const payload = buildMercadoPagoPreferencePayload({
           barberId: selectedBarber.id,
           bookingId: booking.id,
@@ -451,7 +451,7 @@ export default function Home() {
       setModalOpen(false);
       setConfirmed(true);
     } catch (error) {
-      console.error("booking error", error);
+      console.error("create booking permission error", error);
       setBookingError(error instanceof Error ? error.message : "No se pudo crear la reserva. Intentá nuevamente.");
     } finally {
       setBookingSubmitting(false);

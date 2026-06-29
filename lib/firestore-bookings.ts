@@ -85,6 +85,7 @@ export async function createBooking(input: CreateBookingInput) {
   if (!functions) throw new Error("Firebase Functions no está configurado.");
 
   const payload = buildBookingPayload(input);
+  console.log("creating booking doc", payload);
   const callable = httpsCallable<typeof payload, BookingFunctionResponse>(functions, "createBooking");
   const result = await callable(payload);
 
@@ -102,6 +103,7 @@ export async function createFirestoreBooking(input: CreateBookingInput) {
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   };
+  console.log("creating booking doc", document);
   const reference = await addDoc(collection(db, "bookings"), document);
 
   return payloadToBooking(reference.id, payload, status);
