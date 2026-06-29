@@ -435,7 +435,7 @@ export default function Home() {
         const origin = window.location.origin;
         const payload = buildMercadoPagoPreferencePayload({
           booking: bookingPayload,
-          payerEmail: clientProfile?.email ?? auth?.currentUser?.email ?? "",
+          email: clientProfile?.email ?? auth?.currentUser?.email ?? "",
           successUrl: `${origin}/?payment=success`,
           failureUrl: `${origin}/?payment=failure`,
           pendingUrl: `${origin}/?payment=pending`,
