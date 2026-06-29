@@ -5,15 +5,17 @@ export const MP_CREATE_PREFERENCE_URL = process.env.NEXT_PUBLIC_MP_CREATE_PREFER
 type BookingPayload = ReturnType<typeof buildBookingPayload>;
 
 export type MercadoPagoPreferencePayload = {
-  barberId: string;
   clientId: string;
-  slotId: string;
+  barberId: string;
+  barberName: string;
+  barberAddress: string;
   serviceId: string;
   serviceName: string;
   servicePrice: number | string;
-  start: string;
-  end: string;
-  date: string;
+  slotId: string;
+  day: string;
+  startTime: string;
+  endTime: string;
   paymentMethod: BookingPayload["paymentMethod"];
   payerEmail: string;
   successUrl: string;
@@ -47,15 +49,17 @@ function assertRequiredField(fieldName: keyof MercadoPagoPreferencePayload, valu
 
 export function buildMercadoPagoPreferencePayload({ booking, failureUrl, payerEmail, pendingUrl, successUrl }: MercadoPagoPreferenceInput): MercadoPagoPreferencePayload {
   const payload = {
-    barberId: booking.barberId,
     clientId: booking.clientId,
-    slotId: booking.slotId,
+    barberId: booking.barberId,
+    barberName: booking.barberName,
+    barberAddress: booking.barberAddress,
     serviceId: booking.serviceId,
     serviceName: booking.serviceName,
     servicePrice: booking.servicePrice,
-    start: booking.startTime,
-    end: booking.endTime,
-    date: booking.day,
+    slotId: booking.slotId,
+    day: booking.day,
+    startTime: booking.startTime,
+    endTime: booking.endTime,
     paymentMethod: booking.paymentMethod,
     payerEmail,
     successUrl,
@@ -63,15 +67,17 @@ export function buildMercadoPagoPreferencePayload({ booking, failureUrl, payerEm
     pendingUrl,
   } satisfies MercadoPagoPreferencePayload;
 
-  assertRequiredField("barberId", payload.barberId);
   assertRequiredField("clientId", payload.clientId);
-  assertRequiredField("slotId", payload.slotId);
+  assertRequiredField("barberId", payload.barberId);
+  assertRequiredField("barberName", payload.barberName);
+  assertRequiredField("barberAddress", payload.barberAddress);
   assertRequiredField("serviceId", payload.serviceId);
   assertRequiredField("serviceName", payload.serviceName);
   assertRequiredField("servicePrice", payload.servicePrice);
-  assertRequiredField("start", payload.start);
-  assertRequiredField("end", payload.end);
-  assertRequiredField("date", payload.date);
+  assertRequiredField("slotId", payload.slotId);
+  assertRequiredField("day", payload.day);
+  assertRequiredField("startTime", payload.startTime);
+  assertRequiredField("endTime", payload.endTime);
   assertRequiredField("paymentMethod", payload.paymentMethod);
   assertRequiredField("payerEmail", payload.payerEmail);
   assertRequiredField("successUrl", payload.successUrl);
