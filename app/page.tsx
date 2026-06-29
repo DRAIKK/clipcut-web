@@ -36,7 +36,7 @@ import {
 import { auth } from "../lib/firebase";
 import { getBarberById, getBarberServices, getBarbers, getBarberSlots, getClientBookings } from "../lib/firestore-read";
 import { buildBookingPayload, createBooking } from "../lib/firestore-bookings";
-import { createMercadoPagoPreference, MP_CREATE_PREFERENCE_URL } from "../lib/mercado-pago";
+import { buildMercadoPagoPreferencePayload, createMercadoPagoPreference, MP_CREATE_PREFERENCE_URL } from "../lib/mercado-pago";
 import { calculateDistanceKm, formatDistanceKm, type Coordinates } from "../lib/distance";
 import { BarberAppModal } from "./components/BarberAppModal";
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "./types/booking";
@@ -432,7 +432,15 @@ export default function Home() {
       if (selectedPaymentMethod === "transfer") {
         console.log("mp endpoint", MP_CREATE_PREFERENCE_URL);
 
-        const preference = await createMercadoPagoPreference(payload);
+        const origin = window.location.origin;
+        const mercadoPagoPayload = buildMercadoPagoPreferencePayload({
+          booking: payload,
+          payerEmail: clientProfile?.email ?? auth?.currentUser?.email ?? "",
+          successUrl: `${origin}/?payment=success`,
+          failureUrl: `${origin}/?payment=failure`,
+          pendingUrl: `${origin}/?payment=pending`,
+        });
+        const preference = await createMercadoPagoPreference(mercadoPagoPayload);
         const checkoutUrl = preference.init_point ?? preference.sandbox_init_point;
         if (!checkoutUrl) throw new Error("Mercado Pago no devolvió un link de pago.");
         window.location.href = checkoutUrl;
