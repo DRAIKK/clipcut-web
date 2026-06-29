@@ -35,8 +35,8 @@ import {
 } from "../lib/client-auth";
 import { auth } from "../lib/firebase";
 import { getBarberById, getBarberServices, getBarbers, getBarberSlots, getClientBookings } from "../lib/firestore-read";
-import { buildBookingPayload, createBooking } from "../lib/firestore-bookings";
-import { buildMercadoPagoPreferencePayload, createMercadoPagoPreference, MP_CREATE_PREFERENCE_URL } from "../lib/mercado-pago";
+import { createBooking, createFirestoreBooking } from "../lib/firestore-bookings";
+import { buildMercadoPagoPreferencePayload, createMercadoPagoPreference } from "../lib/mercado-pago";
 import { calculateDistanceKm, formatDistanceKm, type Coordinates } from "../lib/distance";
 import { BarberAppModal } from "./components/BarberAppModal";
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "./types/booking";
@@ -414,34 +414,30 @@ export default function Home() {
 
     setBookingSubmitting(true);
     try {
+      const clientEmail = clientProfile?.email ?? auth?.currentUser?.email ?? "";
+      const clientName = clientProfile?.fullName ?? auth?.currentUser?.displayName ?? "";
       const bookingInput = {
         barber: selectedBarber,
+        clientEmail,
         clientId: currentUserId,
+        clientName,
         paymentMethod: selectedPaymentMethod,
         service: selectedService,
         slot: selectedSlot,
       };
-      const bookingPayload = buildBookingPayload(bookingInput);
-
-      console.log("booking payload", bookingPayload);
-      console.log("selected barber", selectedBarber.id);
-      console.log("selected slot", selectedSlot);
-      console.log("selected service", selectedService);
-      console.log("selected payment method", selectedPaymentMethod);
 
       if (selectedPaymentMethod === "transfer") {
-        console.log("mp endpoint", MP_CREATE_PREFERENCE_URL);
-
-        const origin = window.location.origin;
+        const booking = await createFirestoreBooking({ ...bookingInput, paymentMethod: "mp" });
         const payload = buildMercadoPagoPreferencePayload({
-          booking: bookingPayload,
-          email: clientProfile?.email ?? auth?.currentUser?.email ?? "",
-          successUrl: `${origin}/?payment=success`,
-          failureUrl: `${origin}/?payment=failure`,
-          pendingUrl: `${origin}/?payment=pending`,
+          barberId: selectedBarber.id,
+          bookingId: booking.id,
+          title: selectedService.name,
+          paymentType: "mp",
         });
-        console.log("MP PAYLOAD FINAL", JSON.stringify(payload, null, 2));
-        alert("Payload MP enviado. Revisar consola.");
+
+        console.log("booking creado", booking.id);
+        console.log("MP payload final", payload);
+
         const preference = await createMercadoPagoPreference(payload);
         const checkoutUrl = preference.init_point || preference.sandbox_init_point;
         if (!checkoutUrl) throw new Error("Mercado Pago no devolvió un link de pago.");
