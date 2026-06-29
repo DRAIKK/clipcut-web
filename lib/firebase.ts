@@ -12,19 +12,29 @@ type FirebaseExports = {
   functions: Functions | null;
 };
 
-function readEnv(name: string) {
-  const value = process.env[name]?.trim();
-  return value || undefined;
+function cleanEnv(value: string | undefined) {
+  return value?.trim() || undefined;
 }
 
 const firebaseConfig: FirebaseOptions = {
-  apiKey: readEnv("NEXT_PUBLIC_FIREBASE_API_KEY"),
-  authDomain: readEnv("NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN"),
-  projectId: readEnv("NEXT_PUBLIC_FIREBASE_PROJECT_ID"),
-  storageBucket: readEnv("NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET"),
-  messagingSenderId: readEnv("NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID"),
-  appId: readEnv("NEXT_PUBLIC_FIREBASE_APP_ID"),
+  apiKey: cleanEnv(process.env.NEXT_PUBLIC_FIREBASE_API_KEY),
+  authDomain: cleanEnv(process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN),
+  projectId: cleanEnv(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID),
+  storageBucket: cleanEnv(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET),
+  messagingSenderId: cleanEnv(process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID),
+  appId: cleanEnv(process.env.NEXT_PUBLIC_FIREBASE_APP_ID),
 };
+
+if (process.env.NODE_ENV === "development") {
+  console.log("Firebase env check", {
+    apiKey: Boolean(process.env.NEXT_PUBLIC_FIREBASE_API_KEY),
+    authDomain: Boolean(process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN),
+    projectId: Boolean(process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID),
+    storageBucket: Boolean(process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET),
+    messagingSenderId: Boolean(process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID),
+    appId: Boolean(process.env.NEXT_PUBLIC_FIREBASE_APP_ID),
+  });
+}
 
 const hasFirebaseCoreConfig = Boolean(firebaseConfig.apiKey && firebaseConfig.authDomain && firebaseConfig.projectId && firebaseConfig.appId);
 
