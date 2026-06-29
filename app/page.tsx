@@ -421,9 +421,9 @@ export default function Home() {
         service: selectedService,
         slot: selectedSlot,
       };
-      const payload = buildBookingPayload(bookingInput);
+      const bookingPayload = buildBookingPayload(bookingInput);
 
-      console.log("booking payload", payload);
+      console.log("booking payload", bookingPayload);
       console.log("selected barber", selectedBarber.id);
       console.log("selected slot", selectedSlot);
       console.log("selected service", selectedService);
@@ -433,14 +433,15 @@ export default function Home() {
         console.log("mp endpoint", MP_CREATE_PREFERENCE_URL);
 
         const origin = window.location.origin;
-        const mercadoPagoPayload = buildMercadoPagoPreferencePayload({
-          booking: payload,
+        const payload = buildMercadoPagoPreferencePayload({
+          booking: bookingPayload,
           payerEmail: clientProfile?.email ?? auth?.currentUser?.email ?? "",
           successUrl: `${origin}/?payment=success`,
           failureUrl: `${origin}/?payment=failure`,
           pendingUrl: `${origin}/?payment=pending`,
         });
-        const preference = await createMercadoPagoPreference(mercadoPagoPayload);
+        console.log("WEB MP PAYLOAD FINAL", JSON.stringify(payload, null, 2));
+        const preference = await createMercadoPagoPreference(payload);
         const checkoutUrl = preference.init_point || preference.sandbox_init_point;
         if (!checkoutUrl) throw new Error("Mercado Pago no devolvió un link de pago.");
         window.location.href = checkoutUrl;
