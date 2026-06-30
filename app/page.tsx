@@ -435,8 +435,7 @@ export default function Home() {
           paymentType: "mp",
         });
 
-        console.log("booking creado", booking.id);
-        console.log("MP payload final", payload);
+        console.log("mp payload", payload);
 
         const preference = await createMercadoPagoPreference(payload);
         const checkoutUrl = preference.init_point || preference.sandbox_init_point;
