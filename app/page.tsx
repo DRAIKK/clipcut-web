@@ -35,7 +35,7 @@ import {
 } from "../lib/client-auth";
 import { auth } from "../lib/firebase";
 import { getBarberById, getBarberServices, getBarbers, getBarberSlots, getClientBookings } from "../lib/firestore-read";
-import { createBooking } from "../lib/firestore-bookings";
+import { createBooking } from "../lib/cloud-bookings";
 import { buildMercadoPagoPreferencePayload, createMercadoPagoPreference } from "../lib/mercado-pago";
 import { calculateDistanceKm, formatDistanceKm, type Coordinates } from "../lib/distance";
 import { BarberAppModal } from "./components/BarberAppModal";
