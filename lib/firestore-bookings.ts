@@ -1,7 +1,6 @@
 import { addDoc, collection, serverTimestamp } from "firebase/firestore";
-import { httpsCallable } from "firebase/functions";
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "../app/types/booking";
-import { db, functions } from "./firebase";
+import { db } from "./firebase";
 
 type BookingPaymentMethod = PaymentMethodId | "mp";
 
@@ -13,13 +12,6 @@ type CreateBookingInput = {
   paymentMethod: BookingPaymentMethod;
   service: Service;
   slot: TimeSlot;
-};
-
-type BookingFunctionResponse = {
-  booking?: Partial<Booking> & { id?: string };
-  bookingId?: string;
-  id?: string;
-  status?: string;
 };
 
 type BookingPayload = ReturnType<typeof buildBookingPayload>;
@@ -96,11 +88,10 @@ function validatePendingPaymentBookingPayload(bookingPayload: BookingPayload) {
 }
 
 function prepareBookingPayloadForCreate(bookingPayload: BookingPayload) {
-  console.log("booking payload before create", JSON.stringify(bookingPayload, null, 2));
+  console.log("mobile-like booking payload", bookingPayload);
 
   const cleanBookingPayload = removeUndefinedDeep(bookingPayload);
 
-  console.log("clean booking payload", JSON.stringify(cleanBookingPayload, null, 2));
   validateNoInvalidFirestoreValues(cleanBookingPayload);
 
   if (cleanBookingPayload.paymentMethod === "mp" || cleanBookingPayload.status === "pending_payment") {
@@ -156,27 +147,7 @@ function payloadToBooking(id: string, payload: BookingPayload, status: Booking["
   };
 }
 
-function responseToBooking(payload: BookingPayload, response: BookingFunctionResponse): Booking {
-  const booking = response.booking ?? {};
-  const id = booking.id ?? response.bookingId ?? response.id;
-
-  if (!id) throw new Error("La reserva fue creada, pero no recibimos el ID de la reserva.");
-
-  return payloadToBooking(id, payload, booking.status ?? response.status ?? payload.status);
-}
-
 export async function createBooking(input: CreateBookingInput) {
-  if (!functions) throw new Error("Firebase Functions no está configurado.");
-
-  const bookingPayload = buildBookingPayload(input);
-  const cleanBookingPayload = prepareBookingPayloadForCreate(bookingPayload);
-  const callable = httpsCallable<typeof cleanBookingPayload, BookingFunctionResponse>(functions, "createBooking");
-  const result = await callable(cleanBookingPayload);
-
-  return responseToBooking(cleanBookingPayload, result.data);
-}
-
-export async function createFirestoreBooking(input: CreateBookingInput) {
   if (!db) throw new Error("Firebase Firestore no está configurado.");
 
   const bookingPayload = buildBookingPayload(input);
@@ -187,6 +158,8 @@ export async function createFirestoreBooking(input: CreateBookingInput) {
     updatedAt: serverTimestamp(),
   };
   const reference = await addDoc(collection(db, "bookings"), document);
+
+  console.log("created booking id", reference.id);
 
   return payloadToBooking(reference.id, cleanBookingPayload, cleanBookingPayload.status);
 }
