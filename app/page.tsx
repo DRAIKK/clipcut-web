@@ -451,7 +451,13 @@ export default function Home() {
       setModalOpen(false);
       setConfirmed(true);
     } catch (error) {
-      console.error("create booking permission error", error);
+      console.error("create booking full error", {
+        code: error instanceof Error && "code" in error ? (error as any).code : undefined,
+        message: error instanceof Error ? error.message : String(error),
+        name: error instanceof Error ? error.name : undefined,
+        stack: error instanceof Error ? error.stack : undefined,
+        raw: error,
+      });
       setBookingError(error instanceof Error ? error.message : "No se pudo crear la reserva. Intentá nuevamente.");
     } finally {
       setBookingSubmitting(false);
