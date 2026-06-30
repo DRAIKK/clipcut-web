@@ -1,6 +1,6 @@
-import { addDoc, collection, serverTimestamp } from "firebase/firestore";
+import { httpsCallable } from "firebase/functions";
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "../app/types/booking";
-import { db } from "./firebase";
+import { functions } from "./firebase";
 
 type BookingPaymentMethod = PaymentMethodId | "mp";
 
@@ -15,6 +15,15 @@ type CreateBookingInput = {
 };
 
 type BookingPayload = ReturnType<typeof buildBookingPayload>;
+
+type CallableBookingResponse = {
+  bookingId?: string;
+  id?: string;
+  booking?: {
+    id?: string;
+    bookingId?: string;
+  };
+};
 
 function parsePrice(price: string) {
   const normalized = price.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
@@ -43,7 +52,7 @@ function isNonEmptyString(value: unknown) {
   return typeof value === "string" && value.trim().length > 0;
 }
 
-function validateNoInvalidFirestoreValues(value: unknown, path = "bookingPayload") {
+function validateNoInvalidValues(value: unknown, path = "bookingPayload") {
   if (value === undefined) {
     throw new Error(`${path} no puede ser undefined.`);
   }
@@ -57,13 +66,13 @@ function validateNoInvalidFirestoreValues(value: unknown, path = "bookingPayload
   }
 
   if (Array.isArray(value)) {
-    value.forEach((item, index) => validateNoInvalidFirestoreValues(item, `${path}[${index}]`));
+    value.forEach((item, index) => validateNoInvalidValues(item, `${path}[${index}]`));
     return;
   }
 
   if (value && typeof value === "object") {
     Object.entries(value as Record<string, unknown>).forEach(([key, nestedValue]) => {
-      validateNoInvalidFirestoreValues(nestedValue, `${path}.${key}`);
+      validateNoInvalidValues(nestedValue, `${path}.${key}`);
     });
   }
 }
@@ -84,7 +93,7 @@ function validatePendingPaymentBookingPayload(bookingPayload: BookingPayload) {
     throw new Error(`No se puede crear la reserva: payload inválido (${missingFields.join(", ")}).`);
   }
 
-  validateNoInvalidFirestoreValues(bookingPayload);
+  validateNoInvalidValues(bookingPayload);
 }
 
 function prepareBookingPayloadForCreate(bookingPayload: BookingPayload) {
@@ -92,7 +101,7 @@ function prepareBookingPayloadForCreate(bookingPayload: BookingPayload) {
 
   const cleanBookingPayload = removeUndefinedDeep(bookingPayload);
 
-  validateNoInvalidFirestoreValues(cleanBookingPayload);
+  validateNoInvalidValues(cleanBookingPayload);
 
   if (cleanBookingPayload.paymentMethod === "mp" || cleanBookingPayload.status === "pending_payment") {
     validatePendingPaymentBookingPayload(cleanBookingPayload);
@@ -147,19 +156,25 @@ function payloadToBooking(id: string, payload: BookingPayload, status: Booking["
   };
 }
 
+function getBookingId(response: CallableBookingResponse) {
+  return response.bookingId ?? response.id ?? response.booking?.bookingId ?? response.booking?.id;
+}
+
 export async function createBooking(input: CreateBookingInput) {
-  if (!db) throw new Error("Firebase Firestore no está configurado.");
+  if (!functions) throw new Error("Firebase Functions no está configurado.");
 
-  const bookingPayload = buildBookingPayload(input);
-  const cleanBookingPayload = prepareBookingPayloadForCreate(bookingPayload);
-  const document = {
-    ...cleanBookingPayload,
-    createdAt: serverTimestamp(),
-    updatedAt: serverTimestamp(),
-  };
-  const reference = await addDoc(collection(db, "bookings"), document);
+  const cleanBookingPayload = prepareBookingPayloadForCreate(buildBookingPayload(input));
+  const createBookingFunction = httpsCallable<BookingPayload, CallableBookingResponse>(functions, "createBooking");
 
-  console.log("created booking id", reference.id);
+  console.log("using cloud function booking flow");
+  const result = await createBookingFunction(cleanBookingPayload);
+  const bookingId = getBookingId(result.data);
 
-  return payloadToBooking(reference.id, cleanBookingPayload, cleanBookingPayload.status);
+  if (!bookingId) {
+    throw new Error("La función no devolvió el ID de la reserva.");
+  }
+
+  console.log("created bookingId from function", bookingId);
+
+  return payloadToBooking(bookingId, cleanBookingPayload, cleanBookingPayload.status);
 }
