@@ -4,6 +4,8 @@ import { functions } from "./firebase";
 
 type BookingPaymentMethod = PaymentMethodId | "mp";
 
+const CREATE_BOOKING_FUNCTION_NAME = "createBooking";
+
 type CreateBookingInput = {
   barber: Barber;
   clientEmail?: string;
@@ -77,7 +79,7 @@ function validateNoInvalidValues(value: unknown, path = "bookingPayload") {
   }
 }
 
-function validatePendingPaymentBookingPayload(bookingPayload: BookingPayload) {
+function getMissingBookingPayloadFields(bookingPayload: BookingPayload) {
   const missingFields: string[] = [];
 
   if (!isNonEmptyString(bookingPayload.barberId)) missingFields.push("barberId");
@@ -86,14 +88,41 @@ function validatePendingPaymentBookingPayload(bookingPayload: BookingPayload) {
   if (!isNonEmptyString(bookingPayload.serviceName)) missingFields.push("serviceName");
   if (typeof bookingPayload.servicePrice !== "number" || bookingPayload.servicePrice <= 0) missingFields.push("servicePrice");
   if (!isNonEmptyString(bookingPayload.slotId)) missingFields.push("slotId");
-  if (bookingPayload.paymentMethod !== "mp") missingFields.push("paymentMethod");
-  if (bookingPayload.status !== "pending_payment") missingFields.push("status");
+  if (!isNonEmptyString(bookingPayload.paymentMethod)) missingFields.push("paymentMethod");
+  if (!isNonEmptyString(bookingPayload.status)) missingFields.push("status");
+
+  return missingFields;
+}
+
+function validateBookingPayloadForCreate(bookingPayload: BookingPayload) {
+  const missingFields = getMissingBookingPayloadFields(bookingPayload);
 
   if (missingFields.length > 0) {
-    throw new Error(`No se puede crear la reserva: payload inválido (${missingFields.join(", ")}).`);
+    throw new Error(`No se puede crear la reserva: faltan campos requeridos (${missingFields.join(", ")}).`);
+  }
+
+  if (bookingPayload.paymentMethod === "mp" && bookingPayload.status !== "pending_payment") {
+    throw new Error("No se puede crear la reserva: paymentMethod mp requiere status pending_payment.");
   }
 
   validateNoInvalidValues(bookingPayload);
+}
+
+function logCreateBookingDebug(label: string, bookingPayload: BookingPayload, extra?: Record<string, unknown>) {
+  console.error(label, {
+    cloudFunction: CREATE_BOOKING_FUNCTION_NAME,
+    payload: bookingPayload,
+    uid: bookingPayload.clientId,
+    barberId: bookingPayload.barberId,
+    slotId: bookingPayload.slotId,
+    service: {
+      id: bookingPayload.serviceId,
+      name: bookingPayload.serviceName,
+      price: bookingPayload.servicePrice,
+    },
+    paymentMethod: bookingPayload.paymentMethod,
+    ...extra,
+  });
 }
 
 function prepareBookingPayloadForCreate(bookingPayload: BookingPayload) {
@@ -103,17 +132,24 @@ function prepareBookingPayloadForCreate(bookingPayload: BookingPayload) {
 
   validateNoInvalidValues(cleanBookingPayload);
 
-  if (cleanBookingPayload.paymentMethod === "mp" || cleanBookingPayload.status === "pending_payment") {
-    validatePendingPaymentBookingPayload(cleanBookingPayload);
-  }
+  validateBookingPayloadForCreate(cleanBookingPayload);
 
   return cleanBookingPayload;
 }
 
 export function buildBookingPayload({ barber, clientEmail, clientId, clientName, paymentMethod, service, slot }: CreateBookingInput) {
-  if (!clientId) throw new Error("Iniciá sesión para reservar.");
-  if (!barber.id || !service.id || !slot.id || !paymentMethod) {
-    throw new Error("Elegí servicio, horario y método de pago para continuar.");
+  const missingFields: string[] = [];
+
+  if (!isNonEmptyString(clientId)) missingFields.push("uid");
+  if (!isNonEmptyString(barber.id)) missingFields.push("barberId");
+  if (!isNonEmptyString(service.id)) missingFields.push("service.id");
+  if (!isNonEmptyString(service.name)) missingFields.push("service.name");
+  if (!isNonEmptyString(service.price)) missingFields.push("service.price");
+  if (!isNonEmptyString(slot.id)) missingFields.push("slotId");
+  if (!isNonEmptyString(paymentMethod)) missingFields.push("paymentMethod");
+
+  if (missingFields.length > 0) {
+    throw new Error(`No se puede crear la reserva: faltan campos requeridos (${missingFields.join(", ")}).`);
   }
 
   const status: Booking["status"] = paymentMethod === "cash" ? "cash_pending" : "pending_payment";
@@ -164,10 +200,23 @@ export async function createBooking(input: CreateBookingInput) {
   if (!functions) throw new Error("Firebase Functions no está configurado.");
 
   const cleanBookingPayload = prepareBookingPayloadForCreate(buildBookingPayload(input));
-  const createBookingFunction = httpsCallable<BookingPayload, CallableBookingResponse>(functions, "createBooking");
+  const createBookingFunction = httpsCallable<BookingPayload, CallableBookingResponse>(functions, CREATE_BOOKING_FUNCTION_NAME);
 
-  console.log("using cloud function booking flow");
-  const result = await createBookingFunction(cleanBookingPayload);
+  logCreateBookingDebug("createBooking callable request", cleanBookingPayload);
+
+  let result;
+  try {
+    result = await createBookingFunction(cleanBookingPayload);
+  } catch (error) {
+    logCreateBookingDebug("createBooking callable failed", cleanBookingPayload, {
+      code: error instanceof Error && "code" in error ? (error as { code?: unknown }).code : undefined,
+      message: error instanceof Error ? error.message : String(error),
+      name: error instanceof Error ? error.name : undefined,
+      stack: error instanceof Error ? error.stack : undefined,
+      raw: error,
+    });
+    throw error;
+  }
   const bookingId = getBookingId(result.data);
 
   if (!bookingId) {
