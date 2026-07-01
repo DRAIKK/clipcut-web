@@ -41,6 +41,22 @@ import { calculateDistanceKm, formatDistanceKm, type Coordinates } from "../lib/
 import { BarberAppModal } from "./components/BarberAppModal";
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "./types/booking";
 
+type SlotWithTimeAliases = TimeSlot & { start?: string; end?: string };
+type BarberWithLocationAddress = Barber & { location?: Barber["location"] & { address?: string } };
+
+function parseServicePrice(price: string) {
+  const normalized = price.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
+  const parsed = Number(normalized);
+
+  return Number.isFinite(parsed) ? parsed : price;
+}
+
+function isPresentBookingField(value: unknown) {
+  if (typeof value === "number") return Number.isFinite(value) && value > 0;
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+
 type AuthView = "checking" | "landing" | "privacy" | "login" | "register" | "app";
 
 export default function Home() {
@@ -414,18 +430,38 @@ export default function Home() {
 
     setBookingSubmitting(true);
     try {
-      const clientEmail = clientProfile?.email ?? auth?.currentUser?.email ?? "";
-      const clientName = clientProfile?.fullName ?? auth?.currentUser?.displayName ?? "";
-
-      const { bookingId } = await createBookingFromWeb({
-        barber: selectedBarber,
-        clientEmail,
+      const clientEmail = auth?.currentUser?.email ?? clientProfile?.email ?? "";
+      const clientName = clientProfile?.fullName ?? auth?.currentUser?.displayName ?? clientEmail;
+      const barberWithAddress = selectedBarber as BarberWithLocationAddress;
+      const slotWithAliases = selectedSlot as SlotWithTimeAliases;
+      const payload = {
+        barberId: selectedBarber.id,
+        barberName: selectedBarber.name,
+        barberAddress: selectedBarber.address || barberWithAddress.location?.address || "",
+        serviceId: selectedService.id,
+        serviceName: selectedService.name,
+        servicePrice: parseServicePrice(selectedService.price),
+        slotId: selectedSlot.id,
+        day: selectedSlot.day ?? "",
+        startTime: selectedSlot.startTime ?? slotWithAliases.start ?? "",
+        endTime: selectedSlot.endTime ?? slotWithAliases.end ?? "",
         clientId: currentUserId,
         clientName,
-        paymentMethod: selectedPaymentMethod,
-        service: selectedService,
-        slot: selectedSlot,
-      });
+        clientEmail,
+        paymentMethod: selectedPaymentMethod === "transfer" ? "mp" : "cash",
+      };
+      const missingPayloadFields = Object.entries(payload)
+        .filter(([, value]) => !isPresentBookingField(value))
+        .map(([field]) => field);
+
+      if (missingPayloadFields.length > 0) {
+        setBookingError(`No se puede crear la reserva: faltan campos requeridos (${missingPayloadFields.join(", ")}).`);
+        return;
+      }
+
+      console.error("WEB CREATE BOOKING FINAL PAYLOAD", payload);
+
+      const { bookingId } = await createBookingFromWeb(payload);
 
       if (selectedPaymentMethod === "cash") {
         setConfirmed(true);
