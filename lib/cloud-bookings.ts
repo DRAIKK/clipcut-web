@@ -1,6 +1,6 @@
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "../app/types/booking";
 
-export const CREATE_BOOKING_URL = process.env.NEXT_PUBLIC_CREATE_BOOKING_URL ?? "https://us-central1-clipcut-3053d.cloudfunctions.net/api/booking/create";
+export const CREATE_BOOKING_URL = process.env.NEXT_PUBLIC_CREATE_BOOKING_URL;
 
 type BookingPaymentMethod = PaymentMethodId | "mp";
 
@@ -66,12 +66,14 @@ export function buildBookingPayload({ barber, clientEmail, clientId, clientName,
   };
 }
 
-export async function createBookingFromWeb(input: CreateBookingInput) {
-  if (!CREATE_BOOKING_URL) {
-    throw new Error("No está configurado el endpoint de reservas.");
+export async function createBookingFromWeb(input: CreateBookingInput): Promise<CreateBookingResponse> {
+  const createBookingUrl = process.env.NEXT_PUBLIC_CREATE_BOOKING_URL;
+
+  if (!createBookingUrl) {
+    throw new Error("No está configurado NEXT_PUBLIC_CREATE_BOOKING_URL para crear reservas.");
   }
 
-  const response = await fetch(CREATE_BOOKING_URL, {
+  const response = await fetch(createBookingUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(buildBookingPayload(input)),
