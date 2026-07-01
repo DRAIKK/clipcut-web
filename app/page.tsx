@@ -35,7 +35,7 @@ import {
 } from "../lib/client-auth";
 import { auth } from "../lib/firebase";
 import { getBarberById, getBarberServices, getBarbers, getBarberSlots, getClientBookings } from "../lib/firestore-read";
-import { createBooking } from "../lib/cloud-bookings";
+import { createFirestoreBooking } from "../lib/cloud-bookings";
 import { buildMercadoPagoPreferencePayload, createMercadoPagoPreference } from "../lib/mercado-pago";
 import { calculateDistanceKm, formatDistanceKm, type Coordinates } from "../lib/distance";
 import { BarberAppModal } from "./components/BarberAppModal";
@@ -427,7 +427,7 @@ export default function Home() {
       };
 
       if (selectedPaymentMethod === "transfer") {
-        const booking = await createBooking({ ...bookingInput, paymentMethod: "mp" });
+        const booking = await createFirestoreBooking({ ...bookingInput, paymentMethod: "mp" });
         const payload = buildMercadoPagoPreferencePayload({
           barberId: selectedBarber.id,
           bookingId: booking.id,
@@ -444,13 +444,13 @@ export default function Home() {
         return;
       }
 
-      const booking = await createBooking(bookingInput);
+      const booking = await createFirestoreBooking(bookingInput);
 
       setClientBookings((current) => [{ ...booking, dateTime: [booking.day, booking.startTime].filter(Boolean).join(" · ") }, ...current]);
       setModalOpen(false);
       setConfirmed(true);
     } catch (error) {
-      console.error("create booking full error", {
+      console.error("create firestore booking full error", {
         code: error instanceof Error && "code" in error ? (error as any).code : undefined,
         message: error instanceof Error ? error.message : String(error),
         name: error instanceof Error ? error.name : undefined,
