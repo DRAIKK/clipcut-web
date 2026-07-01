@@ -1,10 +1,8 @@
-import { httpsCallable } from "firebase/functions";
+import { addDoc, collection } from "firebase/firestore";
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "../app/types/booking";
-import { functions } from "./firebase";
+import { db } from "./firebase";
 
 type BookingPaymentMethod = PaymentMethodId | "mp";
-
-const CREATE_BOOKING_FUNCTION_NAME = "createBooking";
 
 type CreateBookingInput = {
   barber: Barber;
@@ -17,15 +15,6 @@ type CreateBookingInput = {
 };
 
 type BookingPayload = ReturnType<typeof buildBookingPayload>;
-
-type CallableBookingResponse = {
-  bookingId?: string;
-  id?: string;
-  booking?: {
-    id?: string;
-    bookingId?: string;
-  };
-};
 
 function parsePrice(price: string) {
   const normalized = price.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
@@ -110,7 +99,7 @@ function validateBookingPayloadForCreate(bookingPayload: BookingPayload) {
 
 function logCreateBookingDebug(label: string, bookingPayload: BookingPayload, extra?: Record<string, unknown>) {
   console.error(label, {
-    cloudFunction: CREATE_BOOKING_FUNCTION_NAME,
+    collection: "bookings",
     payload: bookingPayload,
     uid: bookingPayload.clientId,
     barberId: bookingPayload.barberId,
@@ -192,23 +181,18 @@ function payloadToBooking(id: string, payload: BookingPayload, status: Booking["
   };
 }
 
-function getBookingId(response: CallableBookingResponse) {
-  return response.bookingId ?? response.id ?? response.booking?.bookingId ?? response.booking?.id;
-}
-
-export async function createBooking(input: CreateBookingInput) {
-  if (!functions) throw new Error("Firebase Functions no está configurado.");
+export async function createFirestoreBooking(input: CreateBookingInput) {
+  if (!db) throw new Error("Firebase Firestore no está configurado.");
 
   const cleanBookingPayload = prepareBookingPayloadForCreate(buildBookingPayload(input));
-  const createBookingFunction = httpsCallable<BookingPayload, CallableBookingResponse>(functions, CREATE_BOOKING_FUNCTION_NAME);
 
-  logCreateBookingDebug("createBooking callable request", cleanBookingPayload);
+  logCreateBookingDebug("create booking firestore request", cleanBookingPayload);
 
-  let result;
+  let bookingRef;
   try {
-    result = await createBookingFunction(cleanBookingPayload);
+    bookingRef = await addDoc(collection(db, "bookings"), cleanBookingPayload);
   } catch (error) {
-    logCreateBookingDebug("createBooking callable failed", cleanBookingPayload, {
+    logCreateBookingDebug("create booking firestore failed", cleanBookingPayload, {
       code: error instanceof Error && "code" in error ? (error as { code?: unknown }).code : undefined,
       message: error instanceof Error ? error.message : String(error),
       name: error instanceof Error ? error.name : undefined,
@@ -217,13 +201,8 @@ export async function createBooking(input: CreateBookingInput) {
     });
     throw error;
   }
-  const bookingId = getBookingId(result.data);
 
-  if (!bookingId) {
-    throw new Error("La función no devolvió el ID de la reserva.");
-  }
+  console.log("created bookingId from firestore", bookingRef.id);
 
-  console.log("created bookingId from function", bookingId);
-
-  return payloadToBooking(bookingId, cleanBookingPayload, cleanBookingPayload.status);
+  return payloadToBooking(bookingRef.id, cleanBookingPayload, cleanBookingPayload.status);
 }
