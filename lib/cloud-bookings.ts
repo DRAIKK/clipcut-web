@@ -76,12 +76,11 @@ export async function createBookingFromWeb(input: CreateBookingInput): Promise<C
   const response = await fetch(createBookingUrl, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(buildBookingPayload(input)),
+    body: JSON.stringify(input),
   });
 
   if (!response.ok) {
     const errorBody = await response.text();
-    console.error("create booking error body", errorBody);
     throw new Error(errorBody || "No se pudo crear la reserva. Probá nuevamente.");
   }
 
