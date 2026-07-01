@@ -36,6 +36,7 @@ import {
 import { auth } from "../lib/firebase";
 import { getBarberById, getBarberServices, getBarbers, getBarberSlots, getClientBookings } from "../lib/firestore-read";
 import { createBookingFromWeb } from "../lib/cloud-bookings";
+import { createMercadoPagoPreference } from "../lib/mercado-pago";
 import { calculateDistanceKm, formatDistanceKm, type Coordinates } from "../lib/distance";
 import { BarberAppModal } from "./components/BarberAppModal";
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "./types/booking";
@@ -416,7 +417,7 @@ export default function Home() {
       const clientEmail = clientProfile?.email ?? auth?.currentUser?.email ?? "";
       const clientName = clientProfile?.fullName ?? auth?.currentUser?.displayName ?? "";
 
-      await createBookingFromWeb({
+      const { bookingId } = await createBookingFromWeb({
         barber: selectedBarber,
         clientEmail,
         clientId: currentUserId,
@@ -425,6 +426,26 @@ export default function Home() {
         service: selectedService,
         slot: selectedSlot,
       });
+
+      if (selectedPaymentMethod === "cash") {
+        setConfirmed(true);
+        setModalOpen(false);
+        return;
+      }
+
+      const preference = await createMercadoPagoPreference({
+        barberId: selectedBarber.id,
+        bookingId,
+        title: selectedService.name,
+        paymentType: "mp",
+      });
+      const checkoutUrl = preference.init_point ?? preference.sandbox_init_point;
+
+      if (!checkoutUrl) {
+        throw new Error("Mercado Pago no devolvió un link de pago.");
+      }
+
+      window.location.href = checkoutUrl;
     } catch (error) {
       console.error("create booking from web error", {
         code: error instanceof Error && "code" in error ? (error as { code?: unknown }).code : undefined,
