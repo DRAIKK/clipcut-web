@@ -35,8 +35,7 @@ import {
 } from "../lib/client-auth";
 import { auth } from "../lib/firebase";
 import { getBarberById, getBarberServices, getBarbers, getBarberSlots, getClientBookings } from "../lib/firestore-read";
-import { createFirestoreBooking } from "../lib/cloud-bookings";
-import { buildMercadoPagoPreferencePayload, createMercadoPagoPreference } from "../lib/mercado-pago";
+import { createBookingFromWeb } from "../lib/cloud-bookings";
 import { calculateDistanceKm, formatDistanceKm, type Coordinates } from "../lib/distance";
 import { BarberAppModal } from "./components/BarberAppModal";
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "./types/booking";
@@ -416,7 +415,8 @@ export default function Home() {
     try {
       const clientEmail = clientProfile?.email ?? auth?.currentUser?.email ?? "";
       const clientName = clientProfile?.fullName ?? auth?.currentUser?.displayName ?? "";
-      const bookingInput = {
+
+      await createBookingFromWeb({
         barber: selectedBarber,
         clientEmail,
         clientId: currentUserId,
@@ -424,34 +424,10 @@ export default function Home() {
         paymentMethod: selectedPaymentMethod,
         service: selectedService,
         slot: selectedSlot,
-      };
-
-      if (selectedPaymentMethod === "transfer") {
-        const booking = await createFirestoreBooking({ ...bookingInput, paymentMethod: "mp" });
-        const payload = buildMercadoPagoPreferencePayload({
-          barberId: selectedBarber.id,
-          bookingId: booking.id,
-          title: selectedService.name,
-          paymentType: "mp",
-        });
-
-        console.log("mp payload", payload);
-
-        const preference = await createMercadoPagoPreference(payload);
-        const checkoutUrl = preference.init_point || preference.sandbox_init_point;
-        if (!checkoutUrl) throw new Error("Mercado Pago no devolvió un link de pago.");
-        window.location.href = checkoutUrl;
-        return;
-      }
-
-      const booking = await createFirestoreBooking(bookingInput);
-
-      setClientBookings((current) => [{ ...booking, dateTime: [booking.day, booking.startTime].filter(Boolean).join(" · ") }, ...current]);
-      setModalOpen(false);
-      setConfirmed(true);
+      });
     } catch (error) {
-      console.error("create firestore booking full error", {
-        code: error instanceof Error && "code" in error ? (error as any).code : undefined,
+      console.error("create booking from web error", {
+        code: error instanceof Error && "code" in error ? (error as { code?: unknown }).code : undefined,
         message: error instanceof Error ? error.message : String(error),
         name: error instanceof Error ? error.name : undefined,
         stack: error instanceof Error ? error.stack : undefined,
