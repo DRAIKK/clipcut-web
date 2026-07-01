@@ -513,8 +513,6 @@ export default function Home() {
         return;
       }
 
-      console.error("WEB CREATE BOOKING FINAL PAYLOAD", payload);
-
       const { bookingId } = await createBookingFromWeb(payload);
 
       if (selectedPaymentMethod === "cash") {
