@@ -38,6 +38,7 @@ import { getBarberById, getBarberServices, getBarbers, getBarberSlots, getClient
 import { createBookingFromWeb } from "../lib/cloud-bookings";
 import { createMercadoPagoPreference } from "../lib/mercado-pago";
 import { calculateDistanceKm, formatDistanceKm, type Coordinates } from "../lib/distance";
+import { isConfirmedBooking, isReviewableBooking } from "./booking-rules";
 import { BarberAppModal } from "./components/BarberAppModal";
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "./types/booking";
 
@@ -85,6 +86,7 @@ export default function Home() {
   const [browserLocation, setBrowserLocation] = useState<Coordinates>();
   const [locationRequested, setLocationRequested] = useState(false);
   const [clientProfile, setClientProfile] = useState<ClientProfile>();
+  const [ratedBarberIds, setRatedBarberIds] = useState<Record<string, number>>({});
 
   const selectedBarberId = selectedBarber?.id;
   const requestBrowserLocation = useCallback(() => {
@@ -151,7 +153,28 @@ export default function Home() {
     [firebaseBarbers, firebaseFailed, prepareDistanceList]
   );
   const currentUserId = auth?.currentUser?.uid ?? "";
-  const activeBooking = useMemo(() => clientBookings.find((booking) => booking.status !== "cancelled"), [clientBookings]);
+  const confirmedBookings = useMemo(() => clientBookings.filter(isConfirmedBooking), [clientBookings]);
+  const activeBooking = useMemo(() => confirmedBookings[0], [confirmedBookings]);
+  const reviewableBarbers = useMemo(() => {
+    const seen = new Set<string>();
+
+    return clientBookings
+      .filter(isReviewableBooking)
+      .map((booking) => {
+        const barber = (firebaseFailed ? nearbyBarbers : firebaseBarbers).find((candidate) => candidate.id === booking.barberId);
+        return {
+          id: booking.barberId,
+          name: booking.barberName || barber?.name || "Peluquero Clipcut",
+          photoUrl: barber?.photoUrl,
+          initials: barber?.initials || (booking.barberName || "CC").split(" ").map((part) => part[0]).join("").slice(0, 2).toUpperCase(),
+        };
+      })
+      .filter((barber) => {
+        if (!barber.id || seen.has(barber.id)) return false;
+        seen.add(barber.id);
+        return true;
+      });
+  }, [clientBookings, firebaseBarbers, firebaseFailed]);
 
   useEffect(() => {
     let ignore = false;
@@ -382,6 +405,21 @@ export default function Home() {
   }, [firebaseFailed, selectedBarberId]);
 
 
+  const refreshClientBookings = useCallback(async () => {
+    if (!currentUserId || authView !== "app") return;
+
+    setBookingsLoading(true);
+    try {
+      const bookings = await getClientBookings(currentUserId);
+      setClientBookings(bookings);
+    } catch (error) {
+      console.warn("No se pudieron cargar reservas reales.", error);
+      setClientBookings([]);
+    } finally {
+      setBookingsLoading(false);
+    }
+  }, [authView, currentUserId]);
+
   useEffect(() => {
     if (!currentUserId || authView !== "app") return;
 
@@ -406,6 +444,22 @@ export default function Home() {
       ignore = true;
     };
   }, [authView, currentUserId]);
+
+  useEffect(() => {
+    if (authView !== "app") return;
+
+    const refreshOnReturn = () => {
+      if (document.visibilityState === "visible") void refreshClientBookings();
+    };
+
+    window.addEventListener("focus", refreshClientBookings);
+    document.addEventListener("visibilitychange", refreshOnReturn);
+
+    return () => {
+      window.removeEventListener("focus", refreshClientBookings);
+      document.removeEventListener("visibilitychange", refreshOnReturn);
+    };
+  }, [authView, refreshClientBookings]);
 
   const handleSelectService = (service: Service) => {
     setSelectedService(service);
@@ -464,6 +518,7 @@ export default function Home() {
       const { bookingId } = await createBookingFromWeb(payload);
 
       if (selectedPaymentMethod === "cash") {
+        await refreshClientBookings();
         setConfirmed(true);
         setModalOpen(false);
         return;
@@ -554,6 +609,9 @@ export default function Home() {
         }}
         onSelectBarber={openBarberProfile}
         activeBooking={activeBooking}
+        reviewableBarbers={reviewableBarbers}
+        ratedBarberIds={ratedBarberIds}
+        onRateBarber={(barberId, rating) => setRatedBarberIds((ratings) => ({ ...ratings, [barberId]: rating }))}
         onRequestLocation={requestBrowserLocation}
         showLocationHint={!browserLocation}
       />
@@ -571,7 +629,7 @@ export default function Home() {
       />
     );
   } else if (activeTab === "bookings") {
-    content = <BookingsScreen bookings={clientBookings} loading={bookingsLoading} />;
+    content = <BookingsScreen barbers={firebaseFailed ? nearbyBarbers : firebaseBarbers} bookings={confirmedBookings} loading={bookingsLoading} />;
   } else {
     content = (
       <ProfileScreen

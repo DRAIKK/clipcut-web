@@ -1,12 +1,23 @@
-import type { Booking } from "../types/booking";
+import { getBookingStatusLabel } from "../booking-rules";
+import type { Barber, Booking } from "../types/booking";
 import { LogoHeader } from "./LogoHeader";
 
 type BookingsScreenProps = {
   bookings: Booking[];
+  barbers?: Barber[];
   loading?: boolean;
 };
 
-export function BookingsScreen({ bookings, loading = false }: BookingsScreenProps) {
+function getInitials(name: string) {
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("") || "CC";
+}
+
+export function BookingsScreen({ bookings, barbers = [], loading = false }: BookingsScreenProps) {
   return (
     <div className="space-y-5">
       <LogoHeader />
@@ -30,14 +41,29 @@ export function BookingsScreen({ bookings, loading = false }: BookingsScreenProp
           </div>
         ) : null}
 
-        {!loading && bookings.map((booking) => (
-          <article className="rounded-[2rem] bg-white p-5 shadow-sm ring-1 ring-zinc-200" key={booking.id}>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-green-600">{booking.status}</p>
-            <h2 className="mt-2 text-xl font-black text-zinc-950">{booking.serviceName}</h2>
-            <p className="mt-2 text-sm font-bold text-zinc-500">{booking.dateTime || "Horario a confirmar"}</p>
-            {booking.barberName ? <p className="mt-1 text-sm font-black text-zinc-800">{booking.barberName}</p> : null}
-          </article>
-        ))}
+        {!loading && bookings.map((booking) => {
+          const barber = barbers.find((candidate) => candidate.id === booking.barberId);
+          const barberName = booking.barberName || barber?.name || "Peluquero Clipcut";
+
+          return (
+            <article className="flex gap-4 rounded-[2rem] bg-white p-5 shadow-sm ring-1 ring-zinc-200" key={booking.id}>
+              <div className="grid h-16 w-16 shrink-0 place-items-center overflow-hidden rounded-full bg-zinc-100 text-sm font-black text-green-700 ring-1 ring-zinc-200">
+                {barber?.photoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img alt={barberName} className="h-full w-full object-cover" src={barber.photoUrl} />
+                ) : (
+                  barber?.initials || getInitials(barberName)
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-green-600">{getBookingStatusLabel(booking)}</p>
+                <h2 className="mt-2 text-xl font-black text-zinc-950">{barberName}</h2>
+                <p className="mt-1 text-sm font-black text-zinc-800">{booking.serviceName}</p>
+                <p className="mt-2 text-sm font-bold text-zinc-500">{booking.dateTime || "Horario a confirmar"}</p>
+              </div>
+            </article>
+          );
+        })}
       </section>
     </div>
   );
