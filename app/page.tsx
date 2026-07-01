@@ -38,7 +38,7 @@ import { getBarberById, getBarberServices, getBarbers, getBarberSlots, getClient
 import { createBookingFromWeb } from "../lib/cloud-bookings";
 import { createMercadoPagoPreference } from "../lib/mercado-pago";
 import { calculateDistanceKm, formatDistanceKm, type Coordinates } from "../lib/distance";
-import { isConfirmedBooking, isReviewableBooking } from "./booking-rules";
+import { isActiveBlockingBooking, isConfirmedBooking, isReviewableBooking } from "./booking-rules";
 import { BarberAppModal } from "./components/BarberAppModal";
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "./types/booking";
 
@@ -484,6 +484,14 @@ export default function Home() {
 
     setBookingSubmitting(true);
     try {
+      const latestBookings = await getClientBookings(currentUserId);
+      setClientBookings(latestBookings);
+
+      if (latestBookings.some((booking) => isActiveBlockingBooking(booking))) {
+        setBookingError("Ya tenés una reserva activa. Podés hacer otra cuando finalice o se cancele.");
+        return;
+      }
+
       const clientEmail = auth?.currentUser?.email ?? clientProfile?.email ?? "";
       const clientName = clientProfile?.fullName ?? auth?.currentUser?.displayName ?? clientEmail;
       const barberWithAddress = selectedBarber as BarberWithLocationAddress;
@@ -502,7 +510,7 @@ export default function Home() {
         clientId: currentUserId,
         clientName,
         clientEmail,
-        paymentMethod: selectedPaymentMethod === "transfer" ? "mp" : "cash",
+        paymentMethod: selectedPaymentMethod === "transfer" ? ("mp" as const) : ("cash" as const),
       };
       const missingPayloadFields = Object.entries(payload)
         .filter(([, value]) => !isPresentBookingField(value))
@@ -570,17 +578,17 @@ export default function Home() {
   if (confirmed) {
     content = (
       <section className="flex min-h-[calc(100dvh-13rem)] flex-col justify-center">
-        <LogoHeader subtitle="Reserva confirmada" />
+        <LogoHeader subtitle="Solicitud enviada" />
         <div className="rounded-[2.25rem] bg-white p-6 text-center shadow-2xl shadow-green-950/10 ring-1 ring-zinc-200/70">
           <div className="mx-auto grid h-24 w-24 place-items-center rounded-full bg-green-100 text-5xl">
             ✓
           </div>
           <p className="mt-6 text-xs font-bold uppercase tracking-[0.25em] text-green-600">
-            Reserva confirmada
+            Solicitud enviada
           </p>
-          <h1 className="mt-2 text-3xl font-black tracking-tight">¡Tu turno está listo!</h1>
+          <h1 className="mt-2 text-3xl font-black tracking-tight">El peluquero debe aceptar tu solicitud para confirmar el turno.</h1>
           <p className="mt-3 text-sm leading-6 text-zinc-500">
-            Solicitud enviada al peluquero.
+            Cuando el peluquero confirme la reserva, te vamos a avisar con una notificación.
           </p>
           <div className="mt-6 rounded-3xl bg-zinc-50 p-4 text-left">
             <p className="text-sm font-black text-zinc-950">{(selectedBarber ?? mockBarber).name}</p>
@@ -588,10 +596,13 @@ export default function Home() {
           </div>
           <button
             className="mt-6 h-14 w-full rounded-2xl bg-green-600 font-black text-white shadow-xl shadow-green-600/25 transition active:scale-[0.98]"
-            onClick={() => setConfirmed(false)}
+            onClick={() => {
+              setConfirmed(false);
+              setActiveTab("home");
+            }}
             type="button"
           >
-            Hacer otra reserva
+            Volver al inicio
           </button>
         </div>
       </section>
@@ -627,7 +638,7 @@ export default function Home() {
       />
     );
   } else if (activeTab === "bookings") {
-    content = <BookingsScreen barbers={firebaseFailed ? nearbyBarbers : firebaseBarbers} bookings={confirmedBookings} loading={bookingsLoading} />;
+    content = <BookingsScreen barbers={firebaseFailed ? nearbyBarbers : firebaseBarbers} bookings={clientBookings} loading={bookingsLoading} />;
   } else {
     content = (
       <ProfileScreen

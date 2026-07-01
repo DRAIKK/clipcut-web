@@ -320,6 +320,7 @@ function adaptBooking(id: string, data: FirestoreRecord): Booking {
     address: getString(data, ["address", "barberAddress"], ""),
     status: getString(data, ["status"], ""),
     paymentMethod: getString(data, ["paymentMethod"], ""),
+    endAt: data.endAt as Booking["endAt"],
   };
 }
 
