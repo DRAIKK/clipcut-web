@@ -1,6 +1,4 @@
-import { addDoc, collection } from "firebase/firestore";
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "../app/types/booking";
-import { db } from "./firebase";
 
 type BookingPaymentMethod = PaymentMethodId | "mp";
 
@@ -14,116 +12,15 @@ type CreateBookingInput = {
   slot: TimeSlot;
 };
 
-type BookingPayload = ReturnType<typeof buildBookingPayload>;
+function isNonEmptyString(value: unknown) {
+  return typeof value === "string" && value.trim().length > 0;
+}
 
 function parsePrice(price: string) {
   const normalized = price.replace(/[^\d,.-]/g, "").replace(/\./g, "").replace(",", ".");
   const parsed = Number(normalized);
 
   return Number.isFinite(parsed) ? parsed : price;
-}
-
-function removeUndefinedDeep<T>(value: T): T {
-  if (Array.isArray(value)) {
-    return value.map(removeUndefinedDeep) as T;
-  }
-
-  if (value && typeof value === "object") {
-    return Object.fromEntries(
-      Object.entries(value as Record<string, unknown>)
-        .filter(([, v]) => v !== undefined)
-        .map(([k, v]) => [k, removeUndefinedDeep(v)]),
-    ) as T;
-  }
-
-  return value;
-}
-
-function isNonEmptyString(value: unknown) {
-  return typeof value === "string" && value.trim().length > 0;
-}
-
-function validateNoInvalidValues(value: unknown, path = "bookingPayload") {
-  if (value === undefined) {
-    throw new Error(`${path} no puede ser undefined.`);
-  }
-
-  if (typeof value === "number" && Number.isNaN(value)) {
-    throw new Error(`${path} no puede ser NaN.`);
-  }
-
-  if (value instanceof Date && Number.isNaN(value.getTime())) {
-    throw new Error(`${path} no puede ser una Date inválida.`);
-  }
-
-  if (Array.isArray(value)) {
-    value.forEach((item, index) => validateNoInvalidValues(item, `${path}[${index}]`));
-    return;
-  }
-
-  if (value && typeof value === "object") {
-    Object.entries(value as Record<string, unknown>).forEach(([key, nestedValue]) => {
-      validateNoInvalidValues(nestedValue, `${path}.${key}`);
-    });
-  }
-}
-
-function getMissingBookingPayloadFields(bookingPayload: BookingPayload) {
-  const missingFields: string[] = [];
-
-  if (!isNonEmptyString(bookingPayload.barberId)) missingFields.push("barberId");
-  if (!isNonEmptyString(bookingPayload.clientId)) missingFields.push("clientId");
-  if (!isNonEmptyString(bookingPayload.serviceId)) missingFields.push("serviceId");
-  if (!isNonEmptyString(bookingPayload.serviceName)) missingFields.push("serviceName");
-  if (typeof bookingPayload.servicePrice !== "number" || bookingPayload.servicePrice <= 0) missingFields.push("servicePrice");
-  if (!isNonEmptyString(bookingPayload.slotId)) missingFields.push("slotId");
-  if (!isNonEmptyString(bookingPayload.paymentMethod)) missingFields.push("paymentMethod");
-  if (!isNonEmptyString(bookingPayload.status)) missingFields.push("status");
-
-  return missingFields;
-}
-
-function validateBookingPayloadForCreate(bookingPayload: BookingPayload) {
-  const missingFields = getMissingBookingPayloadFields(bookingPayload);
-
-  if (missingFields.length > 0) {
-    throw new Error(`No se puede crear la reserva: faltan campos requeridos (${missingFields.join(", ")}).`);
-  }
-
-  if (bookingPayload.paymentMethod === "mp" && bookingPayload.status !== "pending_payment") {
-    throw new Error("No se puede crear la reserva: paymentMethod mp requiere status pending_payment.");
-  }
-
-  validateNoInvalidValues(bookingPayload);
-}
-
-function logCreateBookingDebug(label: string, bookingPayload: BookingPayload, extra?: Record<string, unknown>) {
-  console.error(label, {
-    collection: "bookings",
-    payload: bookingPayload,
-    uid: bookingPayload.clientId,
-    barberId: bookingPayload.barberId,
-    slotId: bookingPayload.slotId,
-    service: {
-      id: bookingPayload.serviceId,
-      name: bookingPayload.serviceName,
-      price: bookingPayload.servicePrice,
-    },
-    paymentMethod: bookingPayload.paymentMethod,
-    ...extra,
-  });
-}
-
-function prepareBookingPayloadForCreate(bookingPayload: BookingPayload) {
-  console.log("mobile-like booking payload", bookingPayload);
-
-  const cleanBookingPayload = removeUndefinedDeep(bookingPayload);
-
-  validateNoInvalidValues(cleanBookingPayload);
-
-  validateBookingPayloadForCreate(cleanBookingPayload);
-
-  return cleanBookingPayload;
 }
 
 export function buildBookingPayload({ barber, clientEmail, clientId, clientName, paymentMethod, service, slot }: CreateBookingInput) {
@@ -162,47 +59,13 @@ export function buildBookingPayload({ barber, clientEmail, clientId, clientName,
   };
 }
 
-function payloadToBooking(id: string, payload: BookingPayload, status: Booking["status"]): Booking {
-  return {
-    id,
-    barberId: payload.barberId,
-    barberName: payload.barberName,
-    serviceId: payload.serviceId,
-    serviceName: payload.serviceName,
-    servicePrice: payload.servicePrice,
-    slotId: payload.slotId,
-    day: payload.day,
-    startTime: payload.startTime,
-    endTime: payload.endTime,
-    dateTime: [payload.day, payload.startTime].filter(Boolean).join(" · "),
-    address: payload.barberAddress,
-    status,
-    paymentMethod: payload.paymentMethod,
-  };
-}
 
-export async function createFirestoreBooking(input: CreateBookingInput) {
-  if (!db) throw new Error("Firebase Firestore no está configurado.");
+export function createBookingFromWeb(input: CreateBookingInput): never {
+  buildBookingPayload(input);
 
-  const cleanBookingPayload = prepareBookingPayloadForCreate(buildBookingPayload(input));
-
-  logCreateBookingDebug("create booking firestore request", cleanBookingPayload);
-
-  let bookingRef;
-  try {
-    bookingRef = await addDoc(collection(db, "bookings"), cleanBookingPayload);
-  } catch (error) {
-    logCreateBookingDebug("create booking firestore failed", cleanBookingPayload, {
-      code: error instanceof Error && "code" in error ? (error as { code?: unknown }).code : undefined,
-      message: error instanceof Error ? error.message : String(error),
-      name: error instanceof Error ? error.name : undefined,
-      stack: error instanceof Error ? error.stack : undefined,
-      raw: error,
-    });
-    throw error;
-  }
-
-  console.log("created bookingId from firestore", bookingRef.id);
-
-  return payloadToBooking(bookingRef.id, cleanBookingPayload, cleanBookingPayload.status);
+  // Firestore rules in this repo do not expose a client-allowed booking create path,
+  // and Clipcut Web must not write directly to collection("bookings"). The mobile
+  // creation backend/callable is not present in this web codebase, so stop here
+  // instead of retrying a Firestore write that will fail with permission-denied.
+  throw new Error("La web necesita un endpoint backend para crear la reserva.");
 }
