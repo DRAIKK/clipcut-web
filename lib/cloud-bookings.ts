@@ -1,5 +1,7 @@
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "../app/types/booking";
 
+export const CREATE_BOOKING_URL = process.env.NEXT_PUBLIC_CREATE_BOOKING_URL ?? "https://us-central1-clipcut-3053d.cloudfunctions.net/api/booking/create";
+
 type BookingPaymentMethod = PaymentMethodId | "mp";
 
 type CreateBookingInput = {
@@ -10,6 +12,10 @@ type CreateBookingInput = {
   paymentMethod: BookingPaymentMethod;
   service: Service;
   slot: TimeSlot;
+};
+
+type CreateBookingResponse = {
+  bookingId: string;
 };
 
 function isNonEmptyString(value: unknown) {
@@ -25,12 +31,12 @@ function parsePrice(price: string) {
 
 export function buildBookingPayload({ barber, clientEmail, clientId, clientName, paymentMethod, service, slot }: CreateBookingInput) {
   const missingFields: string[] = [];
+  const servicePrice = parsePrice(service.price);
 
   if (!isNonEmptyString(clientId)) missingFields.push("uid");
   if (!isNonEmptyString(barber.id)) missingFields.push("barberId");
-  if (!isNonEmptyString(service.id)) missingFields.push("service.id");
   if (!isNonEmptyString(service.name)) missingFields.push("service.name");
-  if (!isNonEmptyString(service.price)) missingFields.push("service.price");
+  if (typeof servicePrice !== "number" || servicePrice <= 0) missingFields.push("service.price");
   if (!isNonEmptyString(slot.id)) missingFields.push("slotId");
   if (!isNonEmptyString(paymentMethod)) missingFields.push("paymentMethod");
 
@@ -38,7 +44,8 @@ export function buildBookingPayload({ barber, clientEmail, clientId, clientName,
     throw new Error(`No se puede crear la reserva: faltan campos requeridos (${missingFields.join(", ")}).`);
   }
 
-  const status: Booking["status"] = paymentMethod === "cash" ? "cash_pending" : "pending_payment";
+  const backendPaymentMethod = paymentMethod === "cash" ? "cash" : "mp";
+  const status: Booking["status"] = backendPaymentMethod === "cash" ? "cash_pending" : "pending_payment";
 
   return {
     clientId,
@@ -49,23 +56,37 @@ export function buildBookingPayload({ barber, clientEmail, clientId, clientName,
     barberAddress: barber.address,
     serviceId: service.id,
     serviceName: service.name,
-    servicePrice: parsePrice(service.price),
+    servicePrice,
     slotId: slot.id,
     day: slot.day ?? "",
     startTime: slot.startTime ?? slot.label,
     endTime: slot.endTime ?? "",
-    paymentMethod,
+    paymentMethod: backendPaymentMethod,
     status,
   };
 }
 
+export async function createBookingFromWeb(input: CreateBookingInput) {
+  if (!CREATE_BOOKING_URL) {
+    throw new Error("No está configurado el endpoint de reservas.");
+  }
 
-export function createBookingFromWeb(input: CreateBookingInput): never {
-  buildBookingPayload(input);
+  const response = await fetch(CREATE_BOOKING_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(buildBookingPayload(input)),
+  });
 
-  // Firestore rules in this repo do not expose a client-allowed booking create path,
-  // and Clipcut Web must not write directly to collection("bookings"). The mobile
-  // creation backend/callable is not present in this web codebase, so stop here
-  // instead of retrying a Firestore write that will fail with permission-denied.
-  throw new Error("La web necesita un endpoint backend para crear la reserva.");
+  if (!response.ok) {
+    const errorBody = await response.text();
+    console.error("create booking error body", errorBody);
+    throw new Error(errorBody || "No se pudo crear la reserva. Probá nuevamente.");
+  }
+
+  const data = (await response.json()) as CreateBookingResponse;
+  if (!data.bookingId) {
+    throw new Error("El backend no devolvió el identificador de la reserva.");
+  }
+
+  return data;
 }
