@@ -4,7 +4,7 @@ export type MercadoPagoPreferencePayload = {
   barberId: string;
   bookingId: string;
   title: string;
-  paymentType: "mp";
+  paymentType: "mp" | "deposit";
   successUrl: string;
   failureUrl: string;
   pendingUrl: string;

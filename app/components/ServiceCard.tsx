@@ -9,6 +9,12 @@ type ServiceCardProps = {
   onSelectPaymentMethod: (paymentMethod: PaymentMethodId) => void;
 };
 
+function getPaymentMethodText(method: PaymentMethod) {
+  if (method.id === "transfer") return "Pago completo / Transferencia";
+  if (method.id === "deposit") return "Seña";
+  return method.label;
+}
+
 export function ServiceCard({
   service,
   selected,
@@ -59,7 +65,14 @@ export function ServiceCard({
               onClick={() => handlePaymentSelect(method.id)}
               type="button"
             >
-              <span>{method.id === "transfer" ? "Pago completo / Transferencia" : method.label}</span>
+              <span>
+                {getPaymentMethodText(method)}
+                {method.id === "deposit" ? (
+                  <span className="mt-1 block text-xs font-bold leading-snug text-zinc-500">
+                    Pagás una seña para reservar tu turno. El resto lo abonás al peluquero.
+                  </span>
+                ) : null}
+              </span>
               <span
                 className={`grid h-5 w-5 place-items-center rounded-full border-2 ${
                   isPaymentSelected ? "border-[#16A34A]" : "border-zinc-300"

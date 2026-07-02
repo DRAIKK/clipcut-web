@@ -68,7 +68,14 @@ export const api = onRequest({ region: "us-central1" }, async (req, res) => {
   const servicePrice = asPositiveNumber(body.servicePrice);
   const slotId = asString(body.slotId);
   const requestedPaymentMethod = asString(body.paymentMethod);
-  const paymentMethod = requestedPaymentMethod === "cash" ? "cash" : requestedPaymentMethod === "mp" || requestedPaymentMethod === "transfer" ? "mp" : "";
+  const paymentMethod =
+    requestedPaymentMethod === "cash"
+      ? "cash"
+      : requestedPaymentMethod === "deposit" || requestedPaymentMethod === "seña" || requestedPaymentMethod === "senia"
+        ? "deposit"
+        : requestedPaymentMethod === "mp" || requestedPaymentMethod === "transfer"
+          ? "mp"
+          : "";
   const missingFields: string[] = [];
 
   if (!barberId) missingFields.push("barberId");
