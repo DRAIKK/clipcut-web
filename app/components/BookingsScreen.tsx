@@ -18,6 +18,32 @@ type BookingSection = {
   bookings: Booking[];
 };
 
+const WEEKDAY_NAMES = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
+
+function formatDay(day?: string) {
+  const normalizedDay = day?.trim();
+  if (!normalizedDay) return "";
+
+  const dayNumber = Number(normalizedDay);
+  if (Number.isInteger(dayNumber) && dayNumber >= 0 && dayNumber < WEEKDAY_NAMES.length) {
+    return WEEKDAY_NAMES[dayNumber];
+  }
+
+  return normalizedDay;
+}
+
+function capitalize(value: string) {
+  return value ? `${value[0].toUpperCase()}${value.slice(1)}` : value;
+}
+
+function formatBookingDateTime(booking: Booking) {
+  const day = capitalize(formatDay(booking.day));
+  const time = booking.startTime && booking.endTime ? `${booking.startTime} - ${booking.endTime}` : booking.startTime || booking.endTime;
+  const formatted = [day, time].filter(Boolean).join(" · ");
+
+  return formatted || booking.dateTime || "Horario a confirmar";
+}
+
 function getInitials(name: string) {
   return name
     .split(" ")
@@ -27,7 +53,7 @@ function getInitials(name: string) {
     .join("") || "CC";
 }
 
-function BookingCard({ booking, barbers }: { booking: Booking; barbers: Barber[] }) {
+export function BookingCard({ booking, barbers }: { booking: Booking; barbers: Barber[] }) {
   const barber = barbers.find((candidate) => candidate.id === booking.barberId);
   const barberName = booking.barberName || barber?.name || "Peluquero Clipcut";
 
@@ -45,7 +71,7 @@ function BookingCard({ booking, barbers }: { booking: Booking; barbers: Barber[]
         <p className="text-xs font-black uppercase tracking-[0.18em] text-green-600">{getBookingStatusLabel(booking)}</p>
         <h2 className="mt-2 text-xl font-black text-zinc-950">{barberName}</h2>
         <p className="mt-1 text-sm font-black text-zinc-800">{booking.serviceName}</p>
-        <p className="mt-2 text-sm font-bold text-zinc-500">{booking.dateTime || "Horario a confirmar"}</p>
+        <p className="mt-2 text-sm font-bold text-zinc-500">{formatBookingDateTime(booking)}</p>
       </div>
     </article>
   );

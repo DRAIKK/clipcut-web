@@ -1,4 +1,5 @@
 import type { Barber, Booking } from "../types/booking";
+import { BookingCard } from "./BookingsScreen";
 import { BarberMiniCard } from "./BarberMiniCard";
 import { LogoHeader } from "./LogoHeader";
 
@@ -11,6 +12,7 @@ type ReviewableBarber = {
 
 type HomeScreenProps = {
   barbers: Barber[];
+  bookingBarbers?: Barber[];
   onSelectBarber: (barber: Barber) => void;
   onSearchBarbers: () => void;
   loading?: boolean;
@@ -24,6 +26,7 @@ type HomeScreenProps = {
 
 export function HomeScreen({
   barbers,
+  bookingBarbers = barbers,
   loading = false,
   activeBooking,
   reviewableBarbers = [],
@@ -39,11 +42,9 @@ export function HomeScreen({
       <LogoHeader />
 
       {activeBooking ? (
-        <section className="rounded-[2rem] bg-white p-5 shadow-sm ring-1 ring-green-200">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-green-600">Tu próxima reserva</p>
-          <h2 className="mt-2 text-xl font-black text-zinc-950">{activeBooking.serviceName}</h2>
-          <p className="mt-2 text-sm font-bold text-zinc-500">{activeBooking.dateTime || "Horario a confirmar"}</p>
-          {activeBooking.barberName ? <p className="mt-1 text-sm font-black text-zinc-800">{activeBooking.barberName}</p> : null}
+        <section className="space-y-3">
+          <h2 className="px-1 text-sm font-black uppercase tracking-[0.18em] text-zinc-900">Tu próxima reserva</h2>
+          <BookingCard barbers={bookingBarbers} booking={activeBooking} />
         </section>
       ) : null}
 
