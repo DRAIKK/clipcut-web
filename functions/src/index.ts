@@ -68,10 +68,12 @@ export const api = onRequest({ region: "us-central1" }, async (req, res) => {
   const servicePrice = asPositiveNumber(body.servicePrice);
   const slotId = asString(body.slotId);
   const requestedPaymentMethod = asString(body.paymentMethod);
+  const isDepositPayment =
+    requestedPaymentMethod === "deposit" || requestedPaymentMethod === "seña" || requestedPaymentMethod === "senia";
   const paymentMethod =
     requestedPaymentMethod === "cash"
       ? "cash"
-      : requestedPaymentMethod === "deposit" || requestedPaymentMethod === "seña" || requestedPaymentMethod === "senia"
+      : isDepositPayment
         ? "deposit"
         : requestedPaymentMethod === "mp" || requestedPaymentMethod === "transfer"
           ? "mp"
