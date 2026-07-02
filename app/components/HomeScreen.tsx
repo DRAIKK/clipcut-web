@@ -38,17 +38,17 @@ export function HomeScreen({
   showLocationHint = false,
 }: HomeScreenProps) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 pb-1">
       <LogoHeader />
 
       {activeBooking ? (
-        <section className="space-y-3">
+        <section className="space-y-2">
           <h2 className="px-1 text-sm font-black uppercase tracking-[0.18em] text-zinc-900">Tu próxima reserva</h2>
           <BookingCard barbers={bookingBarbers} booking={activeBooking} />
         </section>
       ) : null}
 
-      <section className="space-y-4">
+      <section className="space-y-2">
         <h2 className="text-sm font-black uppercase tracking-[0.18em] text-zinc-900">
           Peluqueros cerca
         </h2>
@@ -61,7 +61,7 @@ export function HomeScreen({
             Activar ubicación para ver peluqueros cerca
           </button>
         ) : null}
-        <div className="scrollbar-hide -mx-4 flex gap-3 overflow-x-auto px-4 pb-2">
+        <div className="scrollbar-hide -mx-4 flex gap-3 overflow-x-auto px-4 pb-1">
           {loading ? (
             <div className="h-44 w-36 shrink-0 rounded-[1.75rem] bg-white p-4 text-sm font-black text-zinc-400 shadow-sm ring-1 ring-zinc-200">
               Cargando...
@@ -78,7 +78,7 @@ export function HomeScreen({
         </div>
       </section>
 
-      <section className="space-y-4">
+      <section className="space-y-2">
         <h2 className="text-sm font-black uppercase tracking-[0.18em] text-zinc-900">
           Clasifica tus peluqueros
         </h2>

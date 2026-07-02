@@ -61,6 +61,26 @@ function isPresentBookingField(value: unknown) {
 
 type AuthView = "checking" | "landing" | "privacy" | "login" | "register" | "app";
 
+const PAYMENT_RETURN_STORAGE_KEY = "clipcut:payment-return";
+
+function getPaymentReturnUrls() {
+  if (typeof window === "undefined") {
+    return {
+      successUrl: "http://localhost:3000/payment-success",
+      failureUrl: "http://localhost:3000/payment-failure",
+      pendingUrl: "http://localhost:3000/payment-pending",
+    };
+  }
+
+  const origin = window.location.hostname === "localhost" ? "http://localhost:3000" : window.location.origin;
+
+  return {
+    successUrl: `${origin}/payment-success`,
+    failureUrl: `${origin}/payment-failure`,
+    pendingUrl: `${origin}/payment-pending`,
+  };
+}
+
 export default function Home() {
   const [selectedBarber, setSelectedBarber] = useState<Barber>();
   const [selectedService, setSelectedService] = useState<Service>();
@@ -515,6 +535,20 @@ export default function Home() {
   useEffect(() => {
     if (authView !== "app") return;
 
+    const paymentReturnStatus = window.localStorage.getItem(PAYMENT_RETURN_STORAGE_KEY);
+    if (paymentReturnStatus) {
+      window.localStorage.removeItem(PAYMENT_RETURN_STORAGE_KEY);
+      setActiveTab("home");
+      void refreshClientBookings();
+
+      if (paymentReturnStatus === "success") {
+        const refreshAttempts = [1500, 3500, 7000];
+        refreshAttempts.forEach((delay) => {
+          window.setTimeout(() => void refreshClientBookings(), delay);
+        });
+      }
+    }
+
     const refreshOnReturn = () => {
       if (document.visibilityState === "visible") void refreshClientBookings();
     };
@@ -602,6 +636,7 @@ export default function Home() {
         bookingId,
         title: selectedService.name,
         paymentType: "mp",
+        ...getPaymentReturnUrls(),
       });
       const checkoutUrl = preference.init_point ?? preference.sandbox_init_point;
 
@@ -790,8 +825,8 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-dvh bg-zinc-50 px-4 py-5 text-zinc-950">
-      <div className="mx-auto w-full max-w-md pb-32">{content}</div>
+    <main className={`min-h-dvh bg-zinc-50 px-4 text-zinc-950 ${activeTab === "home" && !confirmed ? "overflow-hidden py-3" : "py-5"}`}>
+      <div className={`mx-auto w-full max-w-md ${activeTab === "home" && !confirmed ? "pb-24" : "pb-32"}`}>{content}</div>
       <BottomTabs
         activeTab={activeTab}
         onChange={(tab) => {

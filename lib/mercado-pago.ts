@@ -5,6 +5,9 @@ export type MercadoPagoPreferencePayload = {
   bookingId: string;
   title: string;
   paymentType: "mp";
+  successUrl: string;
+  failureUrl: string;
+  pendingUrl: string;
 };
 
 type MercadoPagoPreferenceResponse = {
@@ -27,6 +30,9 @@ export function buildMercadoPagoPreferencePayload(payload: MercadoPagoPreference
   assertRequiredField("bookingId", payload.bookingId);
   assertRequiredField("title", payload.title);
   assertRequiredField("paymentType", payload.paymentType);
+  assertRequiredField("successUrl", payload.successUrl);
+  assertRequiredField("failureUrl", payload.failureUrl);
+  assertRequiredField("pendingUrl", payload.pendingUrl);
 
   return payload;
 }
@@ -39,7 +45,7 @@ export async function createMercadoPagoPreference(payload: MercadoPagoPreference
   const response = await fetch(MP_CREATE_PREFERENCE_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(buildMercadoPagoPreferencePayload(payload)),
   });
 
   if (!response.ok) {
