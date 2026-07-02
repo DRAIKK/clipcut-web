@@ -35,6 +35,7 @@ import {
 } from "../lib/client-auth";
 import { auth } from "../lib/firebase";
 import { getBarberById, getBarberServices, getBarbers, getBarberSlots, getClientBookings } from "../lib/firestore-read";
+import { getClientBarberRating, saveClientBarberRating } from "../lib/firestore-ratings";
 import { createBookingFromWeb } from "../lib/cloud-bookings";
 import { createMercadoPagoPreference } from "../lib/mercado-pago";
 import { calculateDistanceKm, formatDistanceKm, type Coordinates } from "../lib/distance";
@@ -87,6 +88,7 @@ export default function Home() {
   const [locationRequested, setLocationRequested] = useState(false);
   const [clientProfile, setClientProfile] = useState<ClientProfile>();
   const [ratedBarberIds, setRatedBarberIds] = useState<Record<string, number>>({});
+  const [ratingSubmittingBarberId, setRatingSubmittingBarberId] = useState<string>();
 
   const selectedBarberId = selectedBarber?.id;
   const requestBrowserLocation = useCallback(() => {
@@ -214,6 +216,7 @@ export default function Home() {
 
       if (!user) {
         setClientProfile(undefined);
+        setRatedBarberIds({});
         setAuthView((currentView) => (currentView === "checking" ? "landing" : currentView));
         return;
       }
@@ -319,6 +322,7 @@ export default function Home() {
   const handleLogout = async () => {
     await logoutClient();
     setClientProfile(undefined);
+    setRatedBarberIds({});
     setActiveTab("home");
     setAuthView("login");
   };
@@ -326,6 +330,7 @@ export default function Home() {
   const handleDeleteAccount = async () => {
     await deleteClientAccount();
     setClientProfile(undefined);
+    setRatedBarberIds({});
     setActiveTab("home");
     setAuthView("login");
   };
@@ -444,6 +449,68 @@ export default function Home() {
       ignore = true;
     };
   }, [authView, currentUserId]);
+
+
+  useEffect(() => {
+    if (!currentUserId || reviewableBarbers.length === 0) return;
+
+    let ignore = false;
+
+    async function loadClientRatings() {
+      const entries = await Promise.all(
+        reviewableBarbers.map(async (barber) => {
+          try {
+            const rating = await getClientBarberRating(currentUserId, barber.id);
+            return rating ? ([barber.id, rating] as const) : undefined;
+          } catch (error) {
+            console.warn("No se pudo cargar la calificación del peluquero.", error);
+            return undefined;
+          }
+        })
+      );
+
+      if (!ignore) {
+        setRatedBarberIds((currentRatings) => ({
+          ...currentRatings,
+          ...Object.fromEntries(entries.filter((entry): entry is readonly [string, number] => Boolean(entry))),
+        }));
+      }
+    }
+
+    void loadClientRatings();
+
+    return () => {
+      ignore = true;
+    };
+  }, [currentUserId, reviewableBarbers]);
+
+  const handleRateBarber = async (barberId: string, rating: number) => {
+    if (!currentUserId || ratedBarberIds[barberId] || ratingSubmittingBarberId) return;
+
+    setRatingSubmittingBarberId(barberId);
+    try {
+      await saveClientBarberRating(currentUserId, barberId, rating);
+      setRatedBarberIds((ratings) => ({ ...ratings, [barberId]: rating }));
+      setFirebaseBarbers((barbers) =>
+        barbers.map((barber) => {
+          if (barber.id !== barberId) return barber;
+
+          const ratingCount = (barber.ratingCount ?? 0) + 1;
+          const ratingAvg = (((barber.rating ?? 0) * (barber.ratingCount ?? 0)) + rating) / ratingCount;
+
+          return { ...barber, rating: ratingAvg, ratingCount };
+        })
+      );
+    } catch (error) {
+      console.warn("No se pudo guardar la calificación del peluquero.", error);
+      if (error instanceof Error && error.message.includes("Ya calificaste")) {
+        const savedRating = await getClientBarberRating(currentUserId, barberId);
+        if (savedRating) setRatedBarberIds((ratings) => ({ ...ratings, [barberId]: savedRating }));
+      }
+    } finally {
+      setRatingSubmittingBarberId(undefined);
+    }
+  };
 
   useEffect(() => {
     if (authView !== "app") return;
@@ -611,6 +678,7 @@ export default function Home() {
     content = (
       <HomeScreen
         barbers={visibleBarbers}
+        bookingBarbers={firebaseFailed ? nearbyBarbers : firebaseBarbers}
         loading={barbersLoading}
         onSearchBarbers={() => {
           setSelectedBarber(undefined);
@@ -620,7 +688,7 @@ export default function Home() {
         activeBooking={activeBooking}
         reviewableBarbers={reviewableBarbers}
         ratedBarberIds={ratedBarberIds}
-        onRateBarber={(barberId, rating) => setRatedBarberIds((ratings) => ({ ...ratings, [barberId]: rating }))}
+        onRateBarber={handleRateBarber}
         onRequestLocation={requestBrowserLocation}
         showLocationHint={!browserLocation}
       />
