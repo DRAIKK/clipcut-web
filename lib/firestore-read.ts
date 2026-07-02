@@ -114,12 +114,20 @@ function getPaymentMethods(data: FirestoreRecord): PaymentMethod[] {
     isPaymentEnabled(data.mercadoPago) ||
     candidates.some((candidate) => candidateIncludes(candidate, ["transfer", "transferencia", "banktransfer", "mercadopago"]));
 
+  const hasDeposit =
+    isPaymentEnabled(data.deposit) ||
+    isPaymentEnabled(data.senia) ||
+    isPaymentEnabled(data.seña) ||
+    isPaymentEnabled(data.depositEnabled) ||
+    candidates.some((candidate) => candidateIncludes(candidate, ["deposit", "senia", "seña", "deposito", "depósito"]));
+
   const hasCash =
     isPaymentEnabled(data.cash) ||
     isPaymentEnabled(data.efectivo) ||
     candidates.some((candidate) => candidateIncludes(candidate, ["cash", "efectivo"]));
 
   if (hasTransfer) methods.push({ id: "transfer", label: "Transferencia" });
+  if (hasDeposit) methods.push({ id: "deposit", label: "Seña" });
   if (hasCash) methods.push({ id: "cash", label: "Efectivo" });
 
   return methods;

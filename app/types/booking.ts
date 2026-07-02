@@ -1,6 +1,6 @@
 import type { Coordinates } from "../../lib/distance";
 
-export type PaymentMethodId = "transfer" | "cash";
+export type PaymentMethodId = "transfer" | "deposit" | "cash";
 
 export type PaymentMethod = {
   id: PaymentMethodId;

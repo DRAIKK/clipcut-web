@@ -582,6 +582,10 @@ export default function Home() {
       setBookingError("Ese horario ya fue reservado. Elegí otro turno.");
       return;
     }
+    if (!selectedBarber.paymentMethods?.some((method) => method.id === selectedPaymentMethod)) {
+      setBookingError("Este método de pago ya no está disponible para este peluquero.");
+      return;
+    }
 
     setBookingSubmitting(true);
     try {
@@ -611,7 +615,7 @@ export default function Home() {
         clientId: currentUserId,
         clientName,
         clientEmail,
-        paymentMethod: selectedPaymentMethod === "transfer" ? ("mp" as const) : ("cash" as const),
+        paymentMethod: selectedPaymentMethod === "transfer" ? ("mp" as const) : selectedPaymentMethod,
       };
       const missingPayloadFields = Object.entries(payload)
         .filter(([, value]) => !isPresentBookingField(value))
@@ -635,7 +639,7 @@ export default function Home() {
         barberId: selectedBarber.id,
         bookingId,
         title: selectedService.name,
-        paymentType: "mp",
+        paymentType: selectedPaymentMethod === "deposit" ? "deposit" : "mp",
         ...getPaymentReturnUrls(),
       });
       const checkoutUrl = preference.init_point ?? preference.sandbox_init_point;
