@@ -99,6 +99,8 @@ export const mockTimeSlots: TimeSlot[] = [
 ];
 
 export const mockActiveBooking: Booking = {
+  id: "booking-mateo-active",
+  barberId: mockBarber.id,
   barberName: "Mateo Alvarez",
   serviceName: "Corte fade premium",
   dateTime: "Hoy, 16:30 hs",
