@@ -99,7 +99,8 @@ export function calculateDistanceKm(
 
 export function formatDistanceKm(distanceKm?: number) {
   if (!Number.isFinite(distanceKm)) return "";
-  return `${Math.max(distanceKm, 0).toFixed(1)} km`;
+  const value = distanceKm ?? 0;
+  return `${Math.max(value, 0).toFixed(1)} km`;
 }
 
 export function parseDistanceKm(distance?: string) {
