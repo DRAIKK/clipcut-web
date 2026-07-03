@@ -35,7 +35,8 @@ import {
 } from "../lib/client-auth";
 import { auth } from "../lib/firebase";
 import { getBarberById, getBarberServices, getBarbers, getBarberSlots, getClientBookings } from "../lib/firestore-read";
-import { getClientBarberRating, saveClientBarberRating } from "../lib/firestore-ratings";
+import { getClientBarberRating } from "../lib/firestore-ratings";
+import { createRatingFromWeb } from "../lib/cloud-ratings";
 import { createBookingFromWeb } from "../lib/cloud-bookings";
 import { createMercadoPagoPreference } from "../lib/mercado-pago";
 import { calculateDistanceKm, formatDistanceKm, type Coordinates } from "../lib/distance";
@@ -109,6 +110,7 @@ export default function Home() {
   const [clientProfile, setClientProfile] = useState<ClientProfile>();
   const [ratedBarberIds, setRatedBarberIds] = useState<Record<string, number>>({});
   const [ratingSubmittingBarberId, setRatingSubmittingBarberId] = useState<string>();
+  const [ratingErrors, setRatingErrors] = useState<Record<string, string>>({});
   const [paymentReturnMessage, setPaymentReturnMessage] = useState("");
 
   const selectedBarberId = selectedBarber?.id;
@@ -507,25 +509,25 @@ export default function Home() {
 
   const handleRateBarber = async (barberId: string, rating: number) => {
     const canRateBarber = reviewableBarbers.some((barber) => barber.id === barberId);
-    if (!currentUserId || !canRateBarber || ratedBarberIds[barberId] || ratingSubmittingBarberId) return;
+    if (!currentUserId || !canRateBarber || ratingSubmittingBarberId) return;
+    if (ratedBarberIds[barberId]) {
+      setRatingErrors((errors) => ({ ...errors, [barberId]: "Ya calificaste a este peluquero." }));
+      return;
+    }
 
     setRatingSubmittingBarberId(barberId);
+    setRatingErrors((errors) => ({ ...errors, [barberId]: "" }));
     try {
-      await saveClientBarberRating(currentUserId, barberId, rating);
+      const updatedRating = await createRatingFromWeb({ barberId, clientId: currentUserId, rating });
       setRatedBarberIds((ratings) => ({ ...ratings, [barberId]: rating }));
       setFirebaseBarbers((barbers) =>
-        barbers.map((barber) => {
-          if (barber.id !== barberId) return barber;
-
-          const ratingCount = (barber.ratingCount ?? 0) + 1;
-          const ratingAvg = (((barber.rating ?? 0) * (barber.ratingCount ?? 0)) + rating) / ratingCount;
-
-          return { ...barber, rating: ratingAvg, ratingCount };
-        })
+        barbers.map((barber) => (barber.id === barberId ? { ...barber, rating: updatedRating.ratingAvg, ratingCount: updatedRating.ratingCount } : barber))
       );
     } catch (error) {
       console.warn("No se pudo guardar la calificación del peluquero.", error);
-      if (error instanceof Error && error.message.includes("Ya calificaste")) {
+      const message = error instanceof Error ? error.message : "No se pudo enviar la calificación. Probá nuevamente.";
+      setRatingErrors((errors) => ({ ...errors, [barberId]: message }));
+      if (message.toLowerCase().includes("ya calificaste")) {
         const savedRating = await getClientBarberRating(currentUserId, barberId);
         if (savedRating) setRatedBarberIds((ratings) => ({ ...ratings, [barberId]: savedRating }));
       }
@@ -735,6 +737,8 @@ export default function Home() {
         paymentReturnMessage={paymentReturnMessage}
         reviewableBarbers={reviewableBarbers}
         ratedBarberIds={ratedBarberIds}
+        ratingErrors={ratingErrors}
+        ratingSubmittingBarberId={ratingSubmittingBarberId}
         onRateBarber={handleRateBarber}
         onRequestLocation={requestBrowserLocation}
         showLocationHint={!browserLocation}

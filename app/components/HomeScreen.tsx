@@ -20,6 +20,8 @@ type HomeScreenProps = {
   paymentReturnMessage?: string;
   reviewableBarbers?: ReviewableBarber[];
   ratedBarberIds?: Record<string, number>;
+  ratingErrors?: Record<string, string>;
+  ratingSubmittingBarberId?: string;
   onRateBarber?: (barberId: string, rating: number) => void;
   onRequestLocation?: () => void;
   showLocationHint?: boolean;
@@ -33,6 +35,8 @@ export function HomeScreen({
   paymentReturnMessage = "",
   reviewableBarbers = [],
   ratedBarberIds = {},
+  ratingErrors = {},
+  ratingSubmittingBarberId,
   onRateBarber,
   onSearchBarbers,
   onSelectBarber,
@@ -113,6 +117,8 @@ export function HomeScreen({
           <div className="space-y-3">
             {reviewableBarbers.map((barber) => {
               const rating = ratedBarberIds[barber.id];
+              const ratingError = ratingErrors[barber.id];
+              const isSubmittingRating = ratingSubmittingBarberId === barber.id;
 
               return (
                 <article className="rounded-[2rem] bg-white px-5 py-6 text-center shadow-sm ring-1 ring-zinc-200" key={barber.id}>
@@ -129,8 +135,8 @@ export function HomeScreen({
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
                         aria-label={`${star} estrellas`}
-                        className={`text-3xl transition active:scale-95 ${rating && star <= rating ? "text-yellow-400" : "text-zinc-300"}`}
-                        disabled={Boolean(rating)}
+                        className={`text-3xl transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-60 ${rating && star <= rating ? "text-yellow-400" : "text-zinc-300"}`}
+                        disabled={Boolean(rating) || isSubmittingRating}
                         key={star}
                         onClick={() => onRateBarber?.(barber.id, star)}
                         type="button"
@@ -139,7 +145,9 @@ export function HomeScreen({
                       </button>
                     ))}
                   </div>
+                  {isSubmittingRating ? <p className="mt-2 text-xs font-black uppercase tracking-[0.16em] text-zinc-500">Enviando calificación...</p> : null}
                   {rating ? <p className="mt-2 text-xs font-black uppercase tracking-[0.16em] text-green-600">Ya calificaste con {rating} ★</p> : null}
+                  {ratingError ? <p className="mt-2 text-sm font-bold leading-5 text-red-600">{ratingError}</p> : null}
                 </article>
               );
             })}
