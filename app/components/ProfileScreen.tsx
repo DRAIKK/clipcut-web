@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useRef, useState, type ChangeEvent } from "react";
 import type { ClientProfile } from "../../lib/client-auth";
 import { LogoHeader } from "./LogoHeader";
@@ -19,6 +20,7 @@ export function ProfileScreen({
   onRemovePhoto,
   onUpdatePhoto,
 }: ProfileScreenProps) {
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [photoMenuOpen, setPhotoMenuOpen] = useState(false);
   const [message, setMessage] = useState("");
@@ -62,6 +64,11 @@ export function ProfileScreen({
     }
   };
 
+  const handleReturnToLanding = () => {
+    setMenuOpen(false);
+    router.push("/");
+  };
+
   const handleRemovePhoto = async () => {
     setBusy(true);
     setMessage("");
@@ -92,6 +99,14 @@ export function ProfileScreen({
           <div className="absolute right-4 top-24 z-10 w-48 rounded-2xl bg-white p-2 shadow-2xl shadow-zinc-950/15 ring-1 ring-zinc-200">
             <button className="w-full rounded-xl px-4 py-3 text-left text-sm font-black text-red-600 hover:bg-red-50" onClick={onLogout} type="button">
               Cerrar sesión
+            </button>
+            <button className="flex w-full items-center gap-2 rounded-xl px-4 py-3 text-left text-sm font-black text-zinc-950 hover:bg-zinc-50" onClick={handleReturnToLanding} type="button">
+              <svg aria-hidden="true" className="h-4 w-4 shrink-0" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" viewBox="0 0 24 24">
+                <path d="m3 10 9-7 9 7" />
+                <path d="M5 10v10h14V10" />
+                <path d="M9 20v-6h6v6" />
+              </svg>
+              Volver a la landing
             </button>
             <button className="w-full rounded-xl px-4 py-3 text-left text-sm font-black text-red-600 hover:bg-red-50 disabled:opacity-50" disabled={busy} onClick={handleDeleteAccount} type="button">
               Eliminar cuenta
