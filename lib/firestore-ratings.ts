@@ -1,4 +1,4 @@
-import { doc, getDoc, runTransaction } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, runTransaction, where, type Firestore } from "firebase/firestore";
 import { db } from "./firebase";
 
 function assertRating(value: number) {
@@ -27,10 +27,31 @@ export async function getClientBarberRating(clientId: string, barberId: string) 
   return Number.isInteger(rating) && rating >= 1 && rating <= 5 ? rating : undefined;
 }
 
+const REVIEWABLE_BOOKING_STATUSES = ["paid", "booked", "cash_paid", "done"];
+
+async function hasReviewableBooking(firestore: Firestore, clientId: string, barberId: string) {
+  const bookingsRef = collection(firestore, "bookings");
+
+  for (const status of REVIEWABLE_BOOKING_STATUSES) {
+    const snapshot = await getDocs(
+      query(bookingsRef, where("clientId", "==", clientId), where("barberId", "==", barberId), where("status", "==", status))
+    );
+
+    if (!snapshot.empty) return true;
+  }
+
+  return false;
+}
+
 export async function saveClientBarberRating(clientId: string, barberId: string, rating: number) {
   if (!db) throw new Error("Firebase no está configurado.");
 
   assertRating(rating);
+
+  const canRateBarber = await hasReviewableBooking(db, clientId, barberId);
+  if (!canRateBarber) {
+    throw new Error("Solo podés calificar peluqueros con reservas reales confirmadas o realizadas.");
+  }
 
   const ratingRef = doc(db, "users", barberId, "ratings", clientId);
   const barberRef = doc(db, "users", barberId);

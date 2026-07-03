@@ -17,6 +17,7 @@ type HomeScreenProps = {
   onSearchBarbers: () => void;
   loading?: boolean;
   activeBooking?: Booking;
+  paymentReturnMessage?: string;
   reviewableBarbers?: ReviewableBarber[];
   ratedBarberIds?: Record<string, number>;
   onRateBarber?: (barberId: string, rating: number) => void;
@@ -29,6 +30,7 @@ export function HomeScreen({
   bookingBarbers = barbers,
   loading = false,
   activeBooking,
+  paymentReturnMessage = "",
   reviewableBarbers = [],
   ratedBarberIds = {},
   onRateBarber,
@@ -40,6 +42,12 @@ export function HomeScreen({
   return (
     <div className="space-y-4 pb-1">
       <LogoHeader />
+
+      {paymentReturnMessage ? (
+        <section className="rounded-[2rem] bg-green-50 px-5 py-4 text-sm font-black leading-6 text-green-800 ring-1 ring-green-100">
+          {paymentReturnMessage}
+        </section>
+      ) : null}
 
       {activeBooking ? (
         <section className="space-y-2">

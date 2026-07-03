@@ -109,6 +109,7 @@ export default function Home() {
   const [clientProfile, setClientProfile] = useState<ClientProfile>();
   const [ratedBarberIds, setRatedBarberIds] = useState<Record<string, number>>({});
   const [ratingSubmittingBarberId, setRatingSubmittingBarberId] = useState<string>();
+  const [paymentReturnMessage, setPaymentReturnMessage] = useState("");
 
   const selectedBarberId = selectedBarber?.id;
   const requestBrowserLocation = useCallback(() => {
@@ -505,7 +506,8 @@ export default function Home() {
   }, [currentUserId, reviewableBarbers]);
 
   const handleRateBarber = async (barberId: string, rating: number) => {
-    if (!currentUserId || ratedBarberIds[barberId] || ratingSubmittingBarberId) return;
+    const canRateBarber = reviewableBarbers.some((barber) => barber.id === barberId);
+    if (!currentUserId || !canRateBarber || ratedBarberIds[barberId] || ratingSubmittingBarberId) return;
 
     setRatingSubmittingBarberId(barberId);
     try {
@@ -542,10 +544,15 @@ export default function Home() {
       void refreshClientBookings();
 
       if (paymentReturnStatus === "success") {
+        setPaymentReturnMessage("Pago aprobado. Estamos actualizando tus reservas con la confirmación de Mercado Pago.");
         const refreshAttempts = [1500, 3500, 7000];
         refreshAttempts.forEach((delay) => {
           window.setTimeout(() => void refreshClientBookings(), delay);
         });
+      } else if (paymentReturnStatus === "pending") {
+        setPaymentReturnMessage("Pago pendiente. Actualizamos tus reservas y volveremos a mostrar el estado cuando Mercado Pago confirme.");
+      } else if (paymentReturnStatus === "failure") {
+        setPaymentReturnMessage("El pago no se completó. Revisá tus reservas o intentá nuevamente cuando quieras.");
       }
     }
 
@@ -725,6 +732,7 @@ export default function Home() {
         }}
         onSelectBarber={openBarberProfile}
         activeBooking={activeBooking}
+        paymentReturnMessage={paymentReturnMessage}
         reviewableBarbers={reviewableBarbers}
         ratedBarberIds={ratedBarberIds}
         onRateBarber={handleRateBarber}
