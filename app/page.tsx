@@ -389,6 +389,7 @@ export default function Home() {
   useEffect(() => {
     if (!selectedBarberId) return;
 
+    const barberId = selectedBarberId;
     let ignore = false;
 
     async function loadProfile() {
@@ -396,9 +397,9 @@ export default function Home() {
       setServicesLoading(true);
       try {
         const [freshBarber, slots, services] = await Promise.all([
-          getBarberById(selectedBarberId),
-          getBarberSlots(selectedBarberId),
-          getBarberServices(selectedBarberId),
+          getBarberById(barberId),
+          getBarberSlots(barberId),
+          getBarberServices(barberId),
         ]);
 
         if (ignore) return;
