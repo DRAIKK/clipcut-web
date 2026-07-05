@@ -15,6 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Clipcut | Reservas",
   description: "Reservá tu turno con peluqueros profesionales desde la web mobile-first de Clipcut.",
+  icons: {
+    icon: "/clipcut-logo.png",
+    shortcut: "/clipcut-logo.png",
+    apple: "/clipcut-logo.png",
+  },
 };
 
 export const viewport: Viewport = {
