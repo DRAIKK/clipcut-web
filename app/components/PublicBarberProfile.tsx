@@ -85,11 +85,11 @@ export function PublicBarberProfile({
   loading = false,
   clientId = "",
 }: PublicBarberProfileProps) {
-  const availableSlots = slots.filter((slot) => slot.available);
-  const dayLabels = getDayLabels(availableSlots);
+  const visibleSlots = slots;
+  const dayLabels = getDayLabels(visibleSlots);
   const uniqueSlots = new Map<string, { slot: TimeSlot; dayLabel: string }>();
 
-  availableSlots.forEach((slot, index) => {
+  visibleSlots.forEach((slot, index) => {
     const dayLabel = dayLabels[index] || scheduleDays[index % scheduleDays.length];
     const slotKey = `${dayLabel}-${formatSlotRange(slot)}`;
 
@@ -251,7 +251,7 @@ export function PublicBarberProfile({
               Cargando perfil y horarios...
             </div>
           ) : null}
-          {!loading && availableSlots.length === 0 ? (
+          {!loading && visibleSlots.length === 0 ? (
             <div className="rounded-[1.35rem] bg-white p-4 text-sm font-black text-zinc-400 ring-1 ring-zinc-200">
               Este peluquero aún no configuró sus horarios.
             </div>
@@ -274,13 +274,14 @@ export function PublicBarberProfile({
                     <div className="min-w-0 flex-1">
                       <p className="text-base font-black text-zinc-950">{formatSlotRange(slot)}</p>
                       <p className="mt-1 flex items-center gap-2 text-xs font-black text-[#16A34A]">
-                        <span className="h-2 w-2 rounded-full bg-[#16A34A]" />
-                        Disponible
+                        <span className={`h-2 w-2 rounded-full ${slot.available ? "bg-[#16A34A]" : "bg-zinc-400"}`} />
+                        {slot.available ? "Disponible" : "Reservado"}
                       </p>
                     </div>
                     <button
                       aria-label={`Elegir servicio para ${formatSlotRange(slot)}`}
-                      className="grid h-11 w-11 place-items-center rounded-full bg-white text-zinc-900 shadow-lg shadow-zinc-900/10 ring-1 ring-zinc-200 transition active:scale-95"
+                      className="grid h-11 w-11 place-items-center rounded-full bg-white text-zinc-900 shadow-lg shadow-zinc-900/10 ring-1 ring-zinc-200 transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+                      disabled={!slot.available}
                       onClick={() => handleCalendarClick(slot)}
                       type="button"
                     >

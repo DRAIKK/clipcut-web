@@ -59,5 +59,6 @@ export type Booking = {
   address?: string;
   status: BookingStatus;
   paymentMethod?: PaymentMethodId | string;
+  startAt?: string | number | Date | { seconds?: number; toMillis?: () => number };
   endAt?: string | number | Date | { seconds?: number; toMillis?: () => number };
 };
