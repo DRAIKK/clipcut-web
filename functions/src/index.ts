@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase-admin/app";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
+import type { DocumentData } from "firebase-admin/firestore";
 import { onRequest } from "firebase-functions/v2/https";
 
 initializeApp();
@@ -31,6 +32,85 @@ function asString(value: unknown) {
 function asPositiveNumber(value: unknown) {
   const numberValue = typeof value === "number" ? value : Number(value);
   return Number.isFinite(numberValue) && numberValue > 0 ? numberValue : 0;
+}
+
+
+const ACTIVE_STATUSES = new Set(["paid", "booked", "cash_pending", "cash_paid", "pending_payment"]);
+const DAY_ALIASES: Record<string, number> = {
+  domingo: 0, dom: 0, lunes: 1, lun: 1, martes: 2, mar: 2, miercoles: 3, "miércoles": 3, mie: 3, "mié": 3, jueves: 4, jue: 4, viernes: 5, vie: 5, sabado: 6, "sábado": 6, sab: 6, "sáb": 6,
+};
+
+function normalize(value?: string) {
+  return value?.trim().toLowerCase() ?? "";
+}
+
+function toMillis(value: unknown) {
+  if (!value) return undefined;
+  if (value instanceof Date) return value.getTime();
+  if (typeof value === "number") return value;
+  if (typeof value === "string") {
+    const parsed = Date.parse(value);
+    return Number.isNaN(parsed) ? undefined : parsed;
+  }
+  if (typeof value === "object") {
+    const timestamp = value as { seconds?: number; toMillis?: () => number };
+    if (typeof timestamp.toMillis === "function") return timestamp.toMillis();
+    if (typeof timestamp.seconds === "number") return timestamp.seconds * 1000;
+  }
+  return undefined;
+}
+
+function parseTime(value?: string) {
+  const match = value?.trim().match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return undefined;
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59 ? { hours, minutes } : undefined;
+}
+
+function parseSlotWeekday(day?: string) {
+  if (!day) return undefined;
+  const numericDay = Number(day);
+  if (Number.isInteger(numericDay)) {
+    if (numericDay >= 0 && numericDay <= 6) return numericDay;
+    if (numericDay >= 1 && numericDay <= 7) return numericDay === 7 ? 0 : numericDay;
+  }
+  return DAY_ALIASES[normalize(day)];
+}
+
+function getBookingEndMillis(data: DocumentData, now = Date.now()) {
+  const explicitEndAt = toMillis(data.endAt);
+  if (explicitEndAt !== undefined) return explicitEndAt;
+  const endTime = parseTime(asString(data.endTime) || asString(data.startTime));
+  if (!endTime) return undefined;
+  const weekday = parseSlotWeekday(asString(data.day));
+  const candidate = new Date(now);
+  if (weekday !== undefined) candidate.setDate(candidate.getDate() + ((weekday - candidate.getDay() + 7) % 7));
+  candidate.setHours(endTime.hours, endTime.minutes, 0, 0);
+  const startTime = parseTime(asString(data.startTime));
+  if (startTime && (endTime.hours < startTime.hours || (endTime.hours === startTime.hours && endTime.minutes <= startTime.minutes))) candidate.setDate(candidate.getDate() + 1);
+  if (candidate.getTime() <= now && weekday !== undefined) candidate.setDate(candidate.getDate() + 7);
+  return candidate.getTime();
+}
+
+function isActiveBlockingBooking(data: DocumentData, now = Date.now()) {
+  if (!ACTIVE_STATUSES.has(normalize(asString(data.status)))) return false;
+  const endMillis = getBookingEndMillis(data, now);
+  return endMillis === undefined || endMillis > now;
+}
+
+function getBookingDateRange(day: string, start: string, end: string, now = Date.now()) {
+  const startTime = parseTime(start);
+  const endTime = parseTime(end || start);
+  if (!startTime || !endTime) return {};
+  const weekday = parseSlotWeekday(day);
+  const startAt = new Date(now);
+  if (weekday !== undefined) startAt.setDate(startAt.getDate() + ((weekday - startAt.getDay() + 7) % 7));
+  startAt.setHours(startTime.hours, startTime.minutes, 0, 0);
+  const endAt = new Date(startAt);
+  endAt.setHours(endTime.hours, endTime.minutes, 0, 0);
+  if (endAt.getTime() <= startAt.getTime()) endAt.setDate(endAt.getDate() + 1);
+  return { startAt, endAt };
 }
 
 function applyCors(req: { get(name: string): string | undefined }, res: { set(field: string, value: string): unknown }) {
@@ -96,13 +176,20 @@ export const api = onRequest({ region: "us-central1" }, async (req, res) => {
     const bookingRef = db.collection("bookings").doc();
     const slotRef = db.collection("users").doc(barberId).collection("slots").doc(slotId);
     const now = FieldValue.serverTimestamp();
+    const day = asString(body.day);
+    const startTime = asString(body.startTime);
+    const endTime = asString(body.endTime);
+    const bookingDateRange = getBookingDateRange(day, startTime, endTime);
 
     await db.runTransaction(async (transaction) => {
       const slotSnapshot = await transaction.get(slotRef);
 
       if (slotSnapshot.exists) {
         const slotData = slotSnapshot.data() ?? {};
-        if (slotData.bookedBy || slotData.bookedBookingId || slotData.booked === true || slotData.available === false) {
+        if (slotData.bookedBookingId) {
+          const currentBooking = await transaction.get(db.collection("bookings").doc(String(slotData.bookedBookingId)));
+          if (currentBooking.exists && isActiveBlockingBooking(currentBooking.data() ?? {})) throw new Error("slot_unavailable");
+        } else if (slotData.bookedBy || slotData.booked === true || slotData.available === false) {
           throw new Error("slot_unavailable");
         }
       }
@@ -118,9 +205,10 @@ export const api = onRequest({ region: "us-central1" }, async (req, res) => {
         serviceName,
         servicePrice,
         slotId,
-        day: asString(body.day),
-        startTime: asString(body.startTime),
-        endTime: asString(body.endTime),
+        day,
+        startTime,
+        endTime,
+        ...bookingDateRange,
         paymentMethod,
         status: paymentMethod === "cash" ? "cash_pending" : "pending_payment",
         createdAt: now,

@@ -1,4 +1,5 @@
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+import { isActiveBlockingBooking } from "../app/booking-rules";
 import type { Barber, Booking, PaymentMethod, Service, TimeSlot } from "../app/types/booking";
 import type { Coordinates } from "./distance";
 import { db } from "./firebase";
@@ -228,12 +229,12 @@ function getSlotLabel(startTime: string, endTime: string, label: string) {
   return label;
 }
 
-function adaptSlot(id: string, data: FirestoreRecord): TimeSlot | null {
+function adaptSlot(id: string, data: FirestoreRecord, activeBookedSlotIds = new Set<string>()): TimeSlot | null {
   const status = getString(data, ["status"], "").trim().toLowerCase();
-  const isAvailable =
-    !hasValue(data.bookedBy) && status !== "booked" && !isTrue(data.booked) && !isFalse(data.available);
+  const isSlotBlockedByActiveBooking = activeBookedSlotIds.has(id);
+  const isManuallyUnavailable = status === "booked" || isTrue(data.booked) || isFalse(data.available);
+  const isAvailable = !isSlotBlockedByActiveBooking && (!hasValue(data.bookedBy) || !isManuallyUnavailable);
 
-  if (!isAvailable) return null;
 
   const day = getString(data, ["day", "dayLabel", "weekday", "dayName"], "");
   const startTime = getString(data, ["startTime", "start", "time"], "");
@@ -246,7 +247,7 @@ function adaptSlot(id: string, data: FirestoreRecord): TimeSlot | null {
   return {
     id,
     label,
-    available: true,
+    available: isAvailable,
     day,
     startTime,
     endTime,
@@ -279,12 +280,20 @@ export async function getBarberById(barberId: string): Promise<Barber> {
 export async function getBarberSlots(barberId: string): Promise<TimeSlot[]> {
   if (!db) throw new Error("Firebase no está configurado.");
 
-  const snapshot = await getDocs(query(collection(db, "users", barberId, "slots")));
-  const slots = snapshot.docs.map((slotDoc) => ({ id: slotDoc.id, ...slotDoc.data() }));
-  console.log("slots real data", slots);
+  const [slotsSnapshot, bookingsSnapshot] = await Promise.all([
+    getDocs(query(collection(db, "users", barberId, "slots"))),
+    getDocs(query(collection(db, "bookings"), where("barberId", "==", barberId))),
+  ]);
+  const activeBookedSlotIds = new Set(
+    bookingsSnapshot.docs
+      .map((bookingDoc) => adaptBooking(bookingDoc.id, bookingDoc.data()))
+      .filter((booking) => isActiveBlockingBooking(booking))
+      .map((booking) => booking.slotId)
+      .filter((slotId): slotId is string => Boolean(slotId)),
+  );
 
-  return snapshot.docs
-    .map((slotDoc) => adaptSlot(slotDoc.id, slotDoc.data()))
+  return slotsSnapshot.docs
+    .map((slotDoc) => adaptSlot(slotDoc.id, slotDoc.data(), activeBookedSlotIds))
     .filter((slot): slot is TimeSlot => Boolean(slot));
 }
 
@@ -328,6 +337,7 @@ function adaptBooking(id: string, data: FirestoreRecord): Booking {
     address: getString(data, ["address", "barberAddress"], ""),
     status: getString(data, ["status"], ""),
     paymentMethod: getString(data, ["paymentMethod"], ""),
+    startAt: data.startAt as Booking["startAt"],
     endAt: data.endAt as Booking["endAt"],
   };
 }
@@ -337,5 +347,7 @@ export async function getClientBookings(clientId: string): Promise<Booking[]> {
 
   const snapshot = await getDocs(query(collection(db, "bookings"), where("clientId", "==", clientId)));
 
-  return snapshot.docs.map((bookingDoc) => adaptBooking(bookingDoc.id, bookingDoc.data()));
+  return snapshot.docs
+    .map((bookingDoc) => adaptBooking(bookingDoc.id, bookingDoc.data()))
+    .filter((booking) => isActiveBlockingBooking(booking));
 }
