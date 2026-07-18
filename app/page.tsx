@@ -40,7 +40,7 @@ import { createRatingFromWeb } from "../lib/cloud-ratings";
 import { createBookingFromWeb } from "../lib/cloud-bookings";
 import { createMercadoPagoPreference } from "../lib/mercado-pago";
 import { calculateDistanceKm, formatDistanceKm, type Coordinates } from "../lib/distance";
-import { isActiveBlockingBooking, isConfirmedBooking, isReviewableBooking } from "./booking-rules";
+import { getBookingEndMillis, isActiveBlockingBooking, isReviewableBooking, isVisibleUpcomingBooking, toBookingMillis } from "./booking-rules";
 import { BarberAppModal } from "./components/BarberAppModal";
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "./types/booking";
 
@@ -180,8 +180,16 @@ export default function Home() {
     [firebaseBarbers, firebaseFailed, prepareDistanceList]
   );
   const currentUserId = auth?.currentUser?.uid ?? "";
-  const confirmedBookings = useMemo(() => clientBookings.filter(isConfirmedBooking), [clientBookings]);
-  const activeBooking = useMemo(() => confirmedBookings.find((booking) => isActiveBlockingBooking(booking, now)), [confirmedBookings, now]);
+  const upcomingBooking = useMemo(() => {
+    return clientBookings
+      .filter((booking) => isVisibleUpcomingBooking(booking, now))
+      .sort((firstBooking, secondBooking) => {
+        const firstStart = toBookingMillis(firstBooking.startAt) ?? getBookingEndMillis(firstBooking, now) ?? Number.MAX_SAFE_INTEGER;
+        const secondStart = toBookingMillis(secondBooking.startAt) ?? getBookingEndMillis(secondBooking, now) ?? Number.MAX_SAFE_INTEGER;
+
+        return firstStart - secondStart;
+      })[0];
+  }, [clientBookings, now]);
   const reviewableBarbers = useMemo(() => {
     const seen = new Set<string>();
 
@@ -750,7 +758,7 @@ export default function Home() {
           setActiveTab("search");
         }}
         onSelectBarber={openBarberProfile}
-        activeBooking={activeBooking}
+        activeBooking={upcomingBooking}
         paymentReturnMessage={paymentReturnMessage}
         reviewableBarbers={reviewableBarbers}
         ratedBarberIds={ratedBarberIds}
