@@ -339,6 +339,9 @@ function adaptBooking(id: string, data: FirestoreRecord): Booking {
     paymentMethod: getString(data, ["paymentMethod"], ""),
     startAt: data.startAt as Booking["startAt"],
     endAt: data.endAt as Booking["endAt"],
+    bookingDate: data.bookingDate as Booking["bookingDate"],
+    date: data.date as Booking["date"],
+    createdAt: data.createdAt as Booking["createdAt"],
   };
 }
 

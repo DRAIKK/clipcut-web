@@ -61,4 +61,7 @@ export type Booking = {
   paymentMethod?: PaymentMethodId | string;
   startAt?: string | number | Date | { seconds?: number; toMillis?: () => number };
   endAt?: string | number | Date | { seconds?: number; toMillis?: () => number };
+  bookingDate?: string | number | Date | { seconds?: number; toMillis?: () => number };
+  date?: string | number | Date | { seconds?: number; toMillis?: () => number };
+  createdAt?: string | number | Date | { seconds?: number; toMillis?: () => number };
 };

@@ -112,8 +112,10 @@ export default function Home() {
   const [ratingSubmittingBarberId, setRatingSubmittingBarberId] = useState<string>();
   const [ratingErrors, setRatingErrors] = useState<Record<string, string>>({});
   const [paymentReturnMessage, setPaymentReturnMessage] = useState("");
+  const [now, setNow] = useState(() => Date.now());
 
   const selectedBarberId = selectedBarber?.id;
+  const profileRefreshTick = Math.floor(now / (60 * 1000));
   const requestBrowserLocation = useCallback(() => {
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
       setLocationRequested(true);
@@ -179,7 +181,7 @@ export default function Home() {
   );
   const currentUserId = auth?.currentUser?.uid ?? "";
   const confirmedBookings = useMemo(() => clientBookings.filter(isConfirmedBooking), [clientBookings]);
-  const activeBooking = useMemo(() => confirmedBookings.find((booking) => isActiveBlockingBooking(booking)), [confirmedBookings]);
+  const activeBooking = useMemo(() => confirmedBookings.find((booking) => isActiveBlockingBooking(booking, now)), [confirmedBookings, now]);
   const reviewableBarbers = useMemo(() => {
     const seen = new Set<string>();
 
@@ -200,6 +202,12 @@ export default function Home() {
         return true;
       });
   }, [clientBookings, firebaseBarbers, firebaseFailed]);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setNow(Date.now()), 60 * 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   useEffect(() => {
     let ignore = false;
@@ -431,7 +439,7 @@ export default function Home() {
     return () => {
       ignore = true;
     };
-  }, [firebaseFailed, selectedBarberId]);
+  }, [firebaseFailed, profileRefreshTick, selectedBarberId]);
 
 
   const refreshClientBookings = useCallback(async () => {
@@ -610,7 +618,7 @@ export default function Home() {
       const latestBookings = await getClientBookings(currentUserId);
       setClientBookings(latestBookings);
 
-      if (latestBookings.some((booking) => isActiveBlockingBooking(booking))) {
+      if (latestBookings.some((booking) => isActiveBlockingBooking(booking, Date.now()))) {
         setBookingError("Ya tenés una reserva activa. Podés hacer otra cuando finalice o se cancele.");
         return;
       }
@@ -766,7 +774,7 @@ export default function Home() {
       />
     );
   } else if (activeTab === "bookings") {
-    content = <BookingsScreen barbers={firebaseFailed ? nearbyBarbers : firebaseBarbers} bookings={clientBookings} loading={bookingsLoading} />;
+    content = <BookingsScreen barbers={firebaseFailed ? nearbyBarbers : firebaseBarbers} bookings={clientBookings} loading={bookingsLoading} now={now} />;
   } else {
     content = (
       <ProfileScreen
