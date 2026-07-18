@@ -123,6 +123,7 @@ export function BookingModal({
                 selected
                 selectedPaymentMethod={selectedPaymentMethod}
                 service={service}
+                showServiceSummary={false}
               />
             ) : null}
           </div>
@@ -160,13 +161,6 @@ export function BookingModal({
               Continuar
             </button>
           )}
-          <button
-            className="mx-auto mt-3 block px-6 py-2 text-sm font-black text-zinc-500 transition hover:text-zinc-800"
-            onClick={onClose}
-            type="button"
-          >
-            Cancelar
-          </button>
         </div>
       </div>
     </div>

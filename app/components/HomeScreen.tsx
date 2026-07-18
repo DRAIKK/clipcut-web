@@ -96,7 +96,7 @@ export function HomeScreen({
         </h2>
         {reviewableBarbers.length === 0 ? (
           <div className="rounded-[2rem] bg-white px-5 py-8 text-center shadow-sm ring-1 ring-zinc-200">
-            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-green-50 text-3xl ring-1 ring-green-100">
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-green-50 text-3xl text-yellow-400 ring-1 ring-green-100">
               ★
             </div>
             <h3 className="mt-5 text-xl font-black tracking-tight text-zinc-950">
