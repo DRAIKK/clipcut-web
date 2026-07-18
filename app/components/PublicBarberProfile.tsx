@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
 import { followBarber, isFollowingBarber, unfollowBarber } from "../../lib/firestore-followers";
-import { getNextSlotDateRange } from "../booking-rules";
 import type { Barber, TimeSlot } from "../types/booking";
 import { BarberAvatar } from "./BarberAvatar";
 import { LogoHeader } from "./LogoHeader";
-import { formatSlotRange, getSlotEndTime, getSlotStartTime } from "./slot-format";
+import { formatSlotRange, getSlotStartTime } from "./slot-format";
 
 type PublicBarberProfileProps = {
   barber: Barber;
@@ -71,19 +70,33 @@ function getDayLabels(slots: TimeSlot[]) {
   });
 }
 
-function getDayOrderFromToday(dayLabel: string, todayIndex: number) {
+function getSlotOccurrenceInNextWeek(dayLabel: string, startTime: string, now: Date) {
   const dayIndex = dayIndexByLabel.get(dayLabel);
+  const time = startTime.match(/^(\d{1,2}):(\d{2})/);
 
-  if (dayIndex === undefined) return Number.MAX_SAFE_INTEGER;
+  if (dayIndex === undefined || !time) return undefined;
 
-  return (dayIndex - todayIndex + 7) % 7;
+  const hours = Number(time[1]);
+  const minutes = Number(time[2]);
+  if (hours > 23 || minutes > 59) return undefined;
+
+  const windowStart = new Date(now);
+  windowStart.setHours(0, 0, 0, 0);
+  const windowEnd = new Date(windowStart);
+  windowEnd.setDate(windowEnd.getDate() + 7);
+
+  const occurrence = new Date(windowStart);
+  occurrence.setDate(occurrence.getDate() + ((dayIndex - windowStart.getDay() + 7) % 7));
+  occurrence.setHours(hours, minutes, 0, 0);
+
+  // Today's past weekly slots belong to neither this window nor next week's list.
+  if (occurrence < now || occurrence < windowStart || occurrence >= windowEnd) return undefined;
+
+  return occurrence;
 }
 
-function formatSlotDateTime(slot: TimeSlot) {
-  const dateRange = getNextSlotDateRange(slot.day, getSlotStartTime(slot), getSlotEndTime(slot));
-  if (!dateRange) return formatSlotRange(slot);
-
-  const date = new Date(dateRange.startAt);
+function formatSlotDateTime(slot: TimeSlot, startAt: Date) {
+  const date = startAt;
   const weekday = new Intl.DateTimeFormat("es-AR", { weekday: "long" }).format(date);
   const numericDate = new Intl.DateTimeFormat("es-AR", { day: "2-digit", month: "2-digit" }).format(date);
   const displayWeekday = `${weekday[0]?.toUpperCase()}${weekday.slice(1)}`;
@@ -93,7 +106,7 @@ function formatSlotDateTime(slot: TimeSlot) {
 
 type GroupedSlot = {
   dayLabel: string;
-  slots: TimeSlot[];
+  slots: Array<{ slot: TimeSlot; startAt: Date }>;
 };
 
 export function PublicBarberProfile({
@@ -106,32 +119,28 @@ export function PublicBarberProfile({
   loading = false,
   clientId = "",
 }: PublicBarberProfileProps) {
-  const visibleSlots = slots;
-  const todayIndex = new Date().getDay();
-  const dayLabels = getDayLabels(visibleSlots);
-  const uniqueSlots = new Map<string, { slot: TimeSlot; dayLabel: string }>();
+  const now = new Date();
+  const dayLabels = getDayLabels(slots);
+  const uniqueSlots = new Map<string, { slot: TimeSlot; dayLabel: string; startAt: Date }>();
 
-  visibleSlots.forEach((slot, index) => {
+  slots.forEach((slot, index) => {
     const dayLabel = dayLabels[index] || scheduleDays[index % scheduleDays.length];
-    const slotKey = `${dayLabel}-${formatSlotRange(slot)}`;
+    const startAt = getSlotOccurrenceInNextWeek(dayLabel, getSlotStartTime(slot), now);
+    if (!startAt) return;
 
-    if (!uniqueSlots.has(slotKey)) uniqueSlots.set(slotKey, { slot, dayLabel });
+    const slotKey = `${startAt.getTime()}-${formatSlotRange(slot)}`;
+
+    if (!uniqueSlots.has(slotKey)) uniqueSlots.set(slotKey, { slot, dayLabel, startAt });
   });
 
-  const groupedSlots = Array.from(uniqueSlots.values())
-    .sort((firstSlot, secondSlot) => {
-      const firstDayOrder = getDayOrderFromToday(firstSlot.dayLabel, todayIndex);
-      const secondDayOrder = getDayOrderFromToday(secondSlot.dayLabel, todayIndex);
-
-      if (firstDayOrder !== secondDayOrder) return firstDayOrder - secondDayOrder;
-
-      return getSlotStartTime(firstSlot.slot).localeCompare(getSlotStartTime(secondSlot.slot));
-    })
+  const visibleSlots = Array.from(uniqueSlots.values());
+  const groupedSlots = visibleSlots
+    .sort((firstSlot, secondSlot) => firstSlot.startAt.getTime() - secondSlot.startAt.getTime())
     .reduce<GroupedSlot[]>((groups, item) => {
       const currentGroup = groups.find((group) => group.dayLabel === item.dayLabel);
 
-      if (currentGroup) currentGroup.slots.push(item.slot);
-      else groups.push({ dayLabel: item.dayLabel, slots: [item.slot] });
+      if (currentGroup) currentGroup.slots.push({ slot: item.slot, startAt: item.startAt });
+      else groups.push({ dayLabel: item.dayLabel, slots: [{ slot: item.slot, startAt: item.startAt }] });
 
       return groups;
     }, []);
@@ -284,7 +293,7 @@ export function PublicBarberProfile({
                 {group.dayLabel}
               </div>
               <div className="space-y-2">
-                {group.slots.map((slot) => (
+                {group.slots.map(({ slot, startAt }) => (
                   <div
                     className={`flex w-full items-center gap-3 rounded-[1.35rem] p-3 text-left ring-1 transition ${
                       selectedSlot?.id === slot.id
@@ -294,9 +303,9 @@ export function PublicBarberProfile({
                     key={slot.id}
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="text-base font-black text-zinc-950">{formatSlotDateTime(slot)}</p>
-                      <p className="mt-1 flex items-center gap-2 text-xs font-black text-[#16A34A]">
-                        <span className={`h-2 w-2 rounded-full ${slot.available ? "bg-[#16A34A]" : "bg-zinc-400"}`} />
+                      <p className="text-base font-black text-zinc-950">{formatSlotDateTime(slot, startAt)}</p>
+                      <p className={`mt-1 flex items-center gap-2 text-xs font-black ${slot.available ? "text-[#16A34A]" : "text-red-600"}`}>
+                        <span className={`h-2 w-2 rounded-full ${slot.available ? "bg-[#16A34A]" : "bg-red-600"}`} />
                         {slot.available ? "Disponible" : "Reservado"}
                       </p>
                     </div>
