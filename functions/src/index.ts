@@ -22,6 +22,8 @@ type BookingPayload = {
   day?: unknown;
   startTime?: unknown;
   endTime?: unknown;
+  startAt?: unknown;
+  endAt?: unknown;
   paymentMethod?: unknown;
 };
 
@@ -126,6 +128,19 @@ function getBookingDateRange(day: string, start: string, end: string, now = Date
   return { startAt, endAt };
 }
 
+function getRequestedBookingDateRange(data: BookingPayload, day: string, start: string, end: string) {
+  const startAt = toMillis(data.startAt);
+  const endAt = toMillis(data.endAt);
+
+  // The client calculates this range in its local timezone, which is also the
+  // range used to show the slot before the booking is created.
+  if (startAt !== undefined && endAt !== undefined && endAt > startAt) {
+    return { startAt: new Date(startAt), endAt: new Date(endAt) };
+  }
+
+  return getBookingDateRange(day, start, end);
+}
+
 function applyCors(req: { get(name: string): string | undefined }, res: { set(field: string, value: string): unknown }) {
   const origin = req.get("origin");
   if (origin && allowedOrigins.has(origin)) {
@@ -192,7 +207,7 @@ export const api = onRequest({ region: "us-central1" }, async (req, res) => {
     const day = asString(body.day);
     const startTime = asString(body.startTime);
     const endTime = asString(body.endTime);
-    const bookingDateRange = getBookingDateRange(day, startTime, endTime);
+    const bookingDateRange = getRequestedBookingDateRange(body, day, startTime, endTime);
 
     await db.runTransaction(async (transaction) => {
       const slotSnapshot = await transaction.get(slotRef);

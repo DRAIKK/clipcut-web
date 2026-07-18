@@ -40,7 +40,7 @@ import { createRatingFromWeb } from "../lib/cloud-ratings";
 import { createBookingFromWeb } from "../lib/cloud-bookings";
 import { createMercadoPagoPreference } from "../lib/mercado-pago";
 import { calculateDistanceKm, formatDistanceKm, type Coordinates } from "../lib/distance";
-import { getBookingEndMillis, isActiveBlockingBooking, isReviewableBooking, isVisibleUpcomingBooking, toBookingMillis } from "./booking-rules";
+import { getBookingEndMillis, getNextSlotDateRange, isActiveBlockingBooking, isReviewableBooking, isVisibleUpcomingBooking, toBookingMillis } from "./booking-rules";
 import { BarberAppModal } from "./components/BarberAppModal";
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "./types/booking";
 
@@ -635,6 +635,13 @@ export default function Home() {
       const clientName = clientProfile?.fullName ?? auth?.currentUser?.displayName ?? clientEmail;
       const barberWithAddress = selectedBarber as BarberWithLocationAddress;
       const slotWithAliases = selectedSlot as SlotWithTimeAliases;
+      const startTime = selectedSlot.startTime ?? slotWithAliases.start ?? "";
+      const endTime = selectedSlot.endTime ?? slotWithAliases.end ?? "";
+      const dateRange = getNextSlotDateRange(selectedSlot.day, startTime, endTime);
+      if (!dateRange) {
+        setBookingError("No se pudo calcular la fecha del horario seleccionado.");
+        return;
+      }
       const payload = {
         barberId: selectedBarber.id,
         barberName: selectedBarber.name,
@@ -644,8 +651,10 @@ export default function Home() {
         servicePrice: parseServicePrice(selectedService.price),
         slotId: selectedSlot.id,
         day: selectedSlot.day ?? "",
-        startTime: selectedSlot.startTime ?? slotWithAliases.start ?? "",
-        endTime: selectedSlot.endTime ?? slotWithAliases.end ?? "",
+        startTime,
+        endTime,
+        startAt: dateRange.startAt,
+        endAt: dateRange.endAt,
         clientId: currentUserId,
         clientName,
         clientEmail,
