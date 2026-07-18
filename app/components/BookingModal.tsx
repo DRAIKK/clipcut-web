@@ -2,6 +2,19 @@ import { useEffect, useState } from "react";
 import type { PaymentMethod, PaymentMethodId, Service, TimeSlot } from "../types/booking";
 import { ServiceCard } from "./ServiceCard";
 import { formatSlotRange } from "./slot-format";
+import { getNextSlotDateRange } from "../booking-rules";
+
+function formatSelectedSlot(slot?: TimeSlot) {
+  if (!slot) return "Elegí un horario";
+
+  const range = getNextSlotDateRange(slot.day, slot.startTime, slot.endTime);
+  if (!range) return formatSlotRange(slot);
+
+  const date = new Date(range.startAt);
+  const weekday = new Intl.DateTimeFormat("es-AR", { weekday: "long" }).format(date);
+  const numericDate = new Intl.DateTimeFormat("es-AR", { day: "2-digit", month: "2-digit" }).format(date);
+  return `${weekday[0]?.toUpperCase()}${weekday.slice(1)} ${numericDate} · ${formatSlotRange(slot)}`;
+}
 
 type BookingModalProps = {
   open: boolean;
@@ -69,7 +82,7 @@ export function BookingModal({
         <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5 sm:px-7">
           <div className="rounded-3xl bg-white p-4 shadow-sm ring-1 ring-zinc-200">
             <p className="text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">Horario seleccionado</p>
-            <p className="mt-1 font-black text-zinc-950">{slot ? formatSlotRange(slot) : "Elegí un horario"}</p>
+            <p className="mt-1 font-black text-zinc-950">{formatSelectedSlot(slot)}</p>
             {isPaymentStep && service ? (
               <div className="mt-4 border-t border-zinc-100 pt-4">
                 <p className="text-xs font-bold uppercase tracking-[0.16em] text-zinc-400">Servicio seleccionado</p>

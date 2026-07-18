@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
 import { followBarber, isFollowingBarber, unfollowBarber } from "../../lib/firestore-followers";
+import { getNextSlotDateRange } from "../booking-rules";
 import type { Barber, TimeSlot } from "../types/booking";
 import { BarberAvatar } from "./BarberAvatar";
 import { LogoHeader } from "./LogoHeader";
-import { formatSlotRange, getSlotStartTime } from "./slot-format";
+import { formatSlotRange, getSlotEndTime, getSlotStartTime } from "./slot-format";
 
 type PublicBarberProfileProps = {
   barber: Barber;
@@ -68,6 +69,18 @@ function getDayLabels(slots: TimeSlot[]) {
 
     return normalizedDay ?? slot.day?.trim() ?? "";
   });
+}
+
+function formatSlotDateTime(slot: TimeSlot) {
+  const dateRange = getNextSlotDateRange(slot.day, getSlotStartTime(slot), getSlotEndTime(slot));
+  if (!dateRange) return formatSlotRange(slot);
+
+  const date = new Date(dateRange.startAt);
+  const weekday = new Intl.DateTimeFormat("es-AR", { weekday: "long" }).format(date);
+  const numericDate = new Intl.DateTimeFormat("es-AR", { day: "2-digit", month: "2-digit" }).format(date);
+  const displayWeekday = `${weekday[0]?.toUpperCase()}${weekday.slice(1)}`;
+
+  return `${displayWeekday} ${numericDate} · ${formatSlotRange(slot)}`;
 }
 
 type GroupedSlot = {
@@ -272,7 +285,7 @@ export function PublicBarberProfile({
                     key={slot.id}
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="text-base font-black text-zinc-950">{formatSlotRange(slot)}</p>
+                      <p className="text-base font-black text-zinc-950">{formatSlotDateTime(slot)}</p>
                       <p className="mt-1 flex items-center gap-2 text-xs font-black text-[#16A34A]">
                         <span className={`h-2 w-2 rounded-full ${slot.available ? "bg-[#16A34A]" : "bg-zinc-400"}`} />
                         {slot.available ? "Disponible" : "Reservado"}
