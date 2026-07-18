@@ -35,7 +35,7 @@ function asPositiveNumber(value: unknown) {
 }
 
 
-const ACTIVE_STATUSES = new Set(["paid", "booked", "cash_pending", "cash_paid", "pending_payment"]);
+const ACTIVE_STATUSES = new Set(["paid", "booked", "pending", "cash_pending", "cash_paid", "pending_payment"]);
 const DAY_ALIASES: Record<string, number> = {
   domingo: 0, dom: 0, lunes: 1, lun: 1, martes: 2, mar: 2, miercoles: 3, "miércoles": 3, mie: 3, "mié": 3, jueves: 4, jue: 4, viernes: 5, vie: 5, sabado: 6, "sábado": 6, sab: 6, "sáb": 6,
 };
@@ -210,7 +210,7 @@ export const api = onRequest({ region: "us-central1" }, async (req, res) => {
         endTime,
         ...bookingDateRange,
         paymentMethod,
-        status: paymentMethod === "cash" ? "cash_pending" : "pending_payment",
+        status: paymentMethod === "cash" ? "pending" : "pending_payment",
         createdAt: now,
         updatedAt: now,
       });

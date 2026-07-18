@@ -2,7 +2,7 @@ import type { Booking } from "./types/booking";
 
 const CONFIRMED_STATUSES = new Set(["paid", "booked", "cash_paid"]);
 const REVIEWABLE_STATUSES = new Set(["paid", "booked", "cash_paid", "done", "completed", "complete", "finished"]);
-const ACTIVE_STATUSES = new Set(["paid", "booked", "cash_pending", "cash_paid", "pending_payment"]);
+const ACTIVE_STATUSES = new Set(["paid", "booked", "pending", "cash_pending", "cash_paid", "pending_payment"]);
 
 const DAY_ALIASES: Record<string, number> = {
   domingo: 0,
@@ -112,7 +112,9 @@ export function isReviewableBooking(booking: Booking) {
 }
 
 export function isPendingCashRequest(booking: Booking) {
-  return normalize(booking.status) === "cash_pending";
+  const status = normalize(booking.status);
+  const paymentMethod = normalize(booking.paymentMethod);
+  return status === "cash_pending" || (status === "pending" && paymentMethod === "cash");
 }
 
 export function isPendingPaymentBooking(booking: Booking) {
@@ -139,7 +141,9 @@ export function getBookingStatusLabel(booking: Booking) {
   if (status === "paid") return "Pagada";
   if (status === "booked") return "Confirmada";
   if (status === "cash_paid") return "Confirmada";
-  if (status === "cash_pending") return "Esperando confirmación";
+  if (status === "cash_pending" || (status === "pending" && normalize(booking.paymentMethod) === "cash")) {
+    return "Esperando confirmación";
+  }
   if (status === "pending_payment") return "Pago pendiente";
   if (status === "cash_rejected") return "Rechazada";
   if (status === "canceled" || status === "cancelled") return "Cancelada";
