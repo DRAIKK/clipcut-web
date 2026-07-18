@@ -79,7 +79,7 @@ function parseSlotWeekday(day?: string) {
 }
 
 function getExplicitBookingDateMillis(data: DocumentData) {
-  return toMillis(data.bookingDate) ?? toMillis(data.date) ?? toMillis(data.startAt);
+  return toMillis(data.bookingDate) ?? toMillis(data.date);
 }
 
 function endMillisFromDateAndTime(dateMillis: number, endTime: { hours: number; minutes: number }, startTime?: { hours: number; minutes: number }) {
@@ -95,15 +95,11 @@ function getBookingEndMillis(data: DocumentData, now = Date.now()) {
   const endTime = parseTime(asString(data.endTime) || asString(data.startTime));
   if (!endTime) return undefined;
   const startTime = parseTime(asString(data.startTime));
+  const startAt = toMillis(data.startAt);
+  if (startAt !== undefined) return endMillisFromDateAndTime(startAt, endTime, startTime);
   const explicitBookingDate = getExplicitBookingDateMillis(data);
   if (explicitBookingDate !== undefined) return endMillisFromDateAndTime(explicitBookingDate, endTime, startTime);
-  const createdAt = toMillis(data.createdAt);
   const weekday = parseSlotWeekday(asString(data.day));
-  if (createdAt !== undefined && weekday !== undefined) {
-    const candidate = new Date(createdAt);
-    candidate.setDate(candidate.getDate() + ((weekday - candidate.getDay() + 7) % 7));
-    return endMillisFromDateAndTime(candidate.getTime(), endTime, startTime);
-  }
   const candidate = new Date(now);
   if (weekday !== undefined) candidate.setDate(candidate.getDate() + ((weekday - candidate.getDay() + 7) % 7));
   return endMillisFromDateAndTime(candidate.getTime(), endTime, startTime);
@@ -123,6 +119,7 @@ function getBookingDateRange(day: string, start: string, end: string, now = Date
   const startAt = new Date(now);
   if (weekday !== undefined) startAt.setDate(startAt.getDate() + ((weekday - startAt.getDay() + 7) % 7));
   startAt.setHours(startTime.hours, startTime.minutes, 0, 0);
+  if (weekday === startAt.getDay() && startAt.getTime() < now) startAt.setDate(startAt.getDate() + 7);
   const endAt = new Date(startAt);
   endAt.setHours(endTime.hours, endTime.minutes, 0, 0);
   if (endAt.getTime() <= startAt.getTime()) endAt.setDate(endAt.getDate() + 1);

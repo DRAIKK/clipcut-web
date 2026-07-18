@@ -77,8 +77,8 @@ function parseSlotWeekday(day?: string) {
   return DAY_ALIASES[normalize(day)];
 }
 
-function getExplicitBookingDateMillis(booking: Pick<Booking, "bookingDate" | "date" | "startAt" | "createdAt">) {
-  return toBookingMillis(booking.bookingDate) ?? toBookingMillis(booking.date) ?? toBookingMillis(booking.startAt);
+function getExplicitBookingDateMillis(booking: Pick<Booking, "bookingDate" | "date">) {
+  return toBookingMillis(booking.bookingDate) ?? toBookingMillis(booking.date);
 }
 
 function endMillisFromDateAndTime(dateMillis: number, endTime: { hours: number; minutes: number }, startTime?: { hours: number; minutes: number }) {
@@ -103,20 +103,40 @@ export function getBookingEndMillis(
   if (!endTime) return undefined;
 
   const startTime = parseTime(booking.startTime);
+  // A booking with startAt is already tied to a calendar date.  Do not use
+  // its weekday to move it to a subsequent week.
+  const startAt = toBookingMillis(booking.startAt);
+  if (startAt !== undefined) return endMillisFromDateAndTime(startAt, endTime, startTime);
+
   const explicitBookingDate = getExplicitBookingDateMillis(booking);
   if (explicitBookingDate !== undefined) return endMillisFromDateAndTime(explicitBookingDate, endTime, startTime);
 
-  const createdAt = toBookingMillis(booking.createdAt);
   const weekday = parseSlotWeekday(booking.day);
-  if (createdAt !== undefined && weekday !== undefined) {
-    const candidate = new Date(createdAt);
-    candidate.setDate(candidate.getDate() + ((weekday - candidate.getDay() + 7) % 7));
-    return endMillisFromDateAndTime(candidate.getTime(), endTime, startTime);
-  }
-
+  // Legacy-only fallback for records that have no concrete date fields.
   const candidate = new Date(now);
   if (weekday !== undefined) candidate.setDate(candidate.getDate() + ((weekday - candidate.getDay() + 7) % 7));
   return endMillisFromDateAndTime(candidate.getTime(), endTime, startTime);
+}
+
+/** Calculates the immediate calendar occurrence of a weekly slot. */
+export function getNextSlotDateRange(day: string | undefined, start: string | undefined, end: string | undefined, now = Date.now()) {
+  const startTime = parseTime(start);
+  const endTime = parseTime(end || start);
+  if (!startTime || !endTime) return undefined;
+
+  const startAt = new Date(now);
+  const weekday = parseSlotWeekday(day);
+  if (weekday !== undefined) startAt.setDate(startAt.getDate() + ((weekday - startAt.getDay() + 7) % 7));
+  startAt.setHours(startTime.hours, startTime.minutes, 0, 0);
+
+  // For a slot selected today, choose today only while it has not started.
+  if (weekday === startAt.getDay() && startAt.getTime() < now) startAt.setDate(startAt.getDate() + 7);
+
+  const endAt = new Date(startAt);
+  endAt.setHours(endTime.hours, endTime.minutes, 0, 0);
+  if (endAt.getTime() <= startAt.getTime()) endAt.setDate(endAt.getDate() + 1);
+
+  return { startAt: startAt.getTime(), endAt: endAt.getTime() };
 }
 
 export function isConfirmedBooking(booking: Booking) {

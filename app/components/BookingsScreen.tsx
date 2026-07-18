@@ -4,6 +4,7 @@ import {
   isActiveBlockingBooking,
   isConfirmedBooking,
   isPendingCashRequest,
+  toBookingMillis,
 } from "../booking-rules";
 import type { Barber, Booking } from "../types/booking";
 import { LogoHeader } from "./LogoHeader";
@@ -39,6 +40,18 @@ function capitalize(value: string) {
 }
 
 function formatBookingDateTime(booking: Booking) {
+  const startAt = toBookingMillis(booking.startAt);
+  if (startAt !== undefined) {
+    const date = new Date(startAt);
+    const weekday = capitalize(new Intl.DateTimeFormat("es-AR", { weekday: "long" }).format(date));
+    const numericDate = new Intl.DateTimeFormat("es-AR", { day: "2-digit", month: "2-digit" }).format(date);
+    const clock = new Intl.DateTimeFormat("es-AR", { hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+    const endAt = toBookingMillis(booking.endAt);
+    const time = endAt !== undefined ? `${clock.format(date)} - ${clock.format(new Date(endAt))}` : booking.startTime && booking.endTime ? `${booking.startTime} - ${booking.endTime}` : booking.startTime || booking.endTime;
+
+    return [weekday && `${weekday} ${numericDate}`, time].filter(Boolean).join(" · ");
+  }
+
   const day = capitalize(formatDay(booking.day));
   const time = booking.startTime && booking.endTime ? `${booking.startTime} - ${booking.endTime}` : booking.startTime || booking.endTime;
   const formatted = [day, time].filter(Boolean).join(" · ");
