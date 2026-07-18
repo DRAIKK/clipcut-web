@@ -6,7 +6,13 @@ import { onRequest } from "firebase-functions/v2/https";
 initializeApp();
 
 const db = getFirestore();
-const allowedOrigins = new Set(["https://clipcut-web.vercel.app", "http://localhost:3000", "http://localhost:3001"]);
+const allowedOrigins = new Set([
+  "https://www.clipcutapp.com",
+  "https://clipcutapp.com",
+  "http://localhost:3000",
+]);
+const CORS_ALLOW_METHODS = "GET,POST,PUT,PATCH,DELETE,OPTIONS";
+const CORS_ALLOW_HEADERS = "Content-Type,Authorization";
 
 type BookingPayload = {
   barberId?: unknown;
@@ -143,12 +149,15 @@ function getRequestedBookingDateRange(data: BookingPayload, day: string, start: 
 
 function applyCors(req: { get(name: string): string | undefined }, res: { set(field: string, value: string): unknown }) {
   const origin = req.get("origin");
-  if (origin && allowedOrigins.has(origin)) {
-    res.set("Access-Control-Allow-Origin", origin);
-  }
+
   res.set("Vary", "Origin");
-  res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+
+  if (!origin || !allowedOrigins.has(origin)) return;
+
+  res.set("Access-Control-Allow-Origin", origin);
+  res.set("Access-Control-Allow-Methods", CORS_ALLOW_METHODS);
+  res.set("Access-Control-Allow-Headers", CORS_ALLOW_HEADERS);
+  res.set("Access-Control-Allow-Credentials", "true");
 }
 
 export const api = onRequest({ region: "us-central1" }, async (req, res) => {
