@@ -179,7 +179,7 @@ export default function Home() {
   );
   const currentUserId = auth?.currentUser?.uid ?? "";
   const confirmedBookings = useMemo(() => clientBookings.filter(isConfirmedBooking), [clientBookings]);
-  const activeBooking = useMemo(() => confirmedBookings[0], [confirmedBookings]);
+  const activeBooking = useMemo(() => confirmedBookings.find((booking) => isActiveBlockingBooking(booking)), [confirmedBookings]);
   const reviewableBarbers = useMemo(() => {
     const seen = new Set<string>();
 
@@ -572,9 +572,17 @@ export default function Home() {
     };
   }, [authView, refreshClientBookings]);
 
+  const resetBookingModalState = () => {
+    setModalOpen(false);
+    setSelectedService(undefined);
+    setSelectedPaymentMethod(undefined);
+    setBookingError("");
+  };
+
   const handleSelectService = (service: Service) => {
     setSelectedService(service);
     setSelectedPaymentMethod(undefined);
+    setBookingError("");
   };
 
   const handleConfirmBooking = async () => {
@@ -641,7 +649,7 @@ export default function Home() {
       if (selectedPaymentMethod === "cash") {
         await refreshClientBookings();
         setConfirmed(true);
-        setModalOpen(false);
+        resetBookingModalState();
         return;
       }
 
@@ -859,7 +867,7 @@ export default function Home() {
         }}
       />
       <BookingModal
-        onClose={() => setModalOpen(false)}
+        onClose={resetBookingModalState}
         onConfirm={handleConfirmBooking}
         open={modalOpen}
         service={selectedService}

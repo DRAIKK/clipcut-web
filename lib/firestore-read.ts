@@ -347,7 +347,5 @@ export async function getClientBookings(clientId: string): Promise<Booking[]> {
 
   const snapshot = await getDocs(query(collection(db, "bookings"), where("clientId", "==", clientId)));
 
-  return snapshot.docs
-    .map((bookingDoc) => adaptBooking(bookingDoc.id, bookingDoc.data()))
-    .filter((booking) => isActiveBlockingBooking(booking));
+  return snapshot.docs.map((bookingDoc) => adaptBooking(bookingDoc.id, bookingDoc.data()));
 }
