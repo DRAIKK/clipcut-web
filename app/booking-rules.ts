@@ -151,6 +151,15 @@ export function isActiveBlockingBooking(booking: Booking, now = Date.now()) {
   return true;
 }
 
+export function isVisibleUpcomingBooking(booking: Booking, now = Date.now()) {
+  if (isCanceledBooking(booking)) return false;
+
+  const endAt = getBookingEndMillis(booking, now);
+  if (endAt === undefined) return false;
+
+  return endAt > now;
+}
+
 export function getBookingStatusLabel(booking: Booking) {
   const status = normalize(booking.status);
 
