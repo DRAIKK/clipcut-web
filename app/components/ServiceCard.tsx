@@ -8,6 +8,7 @@ type ServiceCardProps = {
   onSelect: (service: Service) => void;
   onSelectPaymentMethod: (paymentMethod: PaymentMethodId) => void;
   showPaymentMethods?: boolean;
+  showServiceSummary?: boolean;
 };
 
 const CLIPCUT_FEE = 300;
@@ -84,6 +85,7 @@ export function ServiceCard({
   onSelect,
   onSelectPaymentMethod,
   showPaymentMethods = true,
+  showServiceSummary = true,
 }: ServiceCardProps) {
   const servicePrice = parsePrice(service.price);
   const deposit = Math.round(servicePrice * DEPOSIT_PERCENTAGE);
@@ -102,22 +104,24 @@ export function ServiceCard({
         selected ? "border-green-300 shadow-green-700/10" : "border-zinc-200 hover:border-zinc-300"
       }`}
     >
-      <button className="w-full text-left active:scale-[0.99]" onClick={() => onSelect(service)} type="button">
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex min-w-0 items-center gap-3">
-            <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-zinc-100 text-zinc-600">
-              <ScissorsIcon />
-            </span>
-            <h3 className="min-w-0 flex-1 truncate text-base font-black leading-tight text-zinc-950 sm:text-lg">
-              {service.name}
-            </h3>
+      {showServiceSummary ? (
+        <button className="w-full text-left active:scale-[0.99]" onClick={() => onSelect(service)} type="button">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-3">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-2xl bg-zinc-100 text-zinc-600">
+                <ScissorsIcon />
+              </span>
+              <h3 className="min-w-0 flex-1 truncate text-base font-black leading-tight text-zinc-950 sm:text-lg">
+                {service.name}
+              </h3>
+            </div>
+            <p className="shrink-0 text-right text-base font-black text-zinc-950">{service.price}</p>
           </div>
-          <p className="shrink-0 text-right text-base font-black text-zinc-950">{service.price}</p>
-        </div>
-      </button>
+        </button>
+      ) : null}
 
       {showPaymentMethods ? (
-        <div className="mt-4 grid gap-3 text-sm font-bold text-zinc-700">
+        <div className={`${showServiceSummary ? "mt-4" : ""} grid gap-3 text-sm font-bold text-zinc-700`}>
           {paymentMethods.length === 0 ? (
             <div className="rounded-2xl bg-zinc-50 px-4 py-3 text-zinc-500 ring-1 ring-zinc-200">
               Este peluquero todavía no configuró métodos de pago.
