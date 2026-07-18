@@ -19,7 +19,7 @@ type PublicBarberProfileProps = {
 
 const scheduleDays = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 const zeroBasedScheduleDays = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
-const dayOrder = new Map(scheduleDays.map((day, index) => [day, index]));
+const dayIndexByLabel = new Map(zeroBasedScheduleDays.map((day, index) => [day, index]));
 const dayAliases: Record<string, string> = {
   domingo: "Dom",
   dom: "Dom",
@@ -71,6 +71,14 @@ function getDayLabels(slots: TimeSlot[]) {
   });
 }
 
+function getDayOrderFromToday(dayLabel: string, todayIndex: number) {
+  const dayIndex = dayIndexByLabel.get(dayLabel);
+
+  if (dayIndex === undefined) return Number.MAX_SAFE_INTEGER;
+
+  return (dayIndex - todayIndex + 7) % 7;
+}
+
 function formatSlotDateTime(slot: TimeSlot) {
   const dateRange = getNextSlotDateRange(slot.day, getSlotStartTime(slot), getSlotEndTime(slot));
   if (!dateRange) return formatSlotRange(slot);
@@ -99,6 +107,7 @@ export function PublicBarberProfile({
   clientId = "",
 }: PublicBarberProfileProps) {
   const visibleSlots = slots;
+  const todayIndex = new Date().getDay();
   const dayLabels = getDayLabels(visibleSlots);
   const uniqueSlots = new Map<string, { slot: TimeSlot; dayLabel: string }>();
 
@@ -111,8 +120,8 @@ export function PublicBarberProfile({
 
   const groupedSlots = Array.from(uniqueSlots.values())
     .sort((firstSlot, secondSlot) => {
-      const firstDayOrder = dayOrder.get(firstSlot.dayLabel) ?? Number.MAX_SAFE_INTEGER;
-      const secondDayOrder = dayOrder.get(secondSlot.dayLabel) ?? Number.MAX_SAFE_INTEGER;
+      const firstDayOrder = getDayOrderFromToday(firstSlot.dayLabel, todayIndex);
+      const secondDayOrder = getDayOrderFromToday(secondSlot.dayLabel, todayIndex);
 
       if (firstDayOrder !== secondDayOrder) return firstDayOrder - secondDayOrder;
 
