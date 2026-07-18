@@ -124,13 +124,14 @@ export function getNextSlotDateRange(day: string | undefined, start: string | un
   const endTime = parseTime(end || start);
   if (!startTime || !endTime) return undefined;
 
-  const startAt = new Date(now);
   const weekday = parseSlotWeekday(day);
-  if (weekday !== undefined) startAt.setDate(startAt.getDate() + ((weekday - startAt.getDay() + 7) % 7));
+  const startAt = new Date(now);
+  const daysUntilSlot = weekday === undefined ? 0 : (weekday - startAt.getDay() + 7) % 7;
+  startAt.setDate(startAt.getDate() + daysUntilSlot);
   startAt.setHours(startTime.hours, startTime.minutes, 0, 0);
 
-  // For a slot selected today, choose today only while it has not started.
-  if (weekday === startAt.getDay() && startAt.getTime() < now) startAt.setDate(startAt.getDate() + 7);
+  // A weekly slot on the current day stays on today until its start time passes.
+  if (daysUntilSlot === 0 && startAt.getTime() < now) startAt.setDate(startAt.getDate() + 7);
 
   const endAt = new Date(startAt);
   endAt.setHours(endTime.hours, endTime.minutes, 0, 0);

@@ -15,6 +15,8 @@ export type CreateBookingPayload = {
   day: string;
   startTime: string;
   endTime: string;
+  startAt: number;
+  endAt: number;
   clientId: string;
   clientName: string;
   clientEmail: string;
