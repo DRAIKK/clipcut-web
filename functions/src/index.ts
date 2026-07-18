@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase-admin/app";
 import { FieldValue, getFirestore } from "firebase-admin/firestore";
 import type { DocumentData } from "firebase-admin/firestore";
+import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import { onRequest } from "firebase-functions/v2/https";
 
 initializeApp();
@@ -40,6 +41,23 @@ function asString(value: unknown) {
 function asPositiveNumber(value: unknown) {
   const numberValue = typeof value === "number" ? value : Number(value);
   return Number.isFinite(numberValue) && numberValue > 0 ? numberValue : 0;
+}
+
+function asStringArray(value: unknown) {
+  if (typeof value === "string") return [value.trim()].filter(Boolean);
+  if (!Array.isArray(value)) return [];
+  return value.filter((item): item is string => typeof item === "string").map((item) => item.trim()).filter(Boolean);
+}
+
+function getExpoPushTokens(data: DocumentData) {
+  return [...new Set([
+    ...asStringArray(data.expoPushToken),
+    ...asStringArray(data.expoPushTokens),
+  ])].filter((token) => /^(?:Exponent|Expo)PushToken\[.+\]$/.test(token));
+}
+
+function getCashBookingSchedule(data: DocumentData) {
+  return [asString(data.day), asString(data.startTime)].filter(Boolean).join(" ") || "el horario seleccionado";
 }
 
 
@@ -247,7 +265,7 @@ export const api = onRequest({ region: "us-central1" }, async (req, res) => {
         endTime,
         ...bookingDateRange,
         paymentMethod,
-        status: paymentMethod === "cash" ? "pending" : "pending_payment",
+        status: paymentMethod === "cash" ? "cash_pending" : "pending_payment",
         createdAt: now,
         updatedAt: now,
       });
@@ -273,5 +291,36 @@ export const api = onRequest({ region: "us-central1" }, async (req, res) => {
 
     console.error("booking create error", error);
     res.status(500).json({ error: "internal" });
+  }
+});
+
+/** Notifies the barber that a cash booking requires an accept/reject decision. */
+export const notifyCashBookingRequest = onDocumentCreated({ document: "bookings/{bookingId}", region: "us-central1" }, async (event) => {
+  const booking = event.data?.data();
+  if (!booking || normalize(asString(booking.status)) !== "cash_pending" || normalize(asString(booking.paymentMethod)) !== "cash") {
+    return;
+  }
+
+  const barberId = asString(booking.barberId);
+  if (!barberId) return;
+
+  const barber = await db.collection("users").doc(barberId).get();
+  const tokens = barber.exists ? getExpoPushTokens(barber.data() ?? {}) : [];
+  if (tokens.length === 0) return;
+
+  const response = await fetch("https://exp.host/--/api/v2/push/send", {
+    method: "POST",
+    headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify(tokens.map((to) => ({
+      to,
+      sound: "default",
+      title: "Nueva solicitud en efectivo",
+      body: `Tenés una nueva solicitud de reserva para ${getCashBookingSchedule(booking)}.`,
+      data: { bookingId: event.params.bookingId, type: "cash_booking_request" },
+    }))),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Expo push notification failed with status ${response.status}`);
   }
 });
