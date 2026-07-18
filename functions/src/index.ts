@@ -78,19 +78,35 @@ function parseSlotWeekday(day?: string) {
   return DAY_ALIASES[normalize(day)];
 }
 
+function getExplicitBookingDateMillis(data: DocumentData) {
+  return toMillis(data.bookingDate) ?? toMillis(data.date) ?? toMillis(data.startAt);
+}
+
+function endMillisFromDateAndTime(dateMillis: number, endTime: { hours: number; minutes: number }, startTime?: { hours: number; minutes: number }) {
+  const candidate = new Date(dateMillis);
+  candidate.setHours(endTime.hours, endTime.minutes, 0, 0);
+  if (startTime && (endTime.hours < startTime.hours || (endTime.hours === startTime.hours && endTime.minutes <= startTime.minutes))) candidate.setDate(candidate.getDate() + 1);
+  return candidate.getTime();
+}
+
 function getBookingEndMillis(data: DocumentData, now = Date.now()) {
   const explicitEndAt = toMillis(data.endAt);
   if (explicitEndAt !== undefined) return explicitEndAt;
   const endTime = parseTime(asString(data.endTime) || asString(data.startTime));
   if (!endTime) return undefined;
+  const startTime = parseTime(asString(data.startTime));
+  const explicitBookingDate = getExplicitBookingDateMillis(data);
+  if (explicitBookingDate !== undefined) return endMillisFromDateAndTime(explicitBookingDate, endTime, startTime);
+  const createdAt = toMillis(data.createdAt);
   const weekday = parseSlotWeekday(asString(data.day));
+  if (createdAt !== undefined && weekday !== undefined) {
+    const candidate = new Date(createdAt);
+    candidate.setDate(candidate.getDate() + ((weekday - candidate.getDay() + 7) % 7));
+    return endMillisFromDateAndTime(candidate.getTime(), endTime, startTime);
+  }
   const candidate = new Date(now);
   if (weekday !== undefined) candidate.setDate(candidate.getDate() + ((weekday - candidate.getDay() + 7) % 7));
-  candidate.setHours(endTime.hours, endTime.minutes, 0, 0);
-  const startTime = parseTime(asString(data.startTime));
-  if (startTime && (endTime.hours < startTime.hours || (endTime.hours === startTime.hours && endTime.minutes <= startTime.minutes))) candidate.setDate(candidate.getDate() + 1);
-  if (candidate.getTime() <= now && weekday !== undefined) candidate.setDate(candidate.getDate() + 7);
-  return candidate.getTime();
+  return endMillisFromDateAndTime(candidate.getTime(), endTime, startTime);
 }
 
 function isActiveBlockingBooking(data: DocumentData, now = Date.now()) {

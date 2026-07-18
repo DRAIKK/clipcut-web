@@ -32,11 +32,13 @@ const DAY_ALIASES: Record<string, number> = {
   saturday: 6,
 };
 
+type BookingDateValue = Booking["endAt"] | Booking["startAt"] | Booking["bookingDate"] | Booking["date"] | Booking["createdAt"];
+
 function normalize(value?: string) {
   return value?.trim().toLowerCase() ?? "";
 }
 
-export function toBookingMillis(value: Booking["endAt"] | Booking["startAt"]) {
+export function toBookingMillis(value: BookingDateValue) {
   if (!value) return undefined;
   if (value instanceof Date) return value.getTime();
   if (typeof value === "number") return value;
@@ -75,32 +77,46 @@ function parseSlotWeekday(day?: string) {
   return DAY_ALIASES[normalize(day)];
 }
 
-export function getBookingEndMillis(booking: Pick<Booking, "day" | "startTime" | "endTime" | "endAt">, now = Date.now()) {
+function getExplicitBookingDateMillis(booking: Pick<Booking, "bookingDate" | "date" | "startAt" | "createdAt">) {
+  return toBookingMillis(booking.bookingDate) ?? toBookingMillis(booking.date) ?? toBookingMillis(booking.startAt);
+}
+
+function endMillisFromDateAndTime(dateMillis: number, endTime: { hours: number; minutes: number }, startTime?: { hours: number; minutes: number }) {
+  const candidate = new Date(dateMillis);
+  candidate.setHours(endTime.hours, endTime.minutes, 0, 0);
+
+  if (startTime && (endTime.hours < startTime.hours || (endTime.hours === startTime.hours && endTime.minutes <= startTime.minutes))) {
+    candidate.setDate(candidate.getDate() + 1);
+  }
+
+  return candidate.getTime();
+}
+
+export function getBookingEndMillis(
+  booking: Pick<Booking, "day" | "startTime" | "endTime" | "endAt" | "startAt" | "bookingDate" | "date" | "createdAt">,
+  now = Date.now(),
+) {
   const explicitEndAt = toBookingMillis(booking.endAt);
   if (explicitEndAt !== undefined) return explicitEndAt;
 
   const endTime = parseTime(booking.endTime || booking.startTime);
   if (!endTime) return undefined;
 
-  const weekday = parseSlotWeekday(booking.day);
-  const base = new Date(now);
-  const candidate = new Date(base);
-
-  if (weekday !== undefined) {
-    const daysUntilSlot = (weekday - base.getDay() + 7) % 7;
-    candidate.setDate(base.getDate() + daysUntilSlot);
-  }
-
-  candidate.setHours(endTime.hours, endTime.minutes, 0, 0);
-
   const startTime = parseTime(booking.startTime);
-  if (startTime && (endTime.hours < startTime.hours || (endTime.hours === startTime.hours && endTime.minutes <= startTime.minutes))) {
-    candidate.setDate(candidate.getDate() + 1);
+  const explicitBookingDate = getExplicitBookingDateMillis(booking);
+  if (explicitBookingDate !== undefined) return endMillisFromDateAndTime(explicitBookingDate, endTime, startTime);
+
+  const createdAt = toBookingMillis(booking.createdAt);
+  const weekday = parseSlotWeekday(booking.day);
+  if (createdAt !== undefined && weekday !== undefined) {
+    const candidate = new Date(createdAt);
+    candidate.setDate(candidate.getDate() + ((weekday - candidate.getDay() + 7) % 7));
+    return endMillisFromDateAndTime(candidate.getTime(), endTime, startTime);
   }
 
-  if (candidate.getTime() <= now && weekday !== undefined) candidate.setDate(candidate.getDate() + 7);
-
-  return candidate.getTime();
+  const candidate = new Date(now);
+  if (weekday !== undefined) candidate.setDate(candidate.getDate() + ((weekday - candidate.getDay() + 7) % 7));
+  return endMillisFromDateAndTime(candidate.getTime(), endTime, startTime);
 }
 
 export function isConfirmedBooking(booking: Booking) {

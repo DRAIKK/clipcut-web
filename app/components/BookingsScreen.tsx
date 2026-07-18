@@ -1,6 +1,7 @@
 import {
   getBookingStatusLabel,
   isCanceledBooking,
+  isActiveBlockingBooking,
   isConfirmedBooking,
   isPendingCashRequest,
 } from "../booking-rules";
@@ -11,6 +12,7 @@ type BookingsScreenProps = {
   bookings: Booking[];
   barbers?: Barber[];
   loading?: boolean;
+  now?: number;
 };
 
 type BookingSection = {
@@ -77,10 +79,11 @@ export function BookingCard({ booking, barbers }: { booking: Booking; barbers: B
   );
 }
 
-export function BookingsScreen({ bookings, barbers = [], loading = false }: BookingsScreenProps) {
+export function BookingsScreen({ bookings, barbers = [], loading = false, now = Date.now() }: BookingsScreenProps) {
+  const activeBookings = bookings.filter((booking) => isActiveBlockingBooking(booking, now));
   const sections: BookingSection[] = [
-    { title: "Confirmadas", bookings: bookings.filter(isConfirmedBooking) },
-    { title: "Solicitudes pendientes", bookings: bookings.filter(isPendingCashRequest) },
+    { title: "Confirmadas", bookings: activeBookings.filter(isConfirmedBooking) },
+    { title: "Solicitudes pendientes", bookings: activeBookings.filter(isPendingCashRequest) },
     { title: "Canceladas / rechazadas", bookings: bookings.filter(isCanceledBooking) },
   ];
   const hasBookings = sections.some((section) => section.bookings.length > 0);
