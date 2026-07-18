@@ -7,6 +7,7 @@ type ServiceCardProps = {
   selectedPaymentMethod?: PaymentMethodId;
   onSelect: (service: Service) => void;
   onSelectPaymentMethod: (paymentMethod: PaymentMethodId) => void;
+  showPaymentMethods?: boolean;
 };
 
 const CLIPCUT_FEE = 300;
@@ -82,6 +83,7 @@ export function ServiceCard({
   selectedPaymentMethod,
   onSelect,
   onSelectPaymentMethod,
+  showPaymentMethods = true,
 }: ServiceCardProps) {
   const servicePrice = parsePrice(service.price);
   const deposit = Math.round(servicePrice * DEPOSIT_PERCENTAGE);
@@ -114,25 +116,26 @@ export function ServiceCard({
         </div>
       </button>
 
-      <div className="mt-4 grid gap-3 text-sm font-bold text-zinc-700">
-        {paymentMethods.length === 0 ? (
-          <div className="rounded-2xl bg-zinc-50 px-4 py-3 text-zinc-500 ring-1 ring-zinc-200">
-            Este peluquero todavía no configuró métodos de pago.
-          </div>
-        ) : null}
-        {paymentMethods.map((method) => {
-          const isPaymentSelected = selected && selectedPaymentMethod === method.id;
+      {showPaymentMethods ? (
+        <div className="mt-4 grid gap-3 text-sm font-bold text-zinc-700">
+          {paymentMethods.length === 0 ? (
+            <div className="rounded-2xl bg-zinc-50 px-4 py-3 text-zinc-500 ring-1 ring-zinc-200">
+              Este peluquero todavía no configuró métodos de pago.
+            </div>
+          ) : null}
+          {paymentMethods.map((method) => {
+            const isPaymentSelected = selected && selectedPaymentMethod === method.id;
 
-          return (
-            <button
-              className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-left transition active:scale-[0.99] ${getMethodStyles(
-                method.id,
-                isPaymentSelected,
-              )}`}
-              key={method.id}
-              onClick={() => handlePaymentSelect(method.id)}
-              type="button"
-            >
+            return (
+              <button
+                className={`flex items-start gap-3 rounded-2xl border px-4 py-3 text-left transition active:scale-[0.99] ${getMethodStyles(
+                  method.id,
+                  isPaymentSelected,
+                )}`}
+                key={method.id}
+                onClick={() => handlePaymentSelect(method.id)}
+                type="button"
+              >
               <span className="mt-0.5 shrink-0">
                 <PaymentIcon method={method.id} />
               </span>
@@ -167,10 +170,11 @@ export function ServiceCard({
                   </>
                 ) : null}
               </span>
-            </button>
-          );
-        })}
-      </div>
+              </button>
+            );
+          })}
+        </div>
+      ) : null}
     </article>
   );
 }

@@ -1,7 +1,7 @@
 import type { Booking } from "./types/booking";
 
 const CONFIRMED_STATUSES = new Set(["paid", "booked", "cash_paid"]);
-const REVIEWABLE_STATUSES = new Set(["paid", "booked", "cash_paid", "done"]);
+const REVIEWABLE_STATUSES = new Set(["paid", "booked", "cash_paid", "done", "completed", "complete", "finished"]);
 const ACTIVE_STATUSES = new Set(["paid", "booked", "cash_pending", "cash_paid", "pending_payment"]);
 
 const DAY_ALIASES: Record<string, number> = {
