@@ -1,10 +1,7 @@
 import {
   getBookingStatusLabel,
-  isCanceledBooking,
   isActiveBlockingBooking,
-  isConfirmedBooking,
-  isPendingCashRequest,
-  isPendingPaymentBooking,
+  getBookingEndMillis,
   toBookingMillis,
 } from "../booking-rules";
 import type { Barber, Booking } from "../types/booking";
@@ -94,17 +91,20 @@ export function BookingCard({ booking, barbers }: { booking: Booking; barbers: B
 }
 
 export function BookingsScreen({ bookings, barbers = [], loading = false, now = Date.now() }: BookingsScreenProps) {
-  const visibleBookings = bookings.filter((booking) => {
-    const status = booking.status.trim().toLowerCase();
-    return status !== "canceled" && status !== "cancelled";
-  });
-  const activeBookings = visibleBookings.filter((booking) => isActiveBlockingBooking(booking, now));
-  const historicalBookings = visibleBookings.filter((booking) => !isActiveBlockingBooking(booking, now) && !isCanceledBooking(booking));
+  const activeBookings = bookings
+    .filter((booking) => {
+      const endAt = getBookingEndMillis(booking, now);
+
+      return isActiveBlockingBooking(booking, now) && endAt !== undefined && endAt > now;
+    })
+    .sort((firstBooking, secondBooking) => {
+      const firstDate = toBookingMillis(firstBooking.startAt) ?? getBookingEndMillis(firstBooking, now) ?? Number.MAX_SAFE_INTEGER;
+      const secondDate = toBookingMillis(secondBooking.startAt) ?? getBookingEndMillis(secondBooking, now) ?? Number.MAX_SAFE_INTEGER;
+
+      return firstDate - secondDate;
+    });
   const sections: BookingSection[] = [
-    { title: "Confirmadas", bookings: activeBookings.filter(isConfirmedBooking) },
-    { title: "Solicitudes pendientes", bookings: activeBookings.filter((booking) => isPendingCashRequest(booking) || isPendingPaymentBooking(booking)) },
-    { title: "Historial", bookings: historicalBookings },
-    { title: "Canceladas / rechazadas", bookings: visibleBookings.filter(isCanceledBooking) },
+    { title: "Reservas activas", bookings: activeBookings },
   ];
   const hasBookings = sections.some((section) => section.bookings.length > 0);
 
