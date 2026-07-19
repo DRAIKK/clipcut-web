@@ -23,6 +23,7 @@ type HomeScreenProps = {
   ratingErrors?: Record<string, string>;
   ratingSubmittingBarberId?: string;
   onRateBarber?: (barberId: string, rating: number) => void;
+  onViewBarberProfile?: (barberId: string) => void;
   onRequestLocation?: () => void;
   showLocationHint?: boolean;
 };
@@ -38,6 +39,7 @@ export function HomeScreen({
   ratingErrors = {},
   ratingSubmittingBarberId,
   onRateBarber,
+  onViewBarberProfile,
   onSearchBarbers,
   onSelectBarber,
   onRequestLocation,
@@ -147,6 +149,15 @@ export function HomeScreen({
                   </div>
                   {isSubmittingRating ? <p className="mt-2 text-xs font-black uppercase tracking-[0.16em] text-zinc-500">Enviando calificación...</p> : null}
                   {rating ? <p className="mt-2 text-xs font-black uppercase tracking-[0.16em] text-green-600">Ya calificaste con {rating} ★</p> : null}
+                  {rating ? (
+                    <button
+                      className="mt-4 h-10 rounded-full bg-green-600 px-5 text-sm font-black text-white transition active:scale-[0.98]"
+                      onClick={() => onViewBarberProfile?.(barber.id)}
+                      type="button"
+                    >
+                      Ver perfil
+                    </button>
+                  ) : null}
                   {ratingError ? <p className="mt-2 text-sm font-bold leading-5 text-red-600">{ratingError}</p> : null}
                 </article>
               );

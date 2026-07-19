@@ -4,6 +4,7 @@ import {
   isActiveBlockingBooking,
   isConfirmedBooking,
   isPendingCashRequest,
+  isPendingPaymentBooking,
   toBookingMillis,
 } from "../booking-rules";
 import type { Barber, Booking } from "../types/booking";
@@ -93,11 +94,17 @@ export function BookingCard({ booking, barbers }: { booking: Booking; barbers: B
 }
 
 export function BookingsScreen({ bookings, barbers = [], loading = false, now = Date.now() }: BookingsScreenProps) {
-  const activeBookings = bookings.filter((booking) => isActiveBlockingBooking(booking, now));
+  const visibleBookings = bookings.filter((booking) => {
+    const status = booking.status.trim().toLowerCase();
+    return status !== "canceled" && status !== "cancelled";
+  });
+  const activeBookings = visibleBookings.filter((booking) => isActiveBlockingBooking(booking, now));
+  const historicalBookings = visibleBookings.filter((booking) => !isActiveBlockingBooking(booking, now) && !isCanceledBooking(booking));
   const sections: BookingSection[] = [
     { title: "Confirmadas", bookings: activeBookings.filter(isConfirmedBooking) },
-    { title: "Solicitudes pendientes", bookings: activeBookings.filter(isPendingCashRequest) },
-    { title: "Canceladas / rechazadas", bookings: bookings.filter(isCanceledBooking) },
+    { title: "Solicitudes pendientes", bookings: activeBookings.filter((booking) => isPendingCashRequest(booking) || isPendingPaymentBooking(booking)) },
+    { title: "Historial", bookings: historicalBookings },
+    { title: "Canceladas / rechazadas", bookings: visibleBookings.filter(isCanceledBooking) },
   ];
   const hasBookings = sections.some((section) => section.bookings.length > 0);
 

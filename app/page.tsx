@@ -394,6 +394,10 @@ export default function Home() {
     setProfileServices(firebaseFailed ? mockServices : []);
     setActiveTab("search");
   };
+  const openRatedBarberProfile = (barberId: string) => {
+    const barber = (firebaseFailed ? nearbyBarbers : firebaseBarbers).find((candidate) => candidate.id === barberId);
+    if (barber) openBarberProfile(barber);
+  };
   useEffect(() => {
     if (authView !== "app" || locationRequested) return;
     if (activeTab !== "home" && activeTab !== "search") return;
@@ -774,6 +778,7 @@ export default function Home() {
         ratingErrors={ratingErrors}
         ratingSubmittingBarberId={ratingSubmittingBarberId}
         onRateBarber={handleRateBarber}
+        onViewBarberProfile={openRatedBarberProfile}
         onRequestLocation={requestBrowserLocation}
         showLocationHint={!browserLocation}
       />
