@@ -3,6 +3,7 @@ import { followBarber, isFollowingBarber, unfollowBarber } from "../../lib/fires
 import type { Barber, TimeSlot } from "../types/booking";
 import { BarberAvatar } from "./BarberAvatar";
 import { LogoHeader } from "./LogoHeader";
+import { OpenInAppButton } from "./OpenInAppButton";
 import { formatSlotRange, getSlotStartTime } from "./slot-format";
 
 type PublicBarberProfileProps = {
@@ -257,6 +258,7 @@ export function PublicBarberProfile({
         </div>
 
         <p className="mt-6 text-sm font-semibold leading-6 text-zinc-500">{barber.description}</p>
+        <OpenInAppButton barberId={barber.id} />
 
         <div className="mt-5 rounded-[1.5rem] bg-zinc-50 p-4 ring-1 ring-zinc-200">
           <div className="flex items-center gap-3">

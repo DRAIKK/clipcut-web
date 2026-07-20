@@ -82,7 +82,11 @@ function getPaymentReturnUrls() {
   };
 }
 
-export default function Home() {
+type HomeProps = {
+  publicBarberId?: string;
+};
+
+export default function Home({ publicBarberId }: HomeProps) {
   const [selectedBarber, setSelectedBarber] = useState<Barber>();
   const [selectedService, setSelectedService] = useState<Service>();
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot>();
@@ -398,6 +402,38 @@ export default function Home() {
     const barber = (firebaseFailed ? nearbyBarbers : firebaseBarbers).find((candidate) => candidate.id === barberId);
     if (barber) openBarberProfile(barber);
   };
+
+  useEffect(() => {
+    if (authView !== "app" || !publicBarberId || selectedBarber?.id === publicBarberId) return;
+
+    const barberId = publicBarberId;
+    let ignore = false;
+
+    async function openPublicBarberProfile() {
+      try {
+        const barber = await getBarberById(barberId);
+        if (ignore) return;
+
+        setSelectedBarber(barber);
+        setSelectedSlot(undefined);
+        setSelectedService(undefined);
+        setSelectedPaymentMethod(undefined);
+        setBookingError("");
+        setProfileSlots([]);
+        setProfileServices([]);
+        setActiveTab("search");
+      } catch (error) {
+        console.warn("No se pudo abrir el perfil público del peluquero.", error);
+      }
+    }
+
+    openPublicBarberProfile();
+
+    return () => {
+      ignore = true;
+    };
+  }, [authView, publicBarberId, selectedBarber?.id]);
+
   useEffect(() => {
     if (authView !== "app" || locationRequested) return;
     if (activeTab !== "home" && activeTab !== "search") return;
