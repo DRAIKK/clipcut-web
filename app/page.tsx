@@ -42,6 +42,7 @@ import { createMercadoPagoPreference } from "../lib/mercado-pago";
 import { calculateDistanceKm, formatDistanceKm, type Coordinates } from "../lib/distance";
 import { getBookingEndMillis, getNextSlotDateRange, isActiveBlockingBooking, isReviewableBooking, isVisibleUpcomingBooking, toBookingMillis } from "./booking-rules";
 import { BarberAppModal } from "./components/BarberAppModal";
+import { AccessRequiredModal } from "./components/AccessRequiredModal";
 import type { Barber, Booking, PaymentMethodId, Service, TimeSlot } from "./types/booking";
 
 type SlotWithTimeAliases = TimeSlot & { start?: string; end?: string };
@@ -63,6 +64,21 @@ function isPresentBookingField(value: unknown) {
 type AuthView = "checking" | "landing" | "privacy" | "login" | "register" | "app";
 
 const PAYMENT_RETURN_STORAGE_KEY = "clipcut:payment-return";
+
+function getSafeReturnTo() {
+  if (typeof window === "undefined") return undefined;
+
+  const returnTo = new URLSearchParams(window.location.search).get("returnTo");
+  return returnTo?.startsWith("/") && !returnTo.startsWith("//") ? returnTo : undefined;
+}
+
+function getCurrentReturnTo() {
+  if (typeof window === "undefined") return "/";
+
+  const url = new URL(window.location.href);
+  url.searchParams.delete("returnTo");
+  return `${url.pathname}${url.search}${url.hash}`;
+}
 
 function getPaymentReturnUrls() {
   if (typeof window === "undefined") {
@@ -91,8 +107,9 @@ export default function Home({ publicBarberId }: HomeProps) {
   const [selectedService, setSelectedService] = useState<Service>();
   const [selectedSlot, setSelectedSlot] = useState<TimeSlot>();
   const [modalOpen, setModalOpen] = useState(false);
+  const [accessModalOpen, setAccessModalOpen] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabId>("home");
+  const [activeTab, setActiveTab] = useState<TabId>(() => (publicBarberId ? "search" : "home"));
   const [authView, setAuthView] = useState<AuthView>("checking");
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState("");
@@ -119,6 +136,7 @@ export default function Home({ publicBarberId }: HomeProps) {
   const [now, setNow] = useState(() => Date.now());
 
   const selectedBarberId = selectedBarber?.id;
+  const isPublicProfile = Boolean(publicBarberId);
   const profileRefreshTick = Math.floor(now / (60 * 1000));
   const requestBrowserLocation = useCallback(() => {
     if (typeof navigator === "undefined" || !("geolocation" in navigator)) {
@@ -250,7 +268,7 @@ export default function Home({ publicBarberId }: HomeProps) {
 
   useEffect(() => {
     if (!auth) {
-      setAuthView("landing");
+      setAuthView(publicBarberId ? "app" : "landing");
       return;
     }
 
@@ -260,7 +278,7 @@ export default function Home({ publicBarberId }: HomeProps) {
       if (!user) {
         setClientProfile(undefined);
         setRatedBarberIds({});
-        setAuthView((currentView) => (currentView === "checking" ? "landing" : currentView));
+        setAuthView((currentView) => (currentView === "checking" ? (publicBarberId ? "app" : "landing") : currentView));
         return;
       }
 
@@ -284,7 +302,18 @@ export default function Home({ publicBarberId }: HomeProps) {
         setAuthView("login");
       }
     });
-  }, []);
+  }, [publicBarberId]);
+
+  const finishAuthentication = () => {
+    const returnTo = getSafeReturnTo();
+
+    if (returnTo && returnTo !== getCurrentReturnTo()) {
+      window.location.replace(returnTo);
+      return;
+    }
+
+    setAuthView("app");
+  };
 
   const handleLogin = async (email: string, password: string) => {
     if (!email.trim() || !password) {
@@ -308,7 +337,7 @@ export default function Home({ publicBarberId }: HomeProps) {
 
       console.log("client profile loaded", result.profile.uid, result.profile);
       setClientProfile(result.profile);
-      setAuthView("app");
+      finishAuthentication();
     } catch (error) {
       setAuthError(getAuthErrorMessage(error));
     } finally {
@@ -334,7 +363,7 @@ export default function Home({ publicBarberId }: HomeProps) {
 
       console.log("client profile loaded", result.profile.uid, result.profile);
       setClientProfile(result.profile);
-      setAuthView("app");
+      finishAuthentication();
     } catch (error) {
       setAuthError(getAuthErrorMessage(error));
     } finally {
@@ -354,7 +383,7 @@ export default function Home({ publicBarberId }: HomeProps) {
     try {
       const result = await registerClient(fullName, email.trim(), password);
       setClientProfile(result.profile);
-      setAuthView("app");
+      finishAuthentication();
     } catch (error) {
       setAuthError(getAuthErrorMessage(error));
     } finally {
@@ -635,6 +664,20 @@ export default function Home({ publicBarberId }: HomeProps) {
     setBookingError("");
   };
 
+  const requireAuthentication = () => {
+    setAccessModalOpen(true);
+  };
+
+  const continueOnWeb = () => {
+    const returnTo = getCurrentReturnTo();
+    const url = new URL(window.location.href);
+    url.searchParams.set("returnTo", returnTo);
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+    setAccessModalOpen(false);
+    setAuthError("");
+    setAuthView("login");
+  };
+
   const handleSelectService = (service: Service) => {
     setSelectedService(service);
     setSelectedPaymentMethod(undefined);
@@ -645,7 +688,8 @@ export default function Home({ publicBarberId }: HomeProps) {
     setBookingError("");
 
     if (!currentUserId) {
-      setBookingError("Iniciá sesión para reservar.");
+      resetBookingModalState();
+      requireAuthentication();
       return;
     }
     if (!selectedBarber || !selectedService || !selectedSlot || !selectedPaymentMethod) {
@@ -759,6 +803,7 @@ export default function Home({ publicBarberId }: HomeProps) {
       loading={profileLoading}
       slots={profileSlots}
       clientId={currentUserId}
+      onRequireAuthentication={requireAuthentication}
     />
   );
 
@@ -822,6 +867,10 @@ export default function Home({ publicBarberId }: HomeProps) {
   } else if (activeTab === "search") {
     content = selectedBarber ? (
       renderReservationFlow()
+    ) : publicBarberId ? (
+      <section className="flex min-h-[calc(100dvh-10rem)] items-center justify-center">
+        <p className="text-sm font-black text-zinc-500">Cargando perfil y horarios...</p>
+      </section>
     ) : (
       <SearchScreen
         barbers={visibleSearchBarbers}
@@ -918,20 +967,23 @@ export default function Home({ publicBarberId }: HomeProps) {
   return (
     <main className={`min-h-dvh bg-zinc-50 px-4 text-zinc-950 ${activeTab === "home" && !confirmed ? "overflow-hidden py-3" : "py-5"}`}>
       <div className={`mx-auto w-full max-w-md ${activeTab === "home" && !confirmed ? "pb-24" : "pb-32"}`}>{content}</div>
-      <BottomTabs
-        activeTab={activeTab}
-        onChange={(tab) => {
-          setConfirmed(false);
-          if (tab === "search") {
-            setSelectedBarber(undefined);
-            setSelectedService(undefined);
-            setSelectedSlot(undefined);
-            setSelectedPaymentMethod(undefined);
-            setBookingError("");
-          }
-          setActiveTab(tab);
-        }}
-      />
+      {!isPublicProfile || currentUserId ? (
+        <BottomTabs
+          activeTab={activeTab}
+          onChange={(tab) => {
+            setConfirmed(false);
+            if (tab === "search") {
+              setSelectedBarber(undefined);
+              setSelectedService(undefined);
+              setSelectedSlot(undefined);
+              setSelectedPaymentMethod(undefined);
+              setBookingError("");
+            }
+            setActiveTab(tab);
+          }}
+        />
+      ) : null}
+      <AccessRequiredModal onClose={() => setAccessModalOpen(false)} onContinueOnWeb={continueOnWeb} open={accessModalOpen} />
       <BookingModal
         onClose={resetBookingModalState}
         onConfirm={handleConfirmBooking}

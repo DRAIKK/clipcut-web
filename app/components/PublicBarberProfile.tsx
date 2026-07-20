@@ -3,7 +3,6 @@ import { followBarber, isFollowingBarber, unfollowBarber } from "../../lib/fires
 import type { Barber, TimeSlot } from "../types/booking";
 import { BarberAvatar } from "./BarberAvatar";
 import { LogoHeader } from "./LogoHeader";
-import { OpenInAppButton } from "./OpenInAppButton";
 import { formatSlotRange, getSlotStartTime } from "./slot-format";
 
 type PublicBarberProfileProps = {
@@ -15,6 +14,7 @@ type PublicBarberProfileProps = {
   onReserve: () => void;
   loading?: boolean;
   clientId?: string;
+  onRequireAuthentication: () => void;
 };
 
 const scheduleDays = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
@@ -119,6 +119,7 @@ export function PublicBarberProfile({
   onReserve,
   loading = false,
   clientId = "",
+  onRequireAuthentication,
 }: PublicBarberProfileProps) {
   const now = new Date();
   const dayLabels = getDayLabels(slots);
@@ -183,12 +184,21 @@ export function PublicBarberProfile({
   }, [barber.id, clientId]);
 
   const handleCalendarClick = (slot: TimeSlot) => {
+    if (!clientId) {
+      onRequireAuthentication();
+      return;
+    }
+
     onSelectSlot(slot);
     onReserve();
   };
 
   const handleToggleFollow = async () => {
-    if (!clientId || followSaving) return;
+    if (!clientId) {
+      onRequireAuthentication();
+      return;
+    }
+    if (followSaving) return;
 
     const previousFollowing = isFollowing;
     const previousFollowersCount = followersCount;
@@ -236,7 +246,7 @@ export function PublicBarberProfile({
                     ? "bg-green-50 text-green-600 ring-green-200"
                     : "bg-zinc-50 text-zinc-500 ring-zinc-200"
                 }`}
-                disabled={followSaving || !clientId}
+                disabled={followSaving}
                 onClick={handleToggleFollow}
                 type="button"
               >
@@ -258,7 +268,6 @@ export function PublicBarberProfile({
         </div>
 
         <p className="mt-6 text-sm font-semibold leading-6 text-zinc-500">{barber.description}</p>
-        <OpenInAppButton barberId={barber.id} />
 
         <div className="mt-5 rounded-[1.5rem] bg-zinc-50 p-4 ring-1 ring-zinc-200">
           <div className="flex items-center gap-3">
