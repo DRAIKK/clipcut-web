@@ -678,6 +678,21 @@ export default function Home({ publicBarberId }: HomeProps) {
     setAuthView("login");
   };
 
+  const handlePublicBarberBack = () => {
+    if (!isPublicProfile) {
+      setSelectedBarber(undefined);
+      setActiveTab("search");
+      return;
+    }
+
+    if (currentUserId) {
+      window.location.assign("/");
+      return;
+    }
+
+    requireAuthentication();
+  };
+
   const handleSelectService = (service: Service) => {
     setSelectedService(service);
     setSelectedPaymentMethod(undefined);
@@ -793,10 +808,7 @@ export default function Home({ publicBarberId }: HomeProps) {
   const renderReservationFlow = () => (
     <PublicBarberProfile
       barber={selectedBarber ?? mockBarber}
-      onBackToSearch={() => {
-        setSelectedBarber(undefined);
-        setActiveTab("search");
-      }}
+      onBackToSearch={handlePublicBarberBack}
       onReserve={() => setModalOpen(true)}
       onSelectSlot={setSelectedSlot}
       selectedSlot={selectedSlot}
