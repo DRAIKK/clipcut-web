@@ -12,7 +12,7 @@ type StoreLink = {
   label: string;
 };
 
-const storeLinks: StoreLink[] = [
+const defaultStoreLinks: StoreLink[] = [
   {
     href: APP_STORE_URL,
     image: "/app-store.svg",
@@ -27,6 +27,44 @@ const storeLinks: StoreLink[] = [
 
 function isRealUrl(href: string) {
   return href.startsWith("http://") || href.startsWith("https://");
+}
+
+type StoreBadgesProps = {
+  appStoreHref?: string;
+  googlePlayHref?: string;
+};
+
+export function StoreBadges({
+  appStoreHref = APP_STORE_URL,
+  googlePlayHref = GOOGLE_PLAY_URL,
+}: StoreBadgesProps) {
+  const storeLinks = defaultStoreLinks.map((link) => ({
+    ...link,
+    href: link.label === "App Store" ? appStoreHref : googlePlayHref,
+  }));
+
+  return (
+    <div className="mx-auto grid max-w-[13rem] justify-items-center gap-4">
+      {storeLinks.map((link) => (
+        <a
+          aria-label={`Descargar en ${link.label}`}
+          className="block w-40 transition active:scale-[0.98]"
+          href={link.href}
+          key={link.label}
+          rel={isRealUrl(link.href) ? "noreferrer" : undefined}
+          target={isRealUrl(link.href) ? "_blank" : undefined}
+        >
+          <Image
+            alt={`Descargar en ${link.label}`}
+            className="h-auto w-full object-contain drop-shadow-sm"
+            height={96}
+            src={link.image}
+            width={320}
+          />
+        </a>
+      ))}
+    </div>
+  );
 }
 
 export function BarberAppModal({ onClose, open }: { onClose: () => void; open: boolean }) {
@@ -53,25 +91,8 @@ export function BarberAppModal({ onClose, open }: { onClose: () => void; open: b
           Descargá la app para registrarte y administrar tu peluquería.
         </p>
 
-        <div className="mx-auto mt-6 grid max-w-[13rem] justify-items-center gap-4">
-          {storeLinks.map((link) => (
-            <a
-              aria-label={`Descargar en ${link.label}`}
-              className="block w-40 transition active:scale-[0.98]"
-              href={link.href}
-              key={link.label}
-              rel={isRealUrl(link.href) ? "noreferrer" : undefined}
-              target={isRealUrl(link.href) ? "_blank" : undefined}
-            >
-              <Image
-                alt={`Descargar en ${link.label}`}
-                className="h-auto w-full object-contain drop-shadow-sm"
-                height={96}
-                src={link.image}
-                width={320}
-              />
-            </a>
-          ))}
+        <div className="mt-6">
+          <StoreBadges />
         </div>
 
         <button
